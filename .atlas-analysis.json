@@ -1,0 +1,181 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "C++ Algorithm Snippets",
+  "projectDescription": "A comprehensive collection of competitive programming algorithms and data structures implemented in C++ with IDE snippet generation support.",
+  "theme": "aspen",
+  "primaryColor": "#0066CC",
+  "lightColor": "#4A90E2",
+  "darkColor": "#003D7A",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/snippet-usage",
+              "concepts/competitive-programming",
+              "concepts/templates"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Algorithms",
+        "groups": [
+          {
+            "group": "Graph Algorithms",
+            "pages": [
+              "algorithms/graph/overview",
+              "algorithms/graph/shortest-path",
+              "algorithms/graph/spanning-tree",
+              "algorithms/graph/connectivity",
+              "algorithms/graph/tree-algorithms"
+            ]
+          },
+          {
+            "group": "Data Structures",
+            "pages": [
+              "algorithms/data-structures/overview",
+              "algorithms/data-structures/trie",
+              "algorithms/data-structures/advanced"
+            ]
+          },
+          {
+            "group": "Range Query",
+            "pages": [
+              "algorithms/range-query/overview",
+              "algorithms/range-query/segment-tree",
+              "algorithms/range-query/fenwick-tree",
+              "algorithms/range-query/sparse-table"
+            ]
+          },
+          {
+            "group": "String Algorithms",
+            "pages": [
+              "algorithms/string/overview",
+              "algorithms/string/pattern-matching",
+              "algorithms/string/hashing",
+              "algorithms/string/suffix-array"
+            ]
+          },
+          {
+            "group": "Math & Number Theory",
+            "pages": [
+              "algorithms/math/overview",
+              "algorithms/math/number-theory",
+              "algorithms/math/combinatorics",
+              "algorithms/math/matrix"
+            ]
+          },
+          {
+            "group": "Numeric",
+            "pages": [
+              "algorithms/numeric/overview",
+              "algorithms/numeric/modular-arithmetic",
+              "algorithms/numeric/bigint"
+            ]
+          },
+          {
+            "group": "Search Algorithms",
+            "pages": [
+              "algorithms/search/binary-search",
+              "algorithms/search/ternary-search"
+            ]
+          },
+          {
+            "group": "Techniques",
+            "pages": [
+              "algorithms/techniques/two-pointers",
+              "algorithms/techniques/sliding-window",
+              "algorithms/techniques/divide-conquer"
+            ]
+          },
+          {
+            "group": "Geometry",
+            "pages": [
+              "algorithms/geometry/overview",
+              "algorithms/geometry/convex-hull"
+            ]
+          },
+          {
+            "group": "Utilities",
+            "pages": [
+              "algorithms/misc/debugging",
+              "algorithms/misc/io",
+              "algorithms/misc/macros"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "API Reference",
+            "pages": [
+              "reference/graph",
+              "reference/data-structures",
+              "reference/range-query",
+              "reference/string",
+              "reference/math",
+              "reference/numeric",
+              "reference/search",
+              "reference/techniques",
+              "reference/geometry",
+              "reference/combinatorics",
+              "reference/misc"
+            ]
+          },
+          {
+            "group": "Templates",
+            "pages": [
+              "reference/templates/standard",
+              "reference/templates/competitive"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "161+ algorithm implementations covering graphs, strings, math, and data structures",
+    "Automatic snippet generation for VS Code and Vim/Neovim",
+    "Optimized templates for competitive programming contests (USACO, Google Code Jam, LeetCode)",
+    "Comprehensive debugging utilities and macros",
+    "Advanced data structures including segment trees with lazy propagation, tries, and DSU",
+    "String algorithms: KMP, Rabin-Karp, Aho-Corasick, Manacher, suffix arrays",
+    "Graph algorithms: Dijkstra, Bellman-Ford, Floyd-Warshall, Kruskal, topological sort",
+    "Range query structures: Segment Tree, Fenwick Tree, Sparse Table, Square Root Decomposition"
+  ],
+  "publicApiSurface": [
+    "dijkstra<T>(graph, start) - Shortest path from source",
+    "bellman_ford<T>(graph, start) - Shortest path with negative weights",
+    "floyd_warshall<T>(graph) - All-pairs shortest paths",
+    "kruskal<T>(edges, n) - Minimum spanning tree",
+    "DSU - Disjoint Set Union data structure",
+    "SegmentTree - Range query data structure",
+    "FenwickTree - Binary indexed tree",
+    "Trie - Prefix tree for string operations",
+    "KMP(pattern, text) - Pattern matching",
+    "RabinKarp(pattern, text) - Rolling hash pattern matching",
+    "AhoCorasick - Multi-pattern matching automaton",
+    "SuffixArray(string) - Suffix array construction",
+    "Mint<MOD> - Modular arithmetic template",
+    "BigInt - Arbitrary precision integers",
+    "Matrix<T> - Matrix operations",
+    "BinaryLifting - LCA queries on trees",
+    "SparseTable<T> - Static RMQ in O(1)",
+    "CoordinateCompression - Compress coordinate values",
+    "Y-Combinator - Recursive lambda pattern"
+  ]
+}
