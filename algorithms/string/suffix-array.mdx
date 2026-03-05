@@ -1,0 +1,426 @@
+---
+title: 'Suffix Array'
+description: 'Efficient string indexing for pattern matching and substring operations'
+icon: 'list'
+---
+
+## Overview
+
+A suffix array is a sorted array of all suffixes of a string. It's a space-efficient alternative to suffix trees, enabling fast pattern matching and string analysis.
+
+<Note>
+**Time Complexity**
+- Build: O(n log n)
+- Pattern Search: O(m log n)
+- LCP Construction: O(n)
+
+**Space Complexity**: O(n)
+
+Where n = string length, m = pattern length
+</Note>
+
+## What is a Suffix Array?
+
+For string `s = "banana"`, the suffixes are:
+
+```
+Index 0: banana
+Index 1: anana
+Index 2: nana
+Index 3: ana
+Index 4: na
+Index 5: a
+```
+
+Sorted lexicographically:
+
+```
+Index 5: a
+Index 3: ana
+Index 1: anana
+Index 0: banana
+Index 4: na
+Index 2: nana
+```
+
+Suffix array: `[5, 3, 1, 0, 4, 2]`
+
+## Implementation
+
+### Suffix Array Construction
+
+```cpp string_suffix_array.cpp
+template <typename T> vector<int> suffix_array(const T &S) {
+    int N = int(S.size());
+    vector<int> suffix(N), classes(N);
+    for (int i = 0; i < N; i++) {
+        suffix[i] = N - 1 - i;
+        classes[i] = S[i];
+    }
+    stable_sort(suffix.begin(), suffix.end(),
+                [&S](int i, int j) { return S[i] < S[j]; });
+    for (int len = 1; len < N; len *= 2) {
+        vector<int> c(classes);
+        for (int i = 0; i < N; i++) {
+            bool same = i && suffix[i - 1] + len < N &&
+                        c[suffix[i]] == c[suffix[i - 1]] &&
+                        c[suffix[i] + len / 2] == c[suffix[i - 1] + len / 2];
+            classes[suffix[i]] = same ? classes[suffix[i - 1]] : i;
+        }
+        vector<int> cnt(N), s(suffix);
+        for (int i = 0; i < N; i++) {
+            cnt[i] = i;
+        }
+        for (int i = 0; i < N; i++) {
+            int s1 = s[i] - len;
+            if (s1 >= 0)
+                suffix[cnt[classes[s1]]++] = s1;
+        }
+    }
+    return suffix;
+}
+```
+
+### LCP Array Construction
+
+The LCP (Longest Common Prefix) array stores the length of the longest common prefix between consecutive suffixes in the sorted order.
+
+```cpp string_suffix_array.cpp
+template <typename T> vector<int> lcp_array(const vector<int> &sa, const T &S) {
+    int N = int(S.size());
+    vector<int> rank(N), lcp(N - 1);
+    for (int i = 0; i < N; i++)
+        rank[sa[i]] = i;
+
+    int pre = 0;
+    for (int i = 0; i < N; i++) {
+        if (rank[i] < N - 1) {
+            int j = sa[rank[i] + 1];
+            while (max(i, j) + pre < int(S.size()) && S[i + pre] == S[j + pre])
+                ++pre;
+            lcp[rank[i]] = pre;
+            if (pre > 0)
+                --pre;
+        }
+    }
+    return lcp;
+}
+```
+
+## Basic Usage
+
+<Tabs>
+  <Tab title="Build Suffix Array">
+    ```cpp
+    string s = "banana";
+    vector<int> sa = suffix_array(s);
+    
+    cout << "Suffix Array: ";
+    for (int idx : sa) {
+        cout << idx << " ";
+    }
+    // Output: 5 3 1 0 4 2
+    
+    cout << "\nSorted Suffixes:" << endl;
+    for (int idx : sa) {
+        cout << s.substr(idx) << endl;
+    }
+    // Output:
+    // a
+    // ana
+    // anana
+    // banana
+    // na
+    // nana
+    ```
+  </Tab>
+  <Tab title="Build LCP Array">
+    ```cpp
+    string s = "banana";
+    vector<int> sa = suffix_array(s);
+    vector<int> lcp = lcp_array(sa, s);
+    
+    cout << "Index\tSuffix\t\tLCP" << endl;
+    for (int i = 0; i < sa.size(); i++) {
+        cout << sa[i] << "\t" << s.substr(sa[i]);
+        if (i < lcp.size()) {
+            cout << "\t" << lcp[i];
+        }
+        cout << endl;
+    }
+    // Output:
+    // Index  Suffix    LCP
+    // 5      a         -
+    // 3      ana       1
+    // 1      anana     3
+    // 0      banana    0
+    // 4      na        0
+    // 2      nana      2
+    ```
+  </Tab>
+  <Tab title="Pattern Search">
+    ```cpp
+    string text = "mississippi";
+    string pattern = "issi";
+    
+    vector<int> sa = suffix_array(text);
+    
+    // Binary search for pattern
+    auto search = [&](const string& pat) {
+        int lo = 0, hi = sa.size();
+        
+        // Find first occurrence
+        while (lo < hi) {
+            int mid = (lo + hi) / 2;
+            if (text.substr(sa[mid], pat.size()) < pat) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        
+        int start = lo;
+        hi = sa.size();
+        
+        // Find last occurrence
+        while (lo < hi) {
+            int mid = (lo + hi) / 2;
+            if (text.substr(sa[mid], pat.size()) <= pat) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        
+        vector<int> positions;
+        for (int i = start; i < lo; i++) {
+            positions.push_back(sa[i]);
+        }
+        return positions;
+    };
+    
+    vector<int> matches = search(pattern);
+    cout << "Pattern found at: ";
+    for (int pos : matches) {
+        cout << pos << " ";
+    }
+    // Output: 1 4
+    ```
+  </Tab>
+</Tabs>
+
+## Advanced Applications
+
+### Longest Common Substring
+
+```cpp
+// Find longest common substring of two strings
+string find_lcs(const string& s1, const string& s2) {
+    // Combine strings with unique separator
+    string combined = s1 + "#" + s2 + "$";
+    vector<int> sa = suffix_array(combined);
+    vector<int> lcp = lcp_array(sa, combined);
+    
+    int max_lcp = 0;
+    int max_pos = 0;
+    int sep = s1.size();
+    
+    for (int i = 0; i < lcp.size(); i++) {
+        // Check if consecutive suffixes are from different strings
+        bool from_s1_first = sa[i] < sep;
+        bool from_s1_second = sa[i + 1] < sep;
+        
+        if (from_s1_first != from_s1_second && lcp[i] > max_lcp) {
+            max_lcp = lcp[i];
+            max_pos = sa[i];
+        }
+    }
+    
+    return combined.substr(max_pos, max_lcp);
+}
+
+string s1 = "abcdefgh";
+string s2 = "xyzabcpqr";
+cout << "LCS: " << find_lcs(s1, s2) << endl;  // "abc"
+```
+
+### Number of Distinct Substrings
+
+```cpp
+string s = "banana";
+vector<int> sa = suffix_array(s);
+vector<int> lcp = lcp_array(sa, s);
+
+int n = s.size();
+long long total_substrings = (long long)n * (n + 1) / 2;
+
+long long duplicate_substrings = 0;
+for (int x : lcp) {
+    duplicate_substrings += x;
+}
+
+long long distinct = total_substrings - duplicate_substrings;
+cout << "Distinct substrings: " << distinct << endl;
+```
+
+### Longest Repeated Substring
+
+```cpp
+string s = "banana";
+vector<int> sa = suffix_array(s);
+vector<int> lcp = lcp_array(sa, s);
+
+int max_lcp = *max_element(lcp.begin(), lcp.end());
+
+if (max_lcp > 0) {
+    int idx = find(lcp.begin(), lcp.end(), max_lcp) - lcp.begin();
+    string repeated = s.substr(sa[idx], max_lcp);
+    cout << "Longest repeated substring: " << repeated << endl;
+    cout << "Length: " << max_lcp << endl;
+} else {
+    cout << "No repeated substring" << endl;
+}
+```
+
+### K-th Lexicographical Substring
+
+```cpp
+// Find k-th lexicographically smallest substring
+string kth_substring(const string& s, long long k) {
+    vector<int> sa = suffix_array(s);
+    vector<int> lcp = lcp_array(sa, s);
+    
+    long long count = 0;
+    
+    for (int i = 0; i < sa.size(); i++) {
+        long long suffixes = s.size() - sa[i];
+        long long duplicates = (i > 0 ? lcp[i - 1] : 0);
+        long long new_substrings = suffixes - duplicates;
+        
+        if (count + new_substrings >= k) {
+            // k-th substring starts at sa[i]
+            long long offset = k - count - 1;
+            long long len = duplicates + offset + 1;
+            return s.substr(sa[i], len);
+        }
+        
+        count += new_substrings;
+    }
+    
+    return "";  // k is too large
+}
+
+string s = "banana";
+for (int k = 1; k <= 5; k++) {
+    cout << k << "-th: " << kth_substring(s, k) << endl;
+}
+// Output:
+// 1-th: a
+// 2-th: an
+// 3-th: ana
+// 4-th: anan
+// 5-th: anana
+```
+
+### Circular String Minimum Rotation
+
+```cpp
+// Find lexicographically smallest rotation
+string min_rotation(const string& s) {
+    string doubled = s + s;
+    vector<int> sa = suffix_array(doubled);
+    
+    // Find first suffix that starts in first half
+    for (int idx : sa) {
+        if (idx < s.size()) {
+            return doubled.substr(idx, s.size());
+        }
+    }
+    return s;
+}
+
+string s = "banana";
+cout << "Min rotation: " << min_rotation(s) << endl;
+// Output: abanana (rotation starting at index 1 of "banana")
+```
+
+## Suffix Array vs Other Structures
+
+| Feature | Suffix Array | Suffix Tree | Trie |
+|---------|-------------|-------------|------|
+| **Build Time** | O(n log n) | O(n) | O(Σ m) |
+| **Space** | O(n) | O(n) | O(Σ m × alphabet) |
+| **Pattern Search** | O(m log n) | O(m) | O(m) |
+| **LCP Queries** | O(1) with RMQ | O(1) | ❌ |
+| **Memory Efficient** | ✅ | ❌ | ❌ |
+| **Implementation** | Medium | Complex | Simple |
+
+<Note>
+**When to use Suffix Array:**
+- Need space-efficient suffix structure
+- Multiple pattern searches on same text
+- Computing substring statistics
+- Finding repeated patterns
+- Bioinformatics (DNA sequence analysis)
+
+**Advantages:**
+- Less memory than suffix tree (5x)
+- Simpler implementation
+- Cache-friendly (better constants)
+- Works well with LCP array
+
+**Disadvantages:**
+- Slower build than suffix tree
+- Pattern search is O(m log n) vs O(m)
+- Online construction not supported
+</Note>
+
+## Optimizations
+
+### Using Sparse Table for RMQ on LCP
+
+```cpp
+// Combine with sparse table for O(1) LCP queries
+string s = "banana";
+vector<int> sa = suffix_array(s);
+vector<int> lcp = lcp_array(sa, s);
+
+SparseTMin<int> st(lcp);
+
+// Get LCP of suffixes at positions i and j in suffix array
+auto lcp_query = [&](int i, int j) {
+    if (i == j) return (int)s.size() - sa[i];
+    if (i > j) swap(i, j);
+    return st.query(i, j - 1);
+};
+
+// Longest common prefix of suffixes starting at pos1 and pos2
+vector<int> rank(s.size());
+for (int i = 0; i < sa.size(); i++) {
+    rank[sa[i]] = i;
+}
+
+auto lcp_of_suffixes = [&](int pos1, int pos2) {
+    int r1 = rank[pos1];
+    int r2 = rank[pos2];
+    return lcp_query(r1, r2);
+};
+```
+
+### Kasai's Algorithm (Optimized LCP)
+
+The implementation above uses Kasai's algorithm, which is optimal O(n) and uses the observation that LCP values decrease by at most 1 between consecutive positions in the original string.
+
+## Practice Problems
+
+1. **Longest Repeated Substring** (LeetCode 1062)
+2. **Distinct Substrings** (SPOJ - DISUBSTR)
+3. **Longest Common Substring** (SPOJ - LCS)
+4. **Minimum Rotation** (SPOJ - MINMOVE)
+5. **Repeated DNA Sequences** (LeetCode 187)
+6. **Palindrome Pairs** (LeetCode 336)
+
+## See Also
+
+- [String Hashing](/algorithms/string/hashing) - Alternative for substring comparison
+- [Pattern Matching](/algorithms/string/pattern-matching) - KMP, Rabin-Karp for simpler searches

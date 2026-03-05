@@ -1,0 +1,455 @@
+---
+title: "Modular Arithmetic (Mint)"
+description: "Template for automatic modular operations"
+---
+
+## Overview
+
+The Mint (Modular Integer) template automates modular arithmetic operations, preventing overflow and reducing boilerplate code. It wraps integer values and ensures all operations are performed modulo a specified value.
+
+## Compressed Mint Implementation
+
+Simple and fast implementation for most competitive programming needs.
+
+```cpp
+template <int64_t MD> struct mint_t {
+    int64_t m;
+    mint_t(){};
+    mint_t(const int64_t &o) : m(o){};
+    
+    mint_t operator*(const mint_t &o) const {
+        return 1LL * ((m % MD) * (o.m % MD)) % MD;
+    };
+    
+    mint_t operator+(const mint_t &o) const {
+        return m + o.m < MD ? m + o.m : m + o.m - MD;
+    }
+    
+    mint_t operator-(const mint_t &o) const {
+        return m - o.m >= 0 ? m - o.m : m - o.m + MD;
+    }
+    
+    mint_t operator^(int64_t e) const {
+        if (e == 0) return 1;
+        mint_t t = *this ^ (e / 2);
+        if (e & 1) return t * t * (*this);
+        return t * t;
+    }
+    
+    mint_t operator!() const { 
+        return *this ^ (MD - 2); // Modular inverse
+    }
+    
+    mint_t operator/(const mint_t &b) const { 
+        return *this * !b; 
+    };
+    
+    friend std::ostream &operator<<(std::ostream &os, const mint_t &a) {
+        return os << a.m;
+    }
+    
+    friend std::istream &operator>>(std::istream &is, mint_t &a) {
+        int64_t val;
+        is >> val;
+        a = mint_t(val);
+        return is;
+    }
+};
+
+const int64_t MD = 1e9 + 7;
+using mint = mint_t<MD>;
+
+const mint ONE_mi = mint(1);
+const mint ZERO_mi = mint(0);
+```
+
+**Usage:**
+```cpp
+mint x(10), y(20);
+mint z = x + y;  // Automatic modulo
+mint w = x ^ 100;  // Fast exponentiation
+mint inv = !x;  // Modular inverse
+cout << z << endl;  // Prints modular value
+```
+
+## Full Mint Implementation
+
+Comprehensive implementation with additional features and type safety.
+
+```cpp
+template<typename T>
+T inverse(T a, T m) {
+    a = (a + m) % m;
+    if (a < static_cast<T>(a)) a += m;
+    T b = m, u = 0, v = 1;
+    while (static_cast<T>(a) > 0) {
+        T t = b / a;
+        b -= t * a; swap(a, b);
+        u -= t * v; swap(u, v);
+    }
+    assert(b == static_cast<T>(1)); // zero division
+    if (u < static_cast<T>(0)) u += m;
+    return u;
+}
+
+template <typename T>
+class Modular {
+public:
+    using Type = typename decay<decltype(T::value)>::type;
+
+    constexpr Modular() : value() {}
+
+    template <typename U>
+    Modular(U x) {
+        value = normalize(x);
+    }
+
+    template <typename U>
+    static Type normalize(const U& x) {
+        Type v;
+        if (-mod() <= x && x < mod()) v = static_cast<Type>(x);
+        else v = static_cast<Type>(x % mod());
+        if (v < 0) v += mod();
+        return v;
+    }
+
+    const Type& operator()() const { return value; }
+    
+    template <typename U>
+    explicit operator U() const { return static_cast<U>(value); }
+
+    constexpr static Type mod() { return T::value; }
+
+    Modular& operator+=(const Modular& other) { 
+        if ((value += other.value) >= mod()) value -= mod(); 
+        return *this; 
+    }
+    
+    Modular& operator-=(const Modular& other) { 
+        if ((value -= other.value) < 0) value += mod(); 
+        return *this; 
+    }
+    
+    template <typename U> 
+    Modular& operator+=(const U& other) { return *this += Modular(other); }
+    
+    template <typename U> 
+    Modular& operator-=(const U& other) { return *this -= Modular(other); }
+    
+    Modular& operator++() { return *this += 1; }
+    Modular& operator--() { return *this -= 1; }
+    Modular operator++(int) { Modular result(*this); *this += 1; return result; }
+    Modular operator--(int) { Modular result(*this); *this -= 1; return result; }
+    Modular operator-() const { return Modular(-value); }
+
+    template <typename U = T>
+    typename enable_if<is_same<typename Modular<U>::Type, int>::value, Modular>::type& 
+    operator*=(const Modular& rhs) {
+        value = normalize(static_cast<int64_t>(value) * static_cast<int64_t>(rhs.value)); 
+        return *this;
+    }
+    
+    template <typename U = T>
+    typename enable_if<is_same<typename Modular<U>::Type, int64_t>::value, Modular>::type& 
+    operator*=(const Modular& rhs) {
+        int64_t q = static_cast<int64_t>(static_cast<long double>(value) * rhs.value / mod());
+        value = normalize(value * rhs.value - q * mod());
+        return *this;
+    }
+    
+    Modular& operator/=(const Modular& other) { 
+        return *this *= Modular(inverse(other.value, mod())); 
+    }
+
+private:
+    Type value;
+};
+
+// Comparison operators
+template <typename T> 
+bool operator==(const Modular<T>& lhs, const Modular<T>& rhs) { 
+    return lhs() == rhs(); 
+}
+
+template <typename T> 
+bool operator!=(const Modular<T>& lhs, const Modular<T>& rhs) { 
+    return !(lhs == rhs); 
+}
+
+template <typename T> 
+bool operator<(const Modular<T>& lhs, const Modular<T>& rhs) { 
+    return lhs() < rhs(); 
+}
+
+// Arithmetic operators
+template <typename T> 
+Modular<T> operator+(const Modular<T>& lhs, const Modular<T>& rhs) { 
+    return Modular<T>(lhs) += rhs; 
+}
+
+template <typename T> 
+Modular<T> operator-(const Modular<T>& lhs, const Modular<T>& rhs) { 
+    return Modular<T>(lhs) -= rhs; 
+}
+
+template <typename T> 
+Modular<T> operator*(const Modular<T>& lhs, const Modular<T>& rhs) { 
+    return Modular<T>(lhs) *= rhs; 
+}
+
+template <typename T> 
+Modular<T> operator/(const Modular<T>& lhs, const Modular<T>& rhs) { 
+    return Modular<T>(lhs) /= rhs; 
+}
+
+// Fast exponentiation
+template<typename T, typename U>
+Modular<T> fastpow(const Modular<T>& a, const U& b) {
+    assert(b >= 0);
+    Modular<T> x = a, res = 1;
+    U p = b;
+    while (p > 0) {
+        if (p & 1) res *= x;
+        x *= x;
+        p >>= 1;
+    }
+    return res;
+}
+
+// I/O operators
+template <typename T>
+std::ostream& operator<<(std::ostream& stream, const Modular<T>& number) {
+    return stream << number();
+}
+
+template <typename T>
+std::istream& operator>>(std::istream& stream, Modular<T>& number) {
+    typename common_type<typename Modular<T>::Type, int64_t>::type x;
+    stream >> x;
+    number = Modular<T>(x);
+    return stream;
+}
+
+const int MOD = int(1e9) + 7;
+using Mint = Modular<integral_constant<decay<decltype(MOD)>::type, MOD>>;
+```
+
+**Usage:**
+```cpp
+Mint a = 1000000000;
+Mint b = 1000000000;
+Mint c = a + b;  // Automatically handles overflow
+cout << c << endl;  // Prints: 999999993
+
+Mint x = 10;
+Mint y = fastpow(x, 100);  // 10^100 mod 10^9+7
+cout << y << endl;
+```
+
+## Factorial with Mint
+
+```cpp
+template<typename T>
+struct Factorial {
+    vector<T> fact, inv_fact;
+    int sz;
+    
+    Factorial(int n) : sz(n) {
+        fact.resize(n + 1);
+        inv_fact.resize(n + 1);
+        
+        fact[0] = 1;
+        for (int i = 1; i <= n; i++) {
+            fact[i] = fact[i-1] * i;
+        }
+        
+        inv_fact[n] = T(1) / fact[n];
+        for (int i = n - 1; i >= 0; i--) {
+            inv_fact[i] = inv_fact[i+1] * (i+1);
+        }
+    }
+    
+    T operator[](int n) {
+        return fact[n];
+    }
+    
+    T inv(int n) {
+        return inv_fact[n];
+    }
+};
+
+// Usage with combinatorics
+Factorial<Mint> fact(100000);
+Mint nCr = fact[n] / (fact[k] * fact[n-k]);
+```
+
+## Applications
+
+### 1. Dynamic Programming
+
+```cpp
+vector<Mint> dp(n+1);
+dp[0] = 1;
+for (int i = 1; i <= n; i++) {
+    for (int j = 0; j < i; j++) {
+        dp[i] += dp[j] * dp[i-1-j];  // Automatic modulo
+    }
+}
+cout << dp[n] << endl;
+```
+
+### 2. Combinatorics
+
+```cpp
+Factorial<Mint> fact(N);
+
+Mint count_ways(int n, int k) {
+    // C(n, k) = n! / (k! * (n-k)!)
+    return fact[n] / (fact[k] * fact[n-k]);
+}
+
+Mint arrangements(int n, vector<int> groups) {
+    // Multinomial coefficient
+    Mint result = fact[n];
+    for (int g : groups) {
+        result /= fact[g];
+    }
+    return result;
+}
+```
+
+### 3. Graph Problems
+
+```cpp
+// Count paths in DAG with modular arithmetic
+vector<Mint> paths(n);
+paths[0] = 1;
+for (int u : topological_order) {
+    for (int v : adj[u]) {
+        paths[v] += paths[u];
+    }
+}
+cout << paths[n-1] << endl;
+```
+
+### 4. Matrix Exponentiation with Mint
+
+```cpp
+template<typename T>
+struct Matrix {
+    vector<vector<T>> M;
+    int n;
+    
+    Matrix(int n) : n(n), M(n, vector<T>(n)) {}
+    
+    Matrix operator*(const Matrix &o) const {
+        Matrix res(n);
+        for (int i = 0; i < n; i++)
+            for (int k = 0; k < n; k++)
+                for (int j = 0; j < n; j++)
+                    res.M[i][j] += M[i][k] * o.M[k][j];  // Mint handles modulo
+        return res;
+    }
+};
+
+Matrix<Mint> fastpow(Matrix<Mint> base, long long exp) {
+    Matrix<Mint> result(base.n);
+    for (int i = 0; i < base.n; i++) result.M[i][i] = 1;
+    while (exp > 0) {
+        if (exp & 1) result = result * base;
+        base = base * base;
+        exp >>= 1;
+    }
+    return result;
+}
+```
+
+## Performance Considerations
+
+### Compressed vs Full Implementation
+
+| Feature | Compressed | Full |
+|---------|-----------|------|
+| Code size | ~30 lines | ~200 lines |
+| Compilation time | Fast | Slower |
+| Runtime overhead | Minimal | Slightly more |
+| Features | Basic operations | Complete feature set |
+| Type safety | Template parameter | More robust |
+
+### When to Use Each
+
+**Use Compressed when:**
+- Quick contest implementation needed
+- Simple modular arithmetic sufficient
+- Code size matters
+
+**Use Full when:**
+- Need variable modulus at runtime
+- Want comprehensive operator overloading
+- Building reusable library code
+- Need type safety guarantees
+
+## Common Patterns
+
+### Sum of Powers
+
+```cpp
+Mint sum_of_powers(int n, int k) {
+    // 1^k + 2^k + ... + n^k
+    Mint sum = 0;
+    for (int i = 1; i <= n; i++) {
+        sum += fastpow(Mint(i), k);
+    }
+    return sum;
+}
+```
+
+### Modular Division in Loop
+
+```cpp
+// Avoid repeated division (expensive)
+// SLOW:
+for (int i = 0; i < n; i++) {
+    result += Mint(a[i]) / Mint(b);
+}
+
+// FAST: Compute inverse once
+Mint inv_b = Mint(1) / Mint(b);
+for (int i = 0; i < n; i++) {
+    result += Mint(a[i]) * inv_b;
+}
+```
+
+### Check if Inverse Exists
+
+```cpp
+bool is_zero_division(Mint &a) {
+    using T = Mint::Type;
+    return inverse(static_cast<T>(a), MOD) < static_cast<T>(0);
+}
+```
+
+## Tips for Contests
+
+1. **Define Mint early**: Put typedef/using at the top of your code
+2. **Use constants**: Define `ZERO_mi` and `ONE_mi` for clarity
+3. **Test modular inverse**: Ensure MOD is prime for inverse to work
+4. **Avoid unnecessary conversions**: Work in Mint throughout
+5. **Profile if needed**: Mint adds overhead; use raw int if TLE occurs
+
+<Accordion title="Why Fermat's Little Theorem Works">
+For prime p and a not divisible by p:
+
+```
+a^(p-1) ≡ 1 (mod p)    [Fermat's Little Theorem]
+a * a^(p-2) ≡ 1 (mod p)  [Multiply both sides by a^(-1)]
+```
+
+Therefore: `a^(p-2)` is the modular inverse of `a` modulo `p`
+
+This only works when:
+- p is prime
+- gcd(a, p) = 1
+
+For composite moduli, use Extended Euclidean Algorithm instead.
+</Accordion>

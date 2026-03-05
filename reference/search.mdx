@@ -1,0 +1,382 @@
+---
+title: "Search Algorithms API"
+description: "Binary search and ternary search implementations for various scenarios"
+---
+
+## Overview
+
+Optimized search algorithms for competitive programming including binary search variants and ternary search for unimodal functions.
+
+## Binary Search
+
+Binary search finds elements or boundaries in sorted data with O(log n) complexity.
+
+### Binary Search Template I
+
+Finds the minimum value where a condition becomes true.
+
+```cpp
+int n = oo;
+int low = 0, high = n, mid;
+while (low < high) {
+    mid = low + (high - low) / 2;
+    if (!works(mid)) {
+        low = mid + 1;
+    } else {
+        high = mid;
+    }
+}
+// low is the answer
+```
+
+**Pattern:** Find minimum x where `works(x)` is true
+
+**Usage Example:**
+
+```cpp
+// Find minimum capacity to ship packages in D days
+auto works = [&](int capacity) {
+    int days = 1, current = 0;
+    for (int weight : packages) {
+        if (current + weight > capacity) {
+            days++;
+            current = 0;
+        }
+        current += weight;
+    }
+    return days <= D;
+};
+
+int low = *max_element(packages.begin(), packages.end());
+int high = accumulate(packages.begin(), packages.end(), 0);
+while (low < high) {
+    int mid = low + (high - low) / 2;
+    if (!works(mid)) {
+        low = mid + 1;
+    } else {
+        high = mid;
+    }
+}
+cout << low << endl;  // Minimum capacity
+```
+
+### Binary Search Template II
+
+Finds the maximum value where a condition is true.
+
+```cpp
+int low = 0, high = n - 1, mid;
+while (low < high) {
+    mid = low + (high - low + 1) / 2;  // Note: +1 here
+    if (works(mid)) {
+        low = mid;
+    } else {
+        high = mid - 1;
+    }
+}
+// low is the answer
+```
+
+**Pattern:** Find maximum x where `works(x)` is true
+
+**Usage Example:**
+
+```cpp
+// Find maximum length of subarray with sum <= k
+auto works = [&](int len) {
+    int sum = 0;
+    for (int i = 0; i < len; i++) sum += arr[i];
+    if (sum <= k) return true;
+    
+    for (int i = len; i < n; i++) {
+        sum += arr[i] - arr[i - len];
+        if (sum <= k) return true;
+    }
+    return false;
+};
+
+int low = 0, high = n;
+while (low < high) {
+    int mid = low + (high - low + 1) / 2;
+    if (works(mid)) {
+        low = mid;
+    } else {
+        high = mid - 1;
+    }
+}
+cout << low << endl;
+```
+
+### Binary Search Template III
+
+Classic binary search to find exact element.
+
+```cpp
+int low = 0, high = n - 1, mid;
+while (low <= high) {
+    mid = low + (high - low) / 2;
+    if (arr[mid] == target) {
+        return mid;
+    } else if (arr[mid] < target) {
+        low = mid + 1;
+    } else {
+        high = mid - 1;
+    }
+}
+return -1;  // Not found
+```
+
+## Binary Search on Real Values
+
+Binary search adapted for continuous domains.
+
+### Template I (Fixed Iterations)
+
+```cpp
+double low = 0.0, high = 1e9;
+for (int iter = 0; iter < 100; iter++) {
+    double mid = (low + high) / 2.0;
+    if (works(mid)) {
+        high = mid;
+    } else {
+        low = mid;
+    }
+}
+// low (or high) is the answer
+```
+
+**Usage Example:**
+
+```cpp
+// Find minimum time to meet
+auto canMeet = [&](double time) {
+    // Check if two people can meet within given time
+    double dist = abs(pos1 - pos2);
+    return dist <= time * (speed1 + speed2);
+};
+
+double low = 0.0, high = 1e9;
+for (int iter = 0; iter < 100; iter++) {
+    double mid = (low + high) / 2.0;
+    if (canMeet(mid)) {
+        high = mid;
+    } else {
+        low = mid;
+    }
+}
+cout << fixed << setprecision(6) << low << endl;
+```
+
+### Template II (Epsilon)
+
+```cpp
+const double EPS = 1e-9;
+double low = 0.0, high = 1e9;
+while (high - low > EPS) {
+    double mid = (low + high) / 2.0;
+    if (works(mid)) {
+        high = mid;
+    } else {
+        low = mid;
+    }
+}
+```
+
+### Template III (Relative Epsilon)
+
+```cpp
+const double EPS = 1e-9;
+double low = 0.0, high = 1e9;
+while ((high - low) / max(1.0, abs(high)) > EPS) {
+    double mid = (low + high) / 2.0;
+    if (works(mid)) {
+        high = mid;
+    } else {
+        low = mid;
+    }
+}
+```
+
+## Ternary Search
+
+Finds minimum or maximum of unimodal functions.
+
+### Ternary Search on Integers
+
+```cpp
+int64_t ternary_search(const function<int64_t(int64_t)> &func, 
+                       int64_t low, int64_t high) {
+    while (high - low > 2) {
+        int64_t delta = (high - low) / 3LL;
+        int64_t m1 = low + delta, m2 = high - delta;
+        
+        if (func(m1) > func(m2)) {  // Change to < for maximum
+            low = m1;
+        } else {
+            high = m2;
+        }
+    }
+    int64_t best = LLONG_MAX;
+    for (int64_t mid = low; mid <= high; ++mid) {
+        best = min(best, func(mid));
+    }
+    return best;
+}
+```
+
+**Complexity:** O(log n) evaluations
+
+**Usage Example:**
+
+```cpp
+// Find point on line closest to given point
+auto distance = [&](int64_t x) {
+    return (x - px) * (x - px) + (y - py) * (y - py);
+};
+
+int64_t best = ternary_search(distance, 0, 1e9);
+cout << best << endl;
+```
+
+### Ternary Search on Real Values (Template I)
+
+```cpp
+double ternary_search(const function<double(double)> &func,
+                      double low, double high) {
+    for (int iter = 0; iter < 100; iter++) {
+        double m1 = low + (high - low) / 3.0;
+        double m2 = high - (high - low) / 3.0;
+        
+        if (func(m1) > func(m2)) {  // Change to < for maximum
+            low = m1;
+        } else {
+            high = m2;
+        }
+    }
+    return func(low);  // or func((low + high) / 2)
+}
+```
+
+**Usage Example:**
+
+```cpp
+// Find angle that maximizes projectile distance
+auto distance = [&](double angle) {
+    double rad = angle * M_PI / 180.0;
+    return v0 * v0 * sin(2 * rad) / g;
+};
+
+double best_angle = ternary_search(distance, 0.0, 90.0);
+```
+
+### Ternary Search on Real Values (Template II)
+
+With epsilon termination.
+
+```cpp
+const double EPS = 1e-9;
+double low = 0.0, high = 1e9;
+while (high - low > EPS) {
+    double m1 = low + (high - low) / 3.0;
+    double m2 = high - (high - low) / 3.0;
+    
+    if (func(m1) > func(m2)) {
+        low = m1;
+    } else {
+        high = m2;
+    }
+}
+```
+
+## Common Patterns
+
+### Pattern 1: Minimize Maximum
+
+```cpp
+// Find minimum of maximum values
+auto works = [&](int threshold) {
+    // Check if threshold is achievable
+    return check(threshold);
+};
+
+int low = 0, high = 1e9;
+while (low < high) {
+    int mid = low + (high - low) / 2;
+    if (works(mid)) {
+        high = mid;
+    } else {
+        low = mid + 1;
+    }
+}
+```
+
+### Pattern 2: Maximize Minimum
+
+```cpp
+// Find maximum of minimum values
+auto works = [&](int threshold) {
+    return check(threshold);
+};
+
+int low = 0, high = 1e9;
+while (low < high) {
+    int mid = low + (high - low + 1) / 2;
+    if (works(mid)) {
+        low = mid;
+    } else {
+        high = mid - 1;
+    }
+}
+```
+
+### Pattern 3: Count Elements
+
+```cpp
+// Count elements less than or equal to x
+int count = upper_bound(arr.begin(), arr.end(), x) - arr.begin();
+
+// Count elements less than x
+int count = lower_bound(arr.begin(), arr.end(), x) - arr.begin();
+```
+
+## Available Implementations
+
+| Algorithm | File | Use Case |
+|-----------|------|----------|
+| Binary Search I | `searches_binary_search_I.cpp` | Find min where condition true |
+| Binary Search II | `searches_binary_search_II.cpp` | Find max where condition true |
+| Binary Search III | `searches_binary_search_III.cpp` | Find exact element |
+| Binary Search Real I | `searches_binary_search_on_real_values_I.cpp` | Fixed iterations |
+| Binary Search Real II | `searches_binary_search_on_real_values_II.cpp` | Epsilon convergence |
+| Binary Search Real III | `searches_binary_search_on_real_values_III.cpp` | Relative epsilon |
+| Ternary Search Int | `searches_ternary_search_on_integers_I.cpp` | Unimodal integer functions |
+| Ternary Search Real I | `searches_ternary_search_on_real_values_I.cpp` | Unimodal real functions |
+| Ternary Search Real II | `searches_ternary_search_on_real_values_II.cpp` | With epsilon |
+
+## Tips and Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Choose Right Template" icon="bullseye">
+    Template I for minimum, II for maximum, III for exact match
+  </Card>
+  <Card title="Define Monotonicity" icon="arrow-up">
+    Ensure search space has monotonic property
+  </Card>
+  <Card title="Handle Overflow" icon="shield">
+    Use `low + (high - low) / 2` instead of `(low + high) / 2`
+  </Card>
+  <Card title="Test Boundaries" icon="border-all">
+    Always test edge cases at boundaries
+  </Card>
+</CardGroup>
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Techniques" icon="lightbulb" href="/reference/techniques">
+    Two pointers and sliding window
+  </Card>
+  <Card title="Range Query" icon="layer-group" href="/reference/range-query">
+    Binary search on data structures
+  </Card>
+</CardGroup>

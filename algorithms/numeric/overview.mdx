@@ -1,0 +1,239 @@
+---
+title: "Numeric Utilities"
+description: "Modular arithmetic and arbitrary precision integers"
+---
+
+## Overview
+
+Numeric utilities provide essential tools for handling large numbers and modular arithmetic in competitive programming. These implementations prevent overflow and ensure correct results under modular constraints.
+
+## Categories
+
+<CardGroup cols={2}>
+  <Card title="Modular Arithmetic" icon="percent" href="/algorithms/numeric/modular-arithmetic">
+    Mint template for automatic modulo operations
+  </Card>
+  
+  <Card title="Big Integer" icon="infinity" href="/algorithms/numeric/bigint">
+    Arbitrary precision integer implementation
+  </Card>
+</CardGroup>
+
+## Why Modular Arithmetic?
+
+Many competitive programming problems ask for answers modulo a large prime (typically 10^9+7) to:
+
+1. **Prevent overflow**: Results can be astronomically large
+2. **Standardize answers**: Multiple valid representations become unique
+3. **Enable comparison**: Same answers produce same modular values
+4. **Test correctness**: Large numbers are harder to verify
+
+### Common Moduli
+
+```cpp
+const int MOD = 1e9 + 7;  // 1,000,000,007 (prime)
+const int MOD = 998244353; // Common in FFT problems (prime)
+const int MOD = 1e9 + 9;   // 1,000,000,009 (prime)
+```
+
+## Modular Operations
+
+### Basic Operations
+
+```cpp
+// Addition
+(a + b) % MOD
+
+// Subtraction (careful with negatives!)
+(a - b + MOD) % MOD
+
+// Multiplication
+(1LL * a * b) % MOD  // Cast to avoid overflow
+
+// Division (requires modular inverse)
+(a * inverse(b, MOD)) % MOD
+```
+
+### Fast Exponentiation
+
+```cpp
+template<typename T>
+T fastpow(T base, T exp, T mod) {
+    T result = 1;
+    base %= mod;
+    while (exp > 0) {
+        if (exp & 1) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return result;
+}
+// Time: O(log exp)
+```
+
+### Modular Inverse
+
+For prime modulus, use Fermat's Little Theorem:
+```cpp
+int inverse(int a, int mod) {
+    return fastpow(a, mod - 2, mod);
+}
+// Works when mod is prime and gcd(a, mod) = 1
+```
+
+## When to Use What
+
+### Use Mint Template When:
+- Problem requires all operations modulo a fixed value
+- You want automatic modular reduction
+- Working with combinatorics or dynamic programming
+- Need clean, readable code
+
+### Use BigInt When:
+- Numbers exceed 64-bit range
+- No modulo constraint given
+- Exact arithmetic required
+- Implementing number theory algorithms for large numbers
+
+### Use Built-in Types When:
+- Numbers fit in `int` (< 2×10^9)
+- Numbers fit in `long long` (< 9×10^18)
+- Performance is critical and no special handling needed
+
+## Complexity Reference
+
+| Operation | Mint | BigInt | Built-in |
+|-----------|------|--------|----------|
+| Addition | O(1) | O(n) | O(1) |
+| Multiplication | O(1) | O(n²) or O(n log n)* | O(1) |
+| Division | O(log MOD) | O(n²) | O(1) |
+| Comparison | O(1) | O(n) | O(1) |
+
+*BigInt uses FFT for large numbers, simple multiplication for small numbers
+
+## Common Pitfalls
+
+### 1. Overflow Before Modulo
+
+```cpp
+// WRONG: Can overflow before modulo
+int result = (a * b) % MOD;
+
+// CORRECT: Cast to larger type first
+int result = (1LL * a * b) % MOD;
+```
+
+### 2. Negative Modulo
+
+```cpp
+// WRONG: Can give negative result
+int result = (a - b) % MOD;
+
+// CORRECT: Add MOD before modulo
+int result = (a - b + MOD) % MOD;
+
+// Or: Use ((a - b) % MOD + MOD) % MOD
+```
+
+### 3. Division by Zero
+
+```cpp
+// Always check before computing modular inverse
+if (gcd(a, MOD) != 1) {
+    // Inverse doesn't exist
+} else {
+    int inv = fastpow(a, MOD - 2, MOD);
+}
+```
+
+### 4. Comparison After Modulo
+
+```cpp
+// WRONG: Comparing modular values
+if ((a % MOD) < (b % MOD)) // This doesn't tell you if a < b
+
+// CORRECT: Compare before taking modulo
+if (a < b) // Then take modulo for output
+```
+
+## Best Practices
+
+1. **Define constants clearly**
+   ```cpp
+   const int MOD = 1e9 + 7;
+   using Mint = Modular<integral_constant<int, MOD>>;
+   ```
+
+2. **Precompute factorials** for combinatorics
+   ```cpp
+   vector<Mint> fact(N);
+   fact[0] = 1;
+   for (int i = 1; i < N; i++) {
+       fact[i] = fact[i-1] * i;
+   }
+   ```
+
+3. **Use type aliases** for clarity
+   ```cpp
+   using mint = Modular<VarMod>;
+   using ll = long long;
+   ```
+
+4. **Test edge cases**
+   - a = 0, b = 0
+   - a = MOD - 1 (negative after modulo)
+   - Very large intermediate results
+
+5. **Profile performance**
+   - Mint adds overhead compared to raw int
+   - BigInt is much slower than built-in types
+   - Use appropriately based on constraints
+
+## Example Problem
+
+**Problem**: Compute C(n, k) mod 10^9+7 for large n, k.
+
+```cpp
+const int MOD = 1e9 + 7;
+const int MAXN = 1e6;
+
+vector<int> fact(MAXN);
+vector<int> inv_fact(MAXN);
+
+int fastpow(int a, int b) {
+    int res = 1;
+    while (b > 0) {
+        if (b & 1) res = 1LL * res * a % MOD;
+        a = 1LL * a * a % MOD;
+        b >>= 1;
+    }
+    return res;
+}
+
+void precompute() {
+    fact[0] = 1;
+    for (int i = 1; i < MAXN; i++) {
+        fact[i] = 1LL * fact[i-1] * i % MOD;
+    }
+    inv_fact[MAXN-1] = fastpow(fact[MAXN-1], MOD - 2);
+    for (int i = MAXN - 2; i >= 0; i--) {
+        inv_fact[i] = 1LL * inv_fact[i+1] * (i+1) % MOD;
+    }
+}
+
+int nCr(int n, int r) {
+    if (r > n || r < 0) return 0;
+    return 1LL * fact[n] * inv_fact[r] % MOD * inv_fact[n-r] % MOD;
+}
+
+int main() {
+    precompute();
+    cout << nCr(100, 50) << endl;
+}
+```
+
+## Further Reading
+
+- [Fermat's Little Theorem](https://en.wikipedia.org/wiki/Fermat%27s_little_theorem)
+- [Chinese Remainder Theorem](https://en.wikipedia.org/wiki/Chinese_remainder_theorem)
+- [Montgomery Multiplication](https://en.wikipedia.org/wiki/Montgomery_modular_multiplication)

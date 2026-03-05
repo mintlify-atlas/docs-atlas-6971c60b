@@ -1,0 +1,370 @@
+---
+title: "String Algorithms API"
+description: "Pattern matching, string hashing, and other string algorithms"
+---
+
+## Overview
+
+Comprehensive string algorithms for competitive programming including pattern matching (KMP, Rabin-Karp, Aho-Corasick), string hashing, suffix arrays, and palindrome detection.
+
+## Pattern Matching Algorithms
+
+### KMP (Knuth-Morris-Pratt)
+
+Efficient pattern matching algorithm that finds all occurrences of a pattern in text.
+
+```cpp
+template <typename T>
+vector<int> kmp(const T &text, const T &pattern);
+
+template <typename T>
+vector<int> search_pattern(const T &text, const T &pattern);
+```
+
+<ParamField path="text" type="T">
+  Text to search in (string, vector, etc.)
+</ParamField>
+
+<ParamField path="pattern" type="T">
+  Pattern to search for
+</ParamField>
+
+**Returns:** `vector<int>` - Starting indices of all pattern occurrences
+
+**Complexity:**
+- Time: O(n + m) where n = text length, m = pattern length
+- Space: O(m)
+
+**Usage Example:**
+
+```cpp
+string txt = "ABABABAB";
+string pat = "ABA";
+vector<int> ans = search_pattern(txt, pat);  // {0, 2, 4}
+```
+
+### Prefix Function
+
+Computes the longest proper prefix which is also suffix for each position.
+
+```cpp
+template <typename T>
+vector<int> prefix_function(const T &s);
+```
+
+**Returns:** `vector<int>` - LPS (Longest Prefix Suffix) array
+
+**Complexity:**
+- Time: O(n)
+- Space: O(n)
+
+**Usage Example:**
+
+```cpp
+string s = "AABAACAABAA";
+vector<int> lps = prefix_function(s);
+// lps = [0, 1, 0, 1, 2, 0, 1, 2, 3, 4, 5]
+```
+
+### Z-Algorithm
+
+Computes Z-array: length of longest substring starting from position i that matches prefix.
+
+```cpp
+vector<int> z_algorithm(const string &s);
+```
+
+**Returns:** `vector<int>` - Z-array where z[i] is the length of longest substring starting at i that matches prefix
+
+**Complexity:**
+- Time: O(n)
+- Space: O(n)
+
+**Usage Example:**
+
+```cpp
+string s = "aabcaabxaaz";
+vector<int> z = z_algorithm(s);
+// Use for pattern matching: concatenate pattern + "$" + text
+```
+
+### Rabin-Karp
+
+Rolling hash-based pattern matching algorithm.
+
+```cpp
+template <typename T>
+vector<int> rabin_karp(const T &text, const T &pattern);
+```
+
+**Complexity:**
+- Time: O(n + m) average, O(nm) worst case
+- Space: O(1)
+
+**Usage Example:**
+
+```cpp
+string text = "hello world";
+string pattern = "wor";
+vector<int> positions = rabin_karp(text, pattern);
+```
+
+## Aho-Corasick Algorithm
+
+Multi-pattern matching algorithm that finds all occurrences of multiple patterns simultaneously.
+
+### Counter Version
+
+Counts total occurrences of all patterns.
+
+```cpp
+class AhoCorasick {
+public:
+    void insert(const string &pattern);
+    void build();
+    int countOccurrences(const string &text);
+};
+```
+
+### Occurrences Version
+
+Finds all positions where patterns occur.
+
+```cpp
+class AhoCorasick {
+public:
+    void insert(const string &pattern, int id);
+    void build();
+    vector<pair<int, int>> findOccurrences(const string &text);
+};
+```
+
+**Complexity:**
+- Build: O(sum of pattern lengths)
+- Query: O(text length + number of matches)
+- Space: O(ALPHABET_SIZE × total pattern length)
+
+**Usage Example:**
+
+```cpp
+AhoCorasick ac;
+ac.insert("he", 0);
+ac.insert("she", 1);
+ac.insert("his", 2);
+ac.build();
+vector<pair<int, int>> matches = ac.findOccurrences("ushers");
+// Returns pattern ids and positions
+```
+
+## String Hashing
+
+Rolling hash for fast substring comparison.
+
+### Static Hashing
+
+```cpp
+class HashInt {
+public:
+    int first;
+    int second;
+    HashInt(int a, int b);
+    HashInt(int a);
+};
+
+template <class T>
+class RollingHashing {
+public:
+    RollingHashing(const T &s);
+    int64_t query(int left, int right);
+};
+
+template <class T> using hashing = RollingHashing<T>;
+```
+
+<ParamField path="query" type="int64_t query(int left, int right)">
+  Get hash of substring [left, right] inclusive
+</ParamField>
+
+**Complexity:**
+- Build: O(n)
+- Query: O(1)
+- Space: O(n)
+
+**Usage Example:**
+
+```cpp
+string s = "Hello World";
+hashing<string> h(s);
+int64_t val = h.query(0, 4);  // Hash of "Hello"
+
+// Compare substrings
+if (h1.query(l1, r1) == h2.query(l2, r2)) {
+    // Substrings are equal (with high probability)
+}
+```
+
+**Palindrome Check:**
+
+```cpp
+string s = "racecar";
+string rev(s.rbegin(), s.rend());
+hashing<string> h1(s), h2(rev);
+
+int n = s.size();
+// Check if s[from..to] is palindrome
+auto hash1 = h1.query(from, to);
+auto hash2 = h2.query(n - to - 1, n - from - 1);
+if (hash1 == hash2) {
+    cout << "Palindrome!" << endl;
+}
+```
+
+### Dynamic Hashing
+
+Supports string modifications.
+
+**Complexity:**
+- Update: O(log n)
+- Query: O(log n)
+
+## Manacher's Algorithm
+
+Finds all palindromic substrings in linear time.
+
+```cpp
+template <typename T>
+vector<int> manacher(const T &s);
+
+template <typename T>
+vector<string> palindromes(const T &txt);
+```
+
+<ParamField path="manacher" type="vector<int> manacher(const T &s)">
+  Returns array where res[i] is the radius of palindrome centered at position i
+</ParamField>
+
+<ParamField path="palindromes" type="vector<string> palindromes(const T &txt)">
+  Returns all palindromic substrings
+</ParamField>
+
+**Complexity:**
+- Time: O(n)
+- Space: O(n)
+
+**Usage Example:**
+
+```cpp
+string s = "ababa";
+vector<int> p = manacher(s);
+vector<string> pals = palindromes(s);
+// pals = ["a", "b", "aba", "a", "b", "ababa", "a", "b", "aba", "a", "b"]
+```
+
+## Suffix Array
+
+Sorts all suffixes of a string lexicographically.
+
+```cpp
+vector<int> suffix_array(const string &s);
+```
+
+**Returns:** `vector<int>` - Indices of suffixes in sorted order
+
+**Complexity:**
+- Time: O(n log n)
+- Space: O(n)
+
+**Usage Example:**
+
+```cpp
+string s = "banana";
+vector<int> sa = suffix_array(s);
+// sa = [5, 3, 1, 0, 4, 2] representing suffixes:
+// "a", "ana", "anana", "banana", "na", "nana"
+```
+
+## Minimum Expression
+
+Finds lexicographically smallest rotation of a string.
+
+```cpp
+int minimum_expression(const string &s);
+```
+
+**Returns:** Starting index of the minimum rotation
+
+**Complexity:**
+- Time: O(n)
+- Space: O(1)
+
+**Usage Example:**
+
+```cpp
+string s = "CGAGTCAGCT";
+int idx = minimum_expression(s);
+string min_rotation = s.substr(idx) + s.substr(0, idx);
+```
+
+## String Utilities
+
+### Split String
+
+```cpp
+vector<string> split(const string &s, char delimiter);
+```
+
+**Usage Example:**
+
+```cpp
+string s = "hello,world,foo,bar";
+vector<string> parts = split(s, ',');
+// parts = ["hello", "world", "foo", "bar"]
+```
+
+## Available Algorithms
+
+| Algorithm | File | Time Complexity |
+|-----------|------|----------------|
+| KMP | `string_kmp_std.cpp` | O(n+m) |
+| Prefix Function | `string_prefix_function.cpp` | O(n) |
+| Z-Algorithm | `string_z_algorithm_std.cpp` | O(n) |
+| Z-Algorithm (Compress) | `string_z_algorithm_compress.cpp` | O(n) |
+| Rabin-Karp | `string_rabin_karp_std.cpp` | O(n+m) avg |
+| Aho-Corasick Counter | `string_aho_corasick_counter.cpp` | O(n+m) |
+| Aho-Corasick Occurrences | `string_aho_corasick_occurrences.cpp` | O(n+matches) |
+| Static Hashing | `string_hashing_static_compress.cpp` | O(n) build, O(1) query |
+| Dynamic Hashing | `string_hashing_dynamic_compress.cpp` | O(log n) |
+| Manacher | `string_manacher.cpp` | O(n) |
+| Suffix Array | `string_suffix_array.cpp` | O(n log n) |
+| Minimum Expression | `string_minimum_expression.cpp` | O(n) |
+| Split | `string_split.cpp` | O(n) |
+
+## Common Use Cases
+
+### Pattern Matching
+
+<CardGroup cols={2}>
+  <Card title="Single Pattern" icon="search">
+    Use KMP or Z-algorithm for single pattern matching
+  </Card>
+  <Card title="Multiple Patterns" icon="layer-group">
+    Use Aho-Corasick for multiple pattern matching
+  </Card>
+  <Card title="Substring Comparison" icon="equals">
+    Use hashing for fast substring equality checks
+  </Card>
+  <Card title="Palindromes" icon="circle">
+    Use Manacher's algorithm for all palindromes
+  </Card>
+</CardGroup>
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Data Structures" icon="database" href="/reference/data-structures">
+    Tries and other string data structures
+  </Card>
+  <Card title="Techniques" icon="lightbulb" href="/reference/techniques">
+    Two pointers and sliding window techniques
+  </Card>
+</CardGroup>

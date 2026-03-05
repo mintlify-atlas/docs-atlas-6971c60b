@@ -1,0 +1,399 @@
+---
+title: "Combinatorics"
+description: "Combinations, permutations, and binomial coefficients"
+---
+
+## Overview
+
+Combinatorics deals with counting arrangements and selections. Understanding the difference between permutations (order matters) and combinations (order doesn't matter) is crucial.
+
+## Key Concepts
+
+- **Permutations**: Arrangements where order matters
+- **Combinations**: Selections where order doesn't matter
+- **With/Without Repetition**: Whether elements can be reused
+
+## Combinations - C(n,k)
+
+Number of ways to choose k items from n items (order doesn't matter).
+
+### Formula
+```
+C(n,k) = n! / (k! * (n-k)!)
+```
+
+### O(k) Direct Computation
+
+```cpp
+template<typename T>
+T C(T n, T k) { // O(k)
+    assert(0 <= n && 0 <= k);
+    if(n < k) return static_cast<T>(0);
+    T ans = static_cast<T>(1);
+    for(T i = static_cast<T>(1); i <= k; i++) {
+        ans *= (n - k + i);
+        ans /= i;
+    }
+    return ans;
+}
+```
+
+**Usage:**
+```cpp
+int ways = C(5, 2); // Returns 10
+// Choosing 2 items from 5: (5*4)/(2*1) = 10
+```
+
+### O(1) with Preprocessing (Using Factorials)
+
+```cpp
+// Requires: numeric_mint_compress or numeric_mint_full
+// Requires: math_factorial
+
+template<typename T>
+struct Combinatorics {
+    int sz;
+    Factorial<T> fact;
+    
+    Combinatorics(int n) : sz(n), fact(n) {}
+    
+    T C(int n, int k) { // O(1) with preprocessing O(n)
+        if(n < k) return static_cast<T>(0);
+        return fact[n] / (fact[n-k]*fact[k]);
+    }
+
+    T H(int n, int k) {
+        // Combinations with repetition
+        return C(n+k-1, k);
+    }
+    
+    T P(int n, int k) {
+        // Permutations without repetition
+        if(n < k) return static_cast<T>(0);
+        return fact[n] / fact[n-k];
+    }
+    
+    T P(int n, const vector<int> &m) {
+        // Permutations with repetition
+        T product = static_cast<T>(1);
+        for(int i = 0; i < (int) m.size(); ++i) {
+            product *= fact[m[i]];
+        }
+        return fact[n] / product;
+    }
+
+    T catalan(int n) {
+        // Catalan numbers
+        return C(2*n, n) / static_cast<T>(n+1);
+    }
+};
+
+template<typename T>
+using Comb = Combinatorics<T>;
+```
+
+**Usage:**
+```cpp
+Comb<Mint> comb(100000);
+Mint ways = comb.C(100, 50); // Binomial coefficient
+Mint perm = comb.P(10, 3);   // Permutations
+```
+
+## Modular nCr (Compressed Version)
+
+```cpp
+const int64_t md = 1e9 + 7;
+
+int64_t fastpow(int64_t a, int64_t b, const int64_t &mod) {
+    if (b == 0) return 1;
+    int64_t half = fastpow(a, b / 2, mod);
+    int64_t answer = half * half % mod;
+    if (b & 1) answer = answer * a % mod;
+    return answer;
+}
+
+int64_t inv(int64_t a, const int64_t &mod) { 
+    return fastpow(a, mod - 2, mod); 
+}
+
+const int MXF = 1e6;
+int64_t fact[MXF];
+
+void build_factorial() {
+    fact[0] = 1;
+    for (int i = 1; i < MXF; ++i) {
+        fact[i] = fact[i - 1] * i % md;
+    }
+}
+
+int64_t nCr(int n, int r) {
+    if (n < r) return 0;
+    return fact[n] * inv(fact[n - r] * fact[r] % md, md) % md;
+}
+
+// At main():
+// build_factorial();
+```
+
+**Usage:**
+```cpp
+build_factorial();
+int64_t result = nCr(100, 50) % md;
+```
+
+## Permutations - P(n,k)
+
+Number of ways to arrange k items from n items (order matters).
+
+### Formula
+```
+P(n,k) = n! / (n-k)!
+     = n × (n-1) × (n-2) × ... × (n-k+1)
+```
+
+**Examples:**
+- P(5,2) = 5×4 = 20 (first position: 5 choices, second: 4 choices)
+- P(5,3) = 5×4×3 = 60
+
+## Formulas Summary
+
+| Type | Formula | Meaning |
+|------|---------|----------|
+| **C(n,k)** | n!/(k!(n-k)!) | Combinations without repetitions |
+| **H(n,k)** | C(n+k-1, k) | Combinations with repetitions |
+| **P(n,k)** | n!/(n-k)! | Permutations without repetitions |
+| **P(n,\{m1,m2,...\})** | n!/(m1!m2!...) | Permutations with repetitions |
+
+## Properties
+
+### Combination Properties
+
+```
+C(n, k) = C(n, n-k)         // Symmetry
+C(n, 0) = C(n, n) = 1        // Edge cases
+C(n, k) = C(n-1, k-1) + C(n-1, k)  // Pascal's identity
+Σ C(n, k) = 2^n              // Sum over all k from 0 to n
+```
+
+### Catalan Numbers
+
+```cpp
+T catalan(int n) {
+    return C(2*n, n) / static_cast<T>(n+1);
+}
+```
+
+Sequence: 1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, 16796...
+
+**Applications:**
+- Valid parentheses sequences
+- Binary search trees with n nodes
+- Paths in grid that don't cross diagonal
+- Ways to triangulate a polygon
+
+<Accordion title="Catalan Number Applications">
+**Example 1: Valid Parentheses**
+
+C(3) = 5 ways to arrange 3 pairs of parentheses:
+- `((()))`
+- `(()())`
+- `(())()`
+- `()(())`
+- `()()()`
+
+**Example 2: Binary Trees**
+
+C(3) = 5 different binary search trees with 3 nodes.
+
+**Example 3: Dyck Paths**
+
+Paths from (0,0) to (n,n) that never go below the diagonal y=x.
+</Accordion>
+
+## k-th Permutation
+
+Finds the k-th permutation in lexicographic order.
+
+```cpp
+vector<int> kth_permutation(vector<int> perm, int k) {
+    int64_t factorial = 1LL;
+    int n = (int) perm.size();
+    for(int64_t num = 2; num < n; ++num)
+        factorial *= num; // (n-1)!
+    k--; // k-th to 0-indexed
+    vector<int> answer; 
+    answer.reserve(n);
+    while(true) {
+        answer.push_back(perm[k / factorial]);
+        perm.erase(perm.begin()+(k/factorial));
+        if((int) perm.size() == 0) break;
+        k %= factorial;
+        factorial /= (int) perm.size();
+    }
+    return answer;
+}
+
+vector<int> kth_permutation(int n, int k, int start=0) {
+    vector<int> perm(n);
+    iota(perm.begin(), perm.end(), start);
+    return kth_permutation(perm, k);
+}
+```
+
+**Usage:**
+```cpp
+vector<int> perm = kth_permutation(4, 10);
+// 4! = 24 total permutations
+// Returns the 10th permutation of {0,1,2,3}
+```
+
+## Next Combination
+
+Generates all combinations iteratively.
+
+```cpp
+// Works for 1 <= k <= n <= 20 approximately
+// Complexity: worst case O(2^n) approximately
+bool next_combination(vector<int> &comb, int n) {
+    int k = (int) comb.size();
+    for (int i = k - 1; i >= 0; i--) {
+        if (comb[i] <= n - k + i) {
+            ++comb[i];
+            while (++i < k) {
+                comb[i] = comb[i - 1] + 1;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+void all_combinations(int n, int k) {
+    vector<int> comb(k);
+    iota(comb.begin(), comb.end(), 1);
+    do {
+        for (const int &v : comb) {
+            cout << v << " ";
+        }
+        cout << endl;
+    } while (next_combination(comb, n));
+}
+```
+
+**Usage:**
+```cpp
+// Generate all C(5,3) = 10 combinations
+all_combinations(5, 3);
+// Output:
+// 1 2 3
+// 1 2 4
+// 1 2 5
+// 1 3 4
+// ...
+```
+
+## STL Permutations
+
+```cpp
+vector<int> v = {1, 2, 3};
+do {
+    // Process permutation
+    for (int x : v) cout << x << " ";
+    cout << endl;
+} while (next_permutation(v.begin(), v.end()));
+
+// Generates all 3! = 6 permutations
+```
+
+## Contest Examples
+
+### Example 1: Count Ways to Select Team
+
+```cpp
+// Select k people from n candidates
+int count_teams(int n, int k) {
+    Comb<Mint> comb(n);
+    return comb.C(n, k)();
+}
+
+// With constraints: at least 1 from group A and 1 from group B
+int count_mixed_teams(int groupA, int groupB, int k) {
+    Comb<Mint> comb(groupA + groupB);
+    Mint total = comb.C(groupA + groupB, k);
+    Mint onlyA = comb.C(groupA, k);
+    Mint onlyB = comb.C(groupB, k);
+    return (total - onlyA - onlyB)();
+}
+```
+
+### Example 2: Paths in Grid
+
+```cpp
+// Count paths from (0,0) to (n,m) moving only right and down
+int count_paths(int n, int m) {
+    // Need to make n+m moves: n down, m right
+    return C(n + m, n);
+}
+
+// With obstacle at (x,y)
+int count_paths_obstacle(int n, int m, int x, int y) {
+    int total = C(n+m, n);
+    int through_obstacle = C(x+y, x) * C((n-x)+(m-y), n-x);
+    return total - through_obstacle;
+}
+```
+
+### Example 3: Distributing Identical Items
+
+```cpp
+// Distribute k identical items into n bins (stars and bars)
+int distribute_items(int n, int k) {
+    Comb<Mint> comb(n + k);
+    // Using H(n,k) = C(n+k-1, k)
+    return comb.H(n, k)();
+}
+```
+
+### Example 4: Derangements
+
+```cpp
+// Count permutations where no element is in its original position
+Mint derangements(int n) {
+    vector<Mint> D(n+1);
+    D[0] = 1;
+    D[1] = 0;
+    for (int i = 2; i <= n; i++) {
+        D[i] = (i-1) * (D[i-1] + D[i-2]);
+    }
+    return D[n];
+}
+// D(n) ≈ n!/e for large n
+```
+
+## Common Patterns
+
+### Stars and Bars
+Distribute k identical items into n distinct bins:
+- **At least 0 in each**: H(n,k) = C(n+k-1, k)
+- **At least 1 in each**: C(k-1, n-1)
+
+### Inclusion-Exclusion
+Count arrangements avoiding certain conditions:
+```cpp
+Total = All - Bad1 - Bad2 + Bad1∩Bad2
+```
+
+### Pigeonhole Principle
+If n items are placed into m containers with n > m, at least one container contains more than one item.
+
+## Complexity Summary
+
+| Operation | Time | Space |
+|-----------|------|-------|
+| C(n,k) direct | O(k) | O(1) |
+| C(n,k) with factorial | O(1)* | O(n) |
+| All combinations C(n,k) | O(C(n,k)) | O(k) |
+| All permutations | O(n! × n) | O(n) |
+| k-th permutation | O(n²) | O(n) |
+
+*After O(n) preprocessing to build factorials

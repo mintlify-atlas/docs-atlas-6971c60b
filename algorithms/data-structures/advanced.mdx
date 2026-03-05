@@ -1,0 +1,624 @@
+---
+title: 'Advanced Data Structures'
+description: "Mo's algorithm, order statistic tree, and min/max heaps"
+icon: 'cubes'
+---
+
+## Overview
+
+This section covers specialized data structures that solve specific problem patterns efficiently: offline range queries, rank-based queries, and dual-ended priority operations.
+
+## Mo's Algorithm
+
+Mo's algorithm efficiently answers **offline range queries** by reordering queries to minimize transitions between ranges.
+
+### Implementation
+
+```cpp
+// Complexity: O(|N+Q|*sqrt(|N|)*|add+del|)
+
+struct Query {
+    int left, right, index;
+    Query (int l, int r, int idx)
+        : left(l), right(r), index(idx) {}
+};
+
+int S; // S = sqrt(n);
+
+bool cmp (const Query &a, const Query &b) {
+    if (a.left/S != b.left/S)
+        return a.left/S < b.left/S;
+    return a.right > b.right;
+}
+
+// Global functions - customize for your problem
+void add(int idx) {
+    // Add element at index idx to current range
+}
+
+void del(int idx) {
+    // Remove element at index idx from current range
+}
+
+auto get_answer() {
+    // Return answer for current range
+}
+
+// In main()
+vector<Query> Q;
+Q.reserve(q+1);
+int from, to;
+for(int i = 0; i < q; ++i){
+    cin >> from >> to; // don't forget (from--, to--) if it's 1-indexed
+    Q.push_back(Query(from, to, i));
+}
+
+S = sqrt(n); // n = size of array
+sort(Q.begin(), Q.end(), cmp);
+
+vector<int> ans(q);
+int left = 0, right = -1;
+
+for (int i = 0; i < (int) Q.size(); ++i) {
+    while (right < Q[i].right)
+        add(++right);
+    while (left > Q[i].left)
+        add(--left);
+    while (right > Q[i].right)
+        del(right--);
+    while (left < Q[i].left)
+        del(left++);
+    
+    ans[Q[i].index] = get_answer();
+}
+```
+
+### Usage Example: Range Distinct Count
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+const int mxN = 2e5 + 10;
+int arr[mxN];
+int freq[mxN];  // Frequency of each element
+int distinct_count = 0;
+int S;
+
+struct Query {
+    int left, right, index;
+    Query(int l, int r, int idx) : left(l), right(r), index(idx) {}
+};
+
+bool cmp(const Query &a, const Query &b) {
+    if (a.left/S != b.left/S)
+        return a.left/S < b.left/S;
+    return a.right > b.right;
+}
+
+void add(int idx) {
+    if(freq[arr[idx]] == 0) {
+        distinct_count++;
+    }
+    freq[arr[idx]]++;
+}
+
+void del(int idx) {
+    freq[arr[idx]]--;
+    if(freq[arr[idx]] == 0) {
+        distinct_count--;
+    }
+}
+
+int get_answer() {
+    return distinct_count;
+}
+
+int main() {
+    int n, q;
+    cin >> n >> q;
+    
+    for(int i = 0; i < n; ++i) {
+        cin >> arr[i];
+    }
+    
+    vector<Query> queries;
+    for(int i = 0; i < q; ++i) {
+        int l, r;
+        cin >> l >> r;
+        l--; r--;  // Convert to 0-indexed
+        queries.push_back(Query(l, r, i));
+    }
+    
+    S = sqrt(n);
+    sort(queries.begin(), queries.end(), cmp);
+    
+    vector<int> ans(q);
+    int left = 0, right = -1;
+    
+    for(const Query &query : queries) {
+        while(right < query.right) add(++right);
+        while(left > query.left) add(--left);
+        while(right > query.right) del(right--);
+        while(left < query.left) del(left++);
+        
+        ans[query.index] = get_answer();
+    }
+    
+    for(int i = 0; i < q; ++i) {
+        cout << ans[i] << "\n";
+    }
+    
+    return 0;
+}
+```
+
+<Note>
+  **Time Complexity**: O((N + Q) × √N × F)
+  
+  where F is the complexity of add() and del() operations
+  
+  **Space Complexity**: O(N + Q)
+</Note>
+
+<Tip>
+  Mo's algorithm works best when:
+  - Queries are offline (known in advance)
+  - add() and del() operations are cheap (O(1) or O(log N))
+  - You have many queries relative to array size
+</Tip>
+
+### Key Concepts
+
+1. **Block Size**: Set S = √N for optimal performance
+2. **Query Ordering**: Sort by block, then by right endpoint
+3. **Pointer Movement**: Expand/shrink range incrementally
+4. **Custom Functions**: Implement add(), del(), get_answer() for your problem
+
+<Warning>
+  Mo's algorithm requires queries to be known beforehand (offline). It cannot handle online queries where you must answer each query immediately.
+</Warning>
+
+## Order Statistic Tree
+
+Order statistic tree extends balanced BST with rank operations using GNU PBDS.
+
+### Implementation
+
+```cpp
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp>
+
+using namespace std;
+using __gnu_pbds::tree;
+using __gnu_pbds::rb_tree_tag;
+using __gnu_pbds::tree_order_statistics_node_update;
+using __gnu_pbds::null_type;
+
+// _GLIBCXX_DEBUG must not be defined otherwise some internal check will fail
+#undef _GLIBCXX_DEBUG
+
+template <typename K, typename V, typename Comp = less<K>>
+using indexed_map = tree<K, V, Comp, rb_tree_tag, tree_order_statistics_node_update>;
+
+template <typename K, typename Comp = less<K>>
+using indexed_set = indexed_map<K, null_type, Comp>;
+
+// ¡¡IMPORTANT!! (for using less_equals<K>)
+// using less_equals<K> makes lower_bound works as upper_bound and vice-versa
+// for erase use: any.erase(any.find_by_order(any.order_of_key(val)));
+// don't use .find() because it will always return .end()
+template <typename K, typename V, typename Comp = less_equal<K>>
+using indexed_multimap = indexed_map<K, V, Comp>;
+
+template <typename K, typename Comp = less_equal<K>>
+using indexed_multiset = indexed_map<K, null_type, Comp>;
+
+// Reference: https://codeforces.com/blog/entry/11080
+```
+
+### Operations
+
+```cpp
+// 1) Return the value at index idx (0-indexed)
+auto it = s.find_by_order(idx);
+if(it != s.end()) {
+    cout << *it << "\n";
+}
+
+// Example: {1, 2, 2, 2, 3, 4, 7}
+// s.find_by_order(0) -> returns iterator to 1
+// s.find_by_order(1) -> returns iterator to 2
+// s.find_by_order(6) -> returns iterator to 7
+// s.find_by_order(-1) -> returns s.end()
+// s.find_by_order(100) -> returns s.end()
+
+// 2) Get the index of key value (0-indexed)
+int index = s.order_of_key(key);
+
+// Example: {1, 2, 2, 2, 3, 4, 7}
+// s.order_of_key(2) -> returns 1
+// s.order_of_key(5) -> returns 6
+
+// 3) Correct way to erase in multiset:
+s.erase(s.find_by_order(s.order_of_key(val)));
+```
+
+### Usage Example
+
+```cpp
+int main() {
+    indexed_set<int> s;
+    
+    // Insert elements
+    s.insert(5);
+    s.insert(2);
+    s.insert(8);
+    s.insert(1);
+    s.insert(9);
+    
+    // Set maintains sorted order: {1, 2, 5, 8, 9}
+    
+    // Find k-th smallest (0-indexed)
+    cout << "0-th element: " << *s.find_by_order(0) << "\n";  // 1
+    cout << "2nd element: " << *s.find_by_order(2) << "\n";   // 5
+    cout << "4th element: " << *s.find_by_order(4) << "\n";   // 9
+    
+    // Count elements less than x
+    cout << "Elements < 5: " << s.order_of_key(5) << "\n";   // 2
+    cout << "Elements < 10: " << s.order_of_key(10) << "\n"; // 5
+    cout << "Elements < 0: " << s.order_of_key(0) << "\n";   // 0
+    
+    // All standard set operations work
+    s.erase(5);
+    cout << "Size: " << s.size() << "\n";  // 4
+    
+    return 0;
+}
+```
+
+<Note>
+  **Time Complexity**: All operations are O(log N)
+  - insert, erase, find: O(log N)
+  - find_by_order: O(log N)
+  - order_of_key: O(log N)
+  
+  **Space Complexity**: O(N)
+</Note>
+
+### Dynamic Median Example
+
+```cpp
+indexed_set<pair<int, int>> s;  // {value, unique_id}
+int id = 0;
+
+void insert(int val) {
+    s.insert({val, id++});
+}
+
+int get_median() {
+    int n = s.size();
+    if(n == 0) return -1;
+    
+    auto it = s.find_by_order(n / 2);
+    return it->first;
+}
+
+int main() {
+    insert(5);
+    insert(15);
+    insert(1);
+    cout << "Median: " << get_median() << "\n";  // 5
+    
+    insert(3);
+    cout << "Median: " << get_median() << "\n";  // 5
+    
+    return 0;
+}
+```
+
+<Warning>
+  Order statistic trees require GNU's Policy-Based Data Structures (PBDS). This is available in g++ but may not work on all platforms or online judges.
+</Warning>
+
+## Min/Max Heaps
+
+Dual-ended priority queues supporting both minimum and maximum operations.
+
+### Map-Based Implementation
+
+```cpp
+template <typename T>
+struct minmax_heap {
+    map<T, int> values;
+    int cnt;
+
+    minmax_heap() : cnt(0) {}
+    
+    void push(T &value) { values[value]++; cnt++; }
+
+    bool erase(T &value) {
+        auto it = values.find(value);
+        if(it != values.end()) {
+            (*it).second--;
+            if((*it).second == 0)
+                values.erase(it);
+            cnt--;
+            return true;
+        }
+        return false;
+    }
+
+    T get_max() {
+        assert(!empty());
+        return (*values.rbegin()).first;
+    }
+
+    T get_min() {
+        assert(!empty());
+        return (*values.begin()).first;
+    }
+
+    T pop_max() {
+        assert(!empty());
+        T to_return = get_max();
+        auto it = --values.end();
+        (*it).second--;
+        if((*it).second == 0)
+            values.erase(it);
+        cnt--;
+        return to_return;
+    }
+
+    T pop_min() {
+        assert(!empty());
+        T to_return = get_min();
+        auto it = values.begin();
+        (*it).second--;
+        if((*it).second == 0)
+            values.erase(it);
+        cnt--;
+        return to_return;
+    }
+
+    bool empty() { return values.empty(); }
+    int size() const { return cnt; }
+};
+```
+
+### Multiset-Based Implementation
+
+```cpp
+template <typename T>
+struct minmax_heap {
+    multiset<T> values;
+
+    minmax_heap() {}
+    
+    void push(T value) {
+        values.insert(value);
+    }
+
+    bool erase(T value) {
+        auto it = values.find(value);
+        if(it != values.end()) {
+            values.erase(it);
+            return true;
+        }
+        return false;
+    }
+
+    T get_max() {
+        assert(!empty());
+        return *values.rbegin();
+    }
+
+    T get_min() {
+        assert(!empty());
+        return *values.begin();
+    }
+
+    T pop_max() {
+        assert(!empty());
+        T to_return = get_max();
+        values.erase(--values.end());
+        return to_return;
+    }
+
+    T pop_min() {
+        assert(!empty());
+        T to_return = get_min();
+        values.erase(values.begin());
+        return to_return;
+    }
+
+    bool empty() { return values.empty(); }
+    int size() const { return (int) values.size(); }
+};
+```
+
+### Usage Example
+
+```cpp
+int main() {
+    minmax_heap<int> heap;
+    
+    heap.push(5);
+    heap.push(2);
+    heap.push(8);
+    heap.push(1);
+    heap.push(9);
+    
+    cout << "Min: " << heap.get_min() << "\n";  // 1
+    cout << "Max: " << heap.get_max() << "\n";  // 9
+    
+    heap.pop_min();
+    cout << "New min: " << heap.get_min() << "\n";  // 2
+    
+    heap.pop_max();
+    cout << "New max: " << heap.get_max() << "\n";  // 8
+    
+    return 0;
+}
+```
+
+<Note>
+  **Time Complexity**:
+  - Map-based: O(log N) for all operations
+  - Multiset-based: O(log N) for all operations
+  
+  **Space Complexity**: O(N)
+</Note>
+
+## Stack/Queue with Min/Max
+
+Augmented stacks and queues that support O(1) min/max queries.
+
+### Stack with Min/Max
+
+```cpp
+template<typename T>
+struct Wrapper {
+    T value;
+    T op;  // Stores min/max up to this point
+};
+
+template<typename T, typename Operate>
+class Stack {
+public:
+    stack<Wrapper<T>> st;
+    T global_op;
+    Operate Oper;
+    
+    Stack() {}
+    
+    void push(T value) {
+        if(st.empty()) {
+            global_op = value;
+        } else {
+            global_op = Oper(global_op, value);
+        }
+        st.push(Wrapper<T>{value, global_op});
+    }
+    
+    void pop() {
+        assert(!st.empty());
+        st.pop();
+        if(!st.empty()) {
+            global_op = st.top().op;
+        }
+    }
+    
+    T top() {
+        assert(!st.empty());
+        return st.top().value;
+    }
+
+    T operate() {  // Get min/max
+        assert(!st.empty());
+        return st.top().op;
+    }
+
+    bool empty() { return st.empty(); }
+};
+
+struct Min {
+    template <typename T> T operator()(T x, T y) { return min<T>(x, y); }
+};
+struct Max {
+    template <typename T> T operator()(T x, T y) { return max<T>(x, y); }
+};
+
+template<typename T> using MinStack = Stack<T, Min>;
+template<typename T> using MaxStack = Stack<T, Max>;
+```
+
+### Queue with Min/Max
+
+```cpp
+template <typename T, typename Operate>
+struct Queue {
+    stack<Wrapper<T>> s1;
+    stack<Wrapper<T>> s2;
+    Operate Oper;
+
+    T operate() {  // Get min/max
+        if(s1.empty() || s2.empty()) {
+            return s1.empty() ? s2.top().op : s1.top().op;
+        } else {
+            return Oper(s1.top().op, s2.top().op);
+        }
+    }
+
+    void add_last(T value) {
+        T value_op;
+        if(s1.empty()) {
+            value_op = value;
+        } else {
+            value_op = Oper(value, s1.top().op);
+        }
+        s1.push(Wrapper<T>{value, value_op});
+    }
+
+    T remove_first() {
+        if (s2.empty()) {
+            while (!s1.empty()) {
+                T value = s1.top().value;
+                s1.pop();
+                T value_op = s2.empty() ? value : Oper(value, s2.top().op);
+                s2.push(Wrapper<T>{value, value_op});
+            }
+        }
+        T value = s2.top().value;
+        s2.pop();
+        return value;
+    }
+};
+
+template<typename T> using MinQueue = Queue<T, Min>;
+template<typename T> using MaxQueue = Queue<T, Max>;
+```
+
+### Usage Example: Sliding Window Maximum
+
+```cpp
+int main() {
+    vector<int> arr = {1, 3, -1, -3, 5, 3, 6, 7};
+    int k = 3;  // Window size
+    
+    MaxQueue<int> window;
+    
+    // Initialize first window
+    for(int i = 0; i < k; ++i) {
+        window.add_last(arr[i]);
+    }
+    
+    vector<int> result;
+    result.push_back(window.operate());
+    
+    // Slide window
+    for(int i = k; i < arr.size(); ++i) {
+        window.remove_first();
+        window.add_last(arr[i]);
+        result.push_back(window.operate());
+    }
+    
+    for(int val : result) {
+        cout << val << " ";
+    }
+    // Output: 3 3 5 5 6 7
+    
+    return 0;
+}
+```
+
+<Note>
+  **Time Complexity**: O(1) amortized for all operations
+  
+  **Space Complexity**: O(N)
+</Note>
+
+<Tip>
+  Use MinStack/MaxStack for problems requiring monotonic stacks. Use MinQueue/MaxQueue for sliding window min/max problems.
+</Tip>

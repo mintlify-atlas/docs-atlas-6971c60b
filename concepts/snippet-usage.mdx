@@ -1,0 +1,483 @@
+---
+title: Snippet Usage Guide
+description: Master snippet triggers and editor configuration for efficient coding
+---
+
+## Understanding Snippet Triggers
+
+Every snippet in the library is triggered by typing its filename (without the `.cpp` extension) followed by your editor's autocomplete trigger.
+
+### Naming Convention
+
+Snippets follow a consistent naming pattern:
+
+```
+{category}_{algorithm}_{variant}
+```
+
+**Examples:**
+- `graph_dijkstra_std` - Standard Dijkstra algorithm from the graph category
+- `string_kmp_std` - Standard KMP pattern matching from string category
+- `range_query_segment_tree_lazy_compress` - Compressed lazy segment tree from range query category
+
+## VS Code Usage
+
+### Triggering Snippets
+
+<Steps>
+  <Step title="Type the Snippet Prefix">
+    Start typing the snippet name in a `.cpp` file:
+    
+    ```cpp
+    graph_dij
+    ```
+  </Step>
+
+  <Step title="Select from Autocomplete">
+    VS Code will show matching snippets in the autocomplete menu. Use arrow keys to select and press `Enter` or `Tab`.
+    
+    <Tip>
+    Press `Ctrl+Space` (Windows/Linux) or `Cmd+Space` (macOS) to manually trigger autocomplete.
+    </Tip>
+  </Step>
+
+  <Step title="Navigate Placeholders">
+    Some snippets contain placeholders marked with `$1`, `$2`, etc. Press `Tab` to jump between them.
+  </Step>
+</Steps>
+
+### IntelliSense Configuration
+
+For optimal snippet experience, configure your `settings.json`:
+
+```json settings.json
+{
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": false
+  },
+  "editor.suggestSelection": "first",
+  "editor.tabCompletion": "on",
+  "editor.acceptSuggestionOnEnter": "on",
+  "editor.snippetSuggestions": "top",
+  "[cpp]": {
+    "editor.suggest.snippetsPreventQuickSuggestions": false
+  }
+}
+```
+
+<Note>
+`"editor.snippetSuggestions": "top"` ensures snippets appear at the top of autocomplete suggestions.
+</Note>
+
+### Keyboard Shortcuts
+
+| Action | Windows/Linux | macOS |
+|--------|---------------|-------|
+| Trigger autocomplete | `Ctrl+Space` | `Cmd+Space` |
+| Next placeholder | `Tab` | `Tab` |
+| Previous placeholder | `Shift+Tab` | `Shift+Tab` |
+| Accept suggestion | `Enter` or `Tab` | `Enter` or `Tab` |
+| Dismiss suggestions | `Esc` | `Esc` |
+
+### Custom Keybindings
+
+Add to your `keybindings.json` for even faster workflow:
+
+```json keybindings.json
+[
+  {
+    "key": "ctrl+j",
+    "command": "jumpToNextSnippetPlaceholder",
+    "when": "editorTextFocus && hasNextTabstop"
+  },
+  {
+    "key": "ctrl+k",
+    "command": "jumpToPrevSnippetPlaceholder",
+    "when": "editorTextFocus && hasPrevTabstop"
+  }
+]
+```
+
+## Vim/Neovim Usage
+
+### UltiSnips Configuration
+
+Add to your `.vimrc` or `init.vim`:
+
+```vim
+" UltiSnips trigger configuration
+let g:UltiSnipsExpandTrigger="<tab>"
+let g:UltiSnipsJumpForwardTrigger="<c-j>"
+let g:UltiSnipsJumpBackwardTrigger="<c-k>"
+let g:UltiSnipsListSnippets="<c-l>"
+
+" Snippet directory
+let g:UltiSnipsSnippetDirectories=["UltiSnips"]
+
+" Edit snippets in vertical split
+let g:UltiSnipsEditSplit="vertical"
+```
+
+### Triggering Snippets
+
+<Steps>
+  <Step title="Enter Insert Mode">
+    Press `i` or `a` to enter insert mode in your `.cpp` file.
+  </Step>
+
+  <Step title="Type the Snippet Prefix">
+    Type the complete or partial snippet name:
+    
+    ```cpp
+    graph_dijkstra_std
+    ```
+  </Step>
+
+  <Step title="Press Tab">
+    Press `Tab` to expand the snippet. The entire code will be inserted at the cursor position.
+  </Step>
+
+  <Step title="Navigate Placeholders">
+    Use `Ctrl+j` and `Ctrl+k` to jump between placeholders (if configured as shown above).
+  </Step>
+</Steps>
+
+### Snippet Listing
+
+To see all available snippets while editing:
+
+```vim
+:UltiSnipsEdit
+```
+
+Or use the list trigger (`Ctrl+l` with the above configuration).
+
+### Advanced Vim Configuration
+
+For completion menu integration with coc.nvim:
+
+```vim
+" Make <tab> used for trigger completion, completion confirm,
+" snippet expand and jump
+inoremap <silent><expr> <TAB>
+  \ coc#pum#visible() ? coc#_select_confirm() :
+  \ coc#expandableOrJumpable() ?
+  \ "\<C-r>=coc#rpc#request('doKeymap', ['snippets-expand-jump',''])\<CR>" :
+  \ CheckBackspace() ? "\<TAB>" :
+  \ coc#refresh()
+
+function! CheckBackspace() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
+
+let g:coc_snippet_next = '<tab>'
+```
+
+## Snippet Categories and Usage Patterns
+
+### Template Snippets
+
+Always use a template as your starting point:
+
+<CodeGroup>
+```cpp Standard Template
+template_std
+// Full-featured template with utilities
+```
+
+```cpp Google Code Jam
+template_google
+// Optimized for Google competitions
+// Includes case numbering
+```
+
+```cpp USACO
+template_usaco
+// File I/O for USACO format
+```
+
+```cpp LeetCode
+template_std_leetcode
+// Class-based structure for LeetCode
+```
+</CodeGroup>
+
+### Graph Snippets
+
+Graph algorithms require the base graph structure:
+
+```cpp
+// Order matters!
+1. graph_graph          // Base structure
+2. graph_digraph        // Or graph_undigraph
+3. graph_dijkstra_std   // Your algorithm
+```
+
+<Warning>
+Always include `graph_graph` before any graph class or algorithm snippet.
+</Warning>
+
+### Data Structure Snippets
+
+Most data structures are self-contained:
+
+```cpp
+data_structure_trie_dynamic
+// Complete Trie implementation
+// Ready to use immediately
+```
+
+### Utility Snippets
+
+Add utilities anywhere in your code:
+
+```cpp
+misc_debug              // Debug macros
+misc_loops              // Loop shortcuts
+misc_directions         // 2D grid navigation
+numeric_mint_compress   // Modular arithmetic
+```
+
+## Snippet Dependencies
+
+### Common Dependencies
+
+Some snippets require others to work:
+
+<AccordionGroup>
+  <Accordion title="Graph Algorithms">
+    **Required:**
+    - `graph_graph` (base class)
+    - `graph_digraph` OR `graph_undigraph`
+    
+    **Then use:**
+    - `graph_dijkstra_std`
+    - `graph_bellman_ford`
+    - `graph_floyd_warshall`
+    - `graph_kruskal`
+    - Any other graph algorithm
+  </Accordion>
+
+  <Accordion title="Segment Tree with Lazy Propagation">
+    **Self-contained:**
+    - `range_query_segment_tree_lazy_full`
+    - `range_query_segment_tree_lazy_compress`
+    
+    No dependencies needed.
+  </Accordion>
+
+  <Accordion title="String Algorithms">
+    **Self-contained:**
+    - All string snippets are independent
+    - `string_kmp_std`
+    - `string_rabin_karp_std`
+    - `string_z_algorithm_std`
+  </Accordion>
+
+  <Accordion title="Modular Arithmetic">
+    **Use one of:**
+    - `numeric_mint_full` (comprehensive)
+    - `numeric_mint_medium` (balanced)
+    - `numeric_mint_compress` (minimal)
+    
+    Then optionally add:
+    - `combinatorics_ncr_compress` (binomial coefficients)
+    - `math_factorial`
+  </Accordion>
+</AccordionGroup>
+
+## Multi-Snippet Workflow
+
+### Building Complex Solutions
+
+For problems requiring multiple algorithms:
+
+<Steps>
+  <Step title="Start with Template">
+    ```cpp
+    template_std
+    ```
+  </Step>
+
+  <Step title="Add Core Structures">
+    Add any base structures (graph, tree, etc.):
+    ```cpp
+    graph_graph
+    graph_undigraph
+    ```
+  </Step>
+
+  <Step title="Add Algorithms">
+    Insert algorithm snippets in order:
+    ```cpp
+    graph_dijkstra_std
+    data_structure_trie_dynamic
+    ```
+  </Step>
+
+  <Step title="Add Utilities">
+    Include helpful utilities:
+    ```cpp
+    misc_debug
+    misc_loops
+    ```
+  </Step>
+</Steps>
+
+### Example: Complex Problem
+
+Solving a problem with graphs, modular arithmetic, and combinatorics:
+
+```cpp
+template_std                    // 1. Base template
+graph_graph                     // 2. Graph structure
+graph_undigraph                 // 3. Undirected graph
+tree_diameter                   // 4. Tree algorithm
+numeric_mint_compress           // 5. Modular arithmetic
+combinatorics_ncr_compress      // 6. Combinatorics
+misc_debug                      // 7. Debug utilities
+```
+
+## Snippet Customization
+
+### Modifying Generated Snippets
+
+#### VS Code
+
+1. Open snippet file:
+   - Windows: `%APPDATA%\Code\User\snippets\cpp.json`
+   - Linux: `~/.config/Code/User/snippets/cpp.json`
+   - macOS: `~/Library/Application Support/Code/User/snippets/cpp.json`
+
+2. Edit the snippet JSON:
+
+```json
+"graph_dijkstra_std": {
+    "prefix": "dijkstra",  // Change trigger
+    "body": [
+        "// Your modified code here"
+    ]
+}
+```
+
+<Warning>
+Your changes will be overwritten if you run `generate_vscode_snippets.py` again.
+</Warning>
+
+#### Vim/Neovim
+
+1. Open snippet file:
+   ```vim
+   :e ~/.vim/UltiSnips/cpp/cpp_generate.snippets
+   ```
+
+2. Modify the snippet:
+
+```vim
+snippet dijkstra "dijkstra custom"
+// Your custom implementation
+endsnippet
+```
+
+### Creating Custom Snippets
+
+To avoid overwriting, create a separate file:
+
+#### VS Code
+
+Create `cpp-custom.json` in your snippets directory:
+
+```json
+{
+  "My Custom Dijkstra": {
+    "prefix": "my_dijkstra",
+    "body": [
+      "// Custom implementation"
+    ]
+  }
+}
+```
+
+#### Vim/Neovim
+
+Create `~/.vim/UltiSnips/cpp/custom.snippets`:
+
+```vim
+snippet my_dijkstra "My custom dijkstra"
+// Custom implementation
+endsnippet
+```
+
+## Performance Tips
+
+<CardGroup cols={2}>
+  <Card title="Load Selectively" icon="filter">
+    Only include snippets you need. Avoid loading entire categories unnecessarily.
+  </Card>
+
+  <Card title="Use Compressed Variants" icon="compress">
+    When available, use `_compress` variants:
+    - `numeric_mint_compress`
+    - `string_hashing_static_compress`
+    
+    They compile faster and use less memory.
+  </Card>
+
+  <Card title="Template First" icon="arrow-up-1-9">
+    Always start with a template. It includes essential optimizations:
+    - Fast I/O
+    - Compiler pragmas
+    - Common macros
+  </Card>
+
+  <Card title="Know Your Variants" icon="code-compare">
+    Many algorithms have multiple variants:
+    - `_std` - Standard implementation
+    - `_full` - Feature-complete
+    - `_compress` - Minimal version
+    
+    Choose based on problem requirements.
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Snippets Not Appearing
+
+<AccordionGroup>
+  <Accordion title="VS Code: Snippets don't show up">
+    1. Check file extension is `.cpp`
+    2. Verify `cpp.json` exists in snippets directory
+    3. Restart VS Code
+    4. Check `settings.json` has snippets enabled
+    5. Try manual trigger: `Ctrl+Space`
+  </Accordion>
+
+  <Accordion title="Vim: Tab doesn't expand snippet">
+    1. Verify UltiSnips is installed: `:echo exists('g:UltiSnipsExpandTrigger')`
+    2. Check trigger key: `:echo g:UltiSnipsExpandTrigger`
+    3. Ensure snippet file exists: `:!ls ~/.vim/UltiSnips/cpp/`
+    4. Try listing snippets: `:UltiSnipsEdit`
+  </Accordion>
+
+  <Accordion title="Compilation errors after using snippet">
+    1. Check if snippet requires dependencies (e.g., `graph_graph`)
+    2. Ensure correct order of snippets
+    3. Verify C++ standard: compile with `-std=c++17`
+    4. Check for namespace conflicts
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Competitive Programming" icon="trophy" href="/concepts/competitive-programming">
+    Learn best practices and optimization strategies
+  </Card>
+  <Card title="Templates Overview" icon="file-code" href="/concepts/templates">
+    Explore all available template options
+  </Card>
+</CardGroup>

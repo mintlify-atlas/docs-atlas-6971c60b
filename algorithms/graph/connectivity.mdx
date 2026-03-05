@@ -1,0 +1,307 @@
+---
+title: 'Graph Connectivity'
+description: 'Disjoint Set Union and Strongly Connected Components'
+icon: 'link'
+---
+
+## Overview
+
+Connectivity algorithms determine how vertices in a graph are connected. This section covers two fundamental structures: Disjoint Set Union (DSU) for undirected graphs and Strongly Connected Components (SCC) for directed graphs.
+
+## Disjoint Set Union (DSU)
+
+DSU (also called Union-Find) maintains a partition of elements into disjoint sets with efficient union and find operations.
+
+### Implementation
+
+```cpp
+class DisjointSet {
+    int n;
+    vector<int> parents;
+    vector<int> sizes;
+public:
+    
+    int comps;  // Number of connected components
+ 
+    DisjointSet(int _n): n(_n), parents(n), sizes(n), comps(n) {
+        fill(sizes.begin(), sizes.end(), 1);
+        iota(parents.begin(), parents.end(), 0);
+    }
+ 
+    int find(int x) { 
+        assert(0 <= x && x < n);
+        if (parents[x] != x)
+            parents[x] = find(parents[x]);  // Path compression
+        return parents[x]; 
+    }
+ 
+    bool unite(int left, int right) {
+        assert(0 <= left && left < n);
+        assert(0 <= right && right < n); 
+        int x = find(left);
+        int y = find(right);
+        if(x == y)
+            return false;
+        if(sizes[x] < sizes[y])  // Union by size
+            swap(x, y);
+        sizes[x] += sizes[y];
+        parents[y] = x;
+        comps--;
+        return true;
+    };
+ 
+    bool united(int left, int right) {
+        assert(0 <= left && left < n);
+        assert(0 <= right && right < n);
+        return find(left) == find(right);
+    }
+ 
+    int size(int x) {
+        assert(0 <= x && x < n);
+        return sizes[find(x)];
+    }
+ 
+    int id(int x) {
+        assert(0 <= x && x < n);
+        return parents[find(x)];
+    }
+ 
+    vector<vector<int>> groups() {
+        vector<int> parent_id(n), group_size(n);
+        for (int i = 0; i < n; i++) {
+            parent_id[i] = find(i);
+            group_size[parent_id[i]]++;
+        }
+        vector<vector<int>> result(n);
+        for (int i = 0; i < n; i++) {
+            result[i].reserve(group_size[i]);
+        }
+        for (int i = 0; i < n; i++) {
+            result[parent_id[i]].push_back(i);
+        }
+        result.erase(
+            remove_if(result.begin(), result.end(),
+            [&](const vector<int>& v) { return v.empty(); }),
+            result.end()
+        );
+        return result;
+    }
+};
+
+using DSU = DisjointSet;
+```
+
+### Usage Example
+
+```cpp
+int n = 7;  // 7 elements
+DSU dsu(n);
+
+// Initially each element is in its own set
+cout << "Initial components: " << dsu.comps << "\n";  // 7
+
+// Unite elements
+dsu.unite(0, 1);
+dsu.unite(1, 2);
+dsu.unite(3, 4);
+dsu.unite(5, 6);
+
+cout << "Components after unions: " << dsu.comps << "\n";  // 3
+
+// Check if elements are connected
+cout << "Are 0 and 2 connected? " << (dsu.united(0, 2) ? "Yes" : "No") << "\n";  // Yes
+cout << "Are 0 and 3 connected? " << (dsu.united(0, 3) ? "Yes" : "No") << "\n";  // No
+
+// Get component sizes
+cout << "Size of component containing 0: " << dsu.size(0) << "\n";  // 3
+cout << "Size of component containing 3: " << dsu.size(3) << "\n";  // 2
+
+// Get all groups
+vector<vector<int>> groups = dsu.groups();
+cout << "All components:\n";
+for(auto &group : groups) {
+    for(int elem : group) cout << elem << " ";
+    cout << "\n";
+}
+// Output:
+// 0 1 2
+// 3 4
+// 5 6
+```
+
+<Note>
+  **Time Complexity**: 
+  - `find(x)`: O(α(n)) amortized
+  - `unite(x, y)`: O(α(n)) amortized
+  - `united(x, y)`: O(α(n)) amortized
+  - `groups()`: O(n)
+  
+  where α is the inverse Ackermann function (effectively constant, α(n) < 5 for all practical n)
+  
+  **Space Complexity**: O(n)
+</Note>
+
+### DSU Optimizations
+
+The implementation uses two key optimizations:
+
+1. **Path Compression**: Makes `find()` flatten the tree structure
+2. **Union by Size**: Attaches smaller tree under larger tree during `unite()`
+
+These optimizations provide near-constant time operations.
+
+## Strongly Connected Components (SCC)
+
+A **strongly connected component** in a directed graph is a maximal set of vertices where every vertex is reachable from every other vertex in the set.
+
+### Kosaraju's Algorithm
+
+```cpp
+// graph_graph
+// graph_digraph
+
+template <typename T>
+class SCC {
+private:
+    digraph<T> g;
+    digraph<T> g_rev;
+    vector<bool> visited;
+    stack<int> toposort;
+    vector<vector<int>> components;
+
+    // Topological Sort
+    void toposort_dfs(int node) {
+        visited[node] = true;
+        for(link<T> neighbor: g.adj[node]) {
+            if(!visited[neighbor.to]) {
+                toposort_dfs(neighbor.to);
+            }
+        }
+        toposort.push(node);
+    }
+
+    // DFS on reversed graph
+    void dfs(int node) {
+        visited[node] = true;
+        components.back().push_back(node);
+        for(link<T> neighbor: g_rev.adj[node]) {
+            if(!visited[neighbor.to]) {
+                dfs(neighbor.to);
+            }
+        }
+    }
+
+public:
+
+    SCC(digraph<T> gr) : g(0), g_rev(0) {
+        g = gr;
+        g_rev = gr.reverse();
+        visited.resize(g.n, false);
+    }
+
+    // Build Algorithm
+    vector<vector<int>> find_scc() {
+        components.clear();
+        toposort = stack<int>();
+        for(int node = 0; node < g.n; ++node) {
+            if(!visited[node]) {
+                toposort_dfs(node);
+            }
+        }
+        fill(visited.begin(), visited.end(), false);
+        while(!toposort.empty()) {
+            int node = toposort.top();
+            toposort.pop();
+            if(!visited[node]) {
+                components.push_back(vector<int>{});
+                dfs(node);
+            }
+        }
+        return components;
+    }
+};
+// Time Complexity: O(|V| + |E|), Space Complexity: O(|V|)
+// |V|: Number of vertices
+// |E|: Number of edges
+```
+
+### Usage Example
+
+```cpp
+// Create a directed graph
+int n = 8;
+digraph<int> g(n);
+
+// Add edges
+g.add(0, 1);
+g.add(1, 2);
+g.add(2, 0);  // Cycle: 0-1-2
+g.add(2, 3);
+g.add(3, 4);
+g.add(4, 5);
+g.add(5, 6);
+g.add(6, 7);
+g.add(7, 4);  // Cycle: 4-5-6-7
+
+// Find SCCs
+SCC<int> scc(g);
+vector<vector<int>> components = scc.find_scc();
+
+cout << "Number of SCCs: " << components.size() << "\n";
+for(int i = 0; i < components.size(); ++i) {
+    cout << "Component " << i << ": ";
+    for(int node : components[i]) {
+        cout << node << " ";
+    }
+    cout << "\n";
+}
+
+// Example output:
+// Component 0: 0 1 2
+// Component 1: 3
+// Component 2: 4 7 6 5
+```
+
+<Note>
+  **Time Complexity**: O(V + E)
+  
+  **Space Complexity**: O(V)
+  
+  The algorithm performs two DFS traversals: one on the original graph and one on the reversed graph.
+</Note>
+
+### How Kosaraju's Algorithm Works
+
+1. **First DFS**: Perform DFS on original graph to compute finish times (topological order)
+2. **Reverse Graph**: Create a reversed version of the graph
+3. **Second DFS**: Perform DFS on reversed graph in decreasing order of finish times
+4. Each DFS tree in step 3 is a strongly connected component
+
+## Practical Applications
+
+### DSU Applications
+- **Kruskal's MST**: Cycle detection while building spanning tree
+- **Dynamic Connectivity**: Track connected components as edges are added
+- **Network Connectivity**: Determine if nodes can communicate
+- **Image Processing**: Connected component labeling
+
+### SCC Applications
+- **Compiler Optimization**: Finding mutually recursive functions
+- **Social Networks**: Identifying tight-knit communities
+- **Web Crawling**: Finding strongly connected web pages
+- **Satisfiability**: Solving 2-SAT problems
+
+## Comparison
+
+| Structure | Graph Type | Operations | Use Case |
+|-----------|-----------|------------|----------|
+| DSU | Undirected | Unite, Find | Dynamic connectivity |
+| SCC | Directed | Find components | Reachability analysis |
+
+<Tip>
+  Use DSU when you need to dynamically merge sets and query connectivity. Use SCC when analyzing strongly connected regions in directed graphs.
+</Tip>
+
+<Warning>
+  DSU operations are not reversible. Once you unite two sets, you cannot split them apart (without rebuilding from scratch).
+</Warning>

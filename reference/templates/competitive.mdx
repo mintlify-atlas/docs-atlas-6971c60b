@@ -1,0 +1,393 @@
+---
+title: "Contest-Specific Templates"
+description: "Templates optimized for USACO, Google Code Jam, and LeetCode contests"
+---
+
+## Overview
+
+Contest-specific templates tailored for different competitive programming platforms with their unique requirements and conventions.
+
+## USACO Template
+
+Template for USA Computing Olympiad with file I/O.
+
+```cpp
+/**
+ * @created     : [Date]
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+class Task {
+  private:
+    void clear() { ; }
+    void read() { ; }
+
+    void solveOne() {
+        ;
+    }
+
+  public:
+    void solve() {
+        int T = 1;
+        cin >> T;
+        while (T-- > 0) {
+            clear();
+            read();
+            solveOne();
+        }
+    }
+
+  private:
+    void print() { cout << '\n'; }
+    template <class H, class... T> void print(const H &h, const T &...t) {
+        cout << h;
+        if (sizeof...(t))
+            cout << ' ';
+        print(t...);
+    }
+};
+
+void set_usaco(string filename = "") {
+    if ((int)filename.size() > 0) {
+        freopen((filename + ".in").c_str(), "r", stdin);
+        freopen((filename + ".out").c_str(), "w", stdout);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    set_usaco("");  // Set filename without extension
+
+    Task solver;
+    solver.solve();
+    cout.flush();
+    return 0;
+}
+```
+
+### USACO-Specific Features
+
+<ParamField path="set_usaco" type="void set_usaco(string filename)">
+  Sets up file I/O for USACO problems. Pass problem name without extension.
+</ParamField>
+
+**Usage Example:**
+
+```cpp
+// For problem "cowjump"
+set_usaco("cowjump");
+// Reads from cowjump.in, writes to cowjump.out
+```
+
+### USACO Tips
+
+<CardGroup cols={2}>
+  <Card title="File I/O" icon="file">
+    Always use file I/O (problemname.in/out)
+  </Card>
+  <Card title="Time Limits" icon="clock">
+    USACO typically has 2-4 second time limits
+  </Card>
+  <Card title="Memory Limits" icon="memory">
+    Usually 256 MB, be mindful of large arrays
+  </Card>
+  <Card title="Subtasks" icon="list">
+    Some problems have subtasks with smaller constraints
+  </Card>
+</CardGroup>
+
+## Google Code Jam Template
+
+Template for Google Code Jam with case number formatting.
+
+```cpp
+/**
+ * @author      : [Your Name] <[email]>
+ * @created     : [Date]
+ * @handle      : @[Handle]
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+class Task {
+  private:
+    void clear() {}
+    void read() {}
+
+    void solveOne() {
+        ;
+    }
+
+  public:
+    void solve() {
+        int T = 1, test_number = 1;
+        cin >> T;
+        while (T-- > 0) {
+            cout << "Case #" << test_number++ << ": ";
+            clear();
+            read();
+            solveOne();
+        }
+    }
+
+  private:
+    void print() { cout << '\n'; }
+    template <class H, class... T> void print(const H &h, const T &...t) {
+        cout << h;
+        if (sizeof...(t))
+            cout << ' ';
+        print(t...);
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    Task solver;
+    solver.solve();
+    cout.flush();
+    return 0;
+}
+```
+
+### Google Code Jam Specific Requirements
+
+**Output Format:**
+
+```
+Case #1: [answer]
+Case #2: [answer]
+Case #3: [answer]
+```
+
+**Important:**
+- Each case starts with `Case #X: `
+- Case numbers start at 1
+- Format must be exact (including space after colon)
+
+### Code Jam Tips
+
+<CardGroup cols={2}>
+  <Card title="Output Format" icon="align-left">
+    Exact format required: "Case #X: answer"
+  </Card>
+  <Card title="Interactive Problems" icon="comments">
+    Use cout.flush() after each output
+  </Card>
+  <Card title="Large Inputs" icon="database">
+    Download input files for some rounds
+  </Card>
+  <Card title="Visible Test Sets" icon="eye">
+    Start with visible tests, then hidden
+  </Card>
+</CardGroup>
+
+### Interactive Problem Template
+
+```cpp
+void query(int x) {
+    cout << x << endl;  // endl flushes automatically
+    // Or: cout << x << "\n" << flush;
+}
+
+int get_response() {
+    int response;
+    cin >> response;
+    return response;
+}
+
+void solve() {
+    // Read parameters
+    int n;
+    cin >> n;
+    
+    // Interactive solving
+    for(int i = 0; i < n; i++) {
+        query(i);
+        int resp = get_response();
+        // Process response
+    }
+    
+    // Submit answer
+    cout << "answer" << endl;
+}
+```
+
+## LeetCode Template
+
+Minimal template for LeetCode (mostly header needed).
+
+```cpp
+/**
+ * @author      : [Your Name] <[email]>
+ * @created     : [Date]
+ * @handle      : @[Handle]
+ */
+
+#include <bits/stdc++.h>
+using namespace std;
+
+class Solution {
+public:
+    // Solution methods here
+};
+```
+
+### LeetCode-Specific Considerations
+
+**No main() function needed:**
+
+```cpp
+class Solution {
+public:
+    int solveProblem(vector<int>& nums) {
+        // Your code here
+        return answer;
+    }
+};
+```
+
+**Testing locally:**
+
+```cpp
+int main() {
+    Solution sol;
+    vector<int> nums = {1, 2, 3, 4, 5};
+    int result = sol.solveProblem(nums);
+    cout << result << endl;
+    return 0;
+}
+```
+
+### LeetCode Tips
+
+<CardGroup cols={2}>
+  <Card title="Class Methods" icon="code">
+    All solutions must be class methods
+  </Card>
+  <Card title="No Global Variables" icon="ban">
+    Use class member variables instead
+  </Card>
+  <Card title="Standard Library" icon="book">
+    Most standard library included automatically
+  </Card>
+  <Card title="Reference Parameters" icon="link">
+    Use & for large containers to avoid copying
+  </Card>
+</CardGroup>
+
+## Multi-Platform Template
+
+Universal template that works across platforms.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+// Conditional compilation for different platforms
+#ifdef USACO
+void setup_io(string name = "") {
+    if(name.size()) {
+        freopen((name + ".in").c_str(), "r", stdin);
+        freopen((name + ".out").c_str(), "w", stdout);
+    }
+}
+#else
+void setup_io(string name = "") {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+}
+#endif
+
+void solve() {
+    // Your solution here
+}
+
+int main() {
+    setup_io();
+    
+    int T = 1;
+    #ifndef USACO
+    cin >> T;
+    #endif
+    
+    for(int tc = 1; tc <= T; tc++) {
+        #ifdef CODEJAM
+        cout << "Case #" << tc << ": ";
+        #endif
+        solve();
+    }
+    
+    return 0;
+}
+```
+
+**Compile with flags:**
+
+```bash
+# For USACO
+g++ -DUSACO solution.cpp -o solution
+
+# For Code Jam
+g++ -DCODEJAM solution.cpp -o solution
+
+# For other contests
+g++ solution.cpp -o solution
+```
+
+## Available Templates
+
+| Template | File | Contest |
+|----------|------|----------|
+| USACO | `template_usaco.cpp` | USA Computing Olympiad |
+| Google | `template_google.cpp` | Google Code Jam/Kick Start |
+| LeetCode | `template_std_leetcode.cpp` | LeetCode |
+| Standard | `template_std.cpp` | Codeforces, AtCoder, etc. |
+
+## Comparison Table
+
+| Feature | USACO | Code Jam | LeetCode | Codeforces |
+|---------|-------|----------|----------|------------|
+| File I/O | Required | No | No | No |
+| Case Numbers | No | Yes | No | No |
+| Class-based | Optional | Optional | Required | No |
+| Interactive | Rare | Common | No | Common |
+| Time Limit | 2-4s | 5-30s | Varies | 1-2s |
+
+## Contest-Specific Notes
+
+### USACO
+- Bronze/Silver: Usually straightforward implementation
+- Gold/Platinum: Advanced algorithms required
+- Always read from `problemname.in`, write to `problemname.out`
+
+### Google Code Jam
+- Test Set 1: Smaller constraints, visible
+- Test Set 2: Full constraints, hidden
+- Interactive problems common in later rounds
+- Download large input files for some problems
+
+### LeetCode
+- Focus on clean, efficient code
+- Multiple test cases run automatically
+- Consider edge cases carefully
+- Time and space complexity shown
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Standard Template" icon="file-code" href="/reference/templates/standard">
+    Basic competitive programming template
+  </Card>
+  <Card title="Debugging Tools" icon="bug" href="/reference/misc#debugging">
+    Debugging utilities for contests
+  </Card>
+</CardGroup>

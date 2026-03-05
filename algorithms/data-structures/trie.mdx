@@ -1,0 +1,409 @@
+---
+title: 'Trie (Prefix Tree)'
+description: 'Trie automaton and dynamic implementations for efficient string operations'
+icon: 'diagram-project'
+---
+
+## Overview
+
+A **Trie** (pronounced "try") is a tree-like data structure that stores strings efficiently, enabling fast prefix-based operations. Each node represents a character, and paths from root to nodes form strings.
+
+## Trie Automaton (Static)
+
+Array-based implementation optimized for speed with fixed alphabet size.
+
+### Implementation
+
+```cpp
+const int ALPHA = 26;
+const char L = 'a';
+
+struct TrieNode {
+    int next[ALPHA];
+    bool end : 1;
+    
+    TrieNode() {
+        fill(next, next + ALPHA, 0);
+        end = false;
+    }
+    int& operator[](int idx) {
+        return next[idx];
+    }
+};
+
+class Trie {
+public:
+    
+    int nodes;
+    vector<TrieNode> trie;
+
+    Trie() : nodes(0) {
+        trie.emplace_back();
+    }
+    
+    void insert(const string &word) {
+        int root = 0;
+        for(const char &ch : word) {
+            int c = ch - L;
+            if(!trie[root][c]) {
+                trie.emplace_back();
+                trie[root][c] = ++nodes;
+            }
+            root = trie[root][c];
+        }
+        trie[root].end = true;
+    }
+    
+    bool search(const string &word) {
+        int root = 0;
+        for(const char &ch : word) {
+            int c = ch - L;
+            if(!trie[root][c])
+                return false;
+            root = trie[root][c];
+        }
+        return trie[root].end;
+    }
+    
+    bool startsWith(const string &prefix) {
+        int root = 0;
+        for(const char &ch : prefix) {
+            int c = ch - L;
+            if(!trie[root][c])
+                return false;
+            root = trie[root][c];
+        }
+        return true;
+    }
+};
+```
+
+### Usage Example
+
+```cpp
+int main() {
+    Trie trie;
+    
+    // Insert words
+    trie.insert("apple");
+    trie.insert("app");
+    trie.insert("application");
+    trie.insert("apply");
+    trie.insert("banana");
+    
+    // Search for complete words
+    cout << trie.search("app") << "\n";         // 1 (true)
+    cout << trie.search("appl") << "\n";        // 0 (false)
+    cout << trie.search("apple") << "\n";       // 1 (true)
+    
+    // Check prefixes
+    cout << trie.startsWith("app") << "\n";     // 1 (true)
+    cout << trie.startsWith("banan") << "\n";   // 1 (true)
+    cout << trie.startsWith("cherry") << "\n";  // 0 (false)
+    
+    return 0;
+}
+```
+
+<Note>
+  **Time Complexity**:
+  - Insert: O(L) where L is the length of the word
+  - Search: O(L)
+  - Prefix check: O(L)
+  
+  **Space Complexity**: O(N × ALPHA) where N is the total number of nodes
+</Note>
+
+### Customization
+
+Modify constants for different character sets:
+
+```cpp
+// For lowercase letters (default)
+const int ALPHA = 26;
+const char L = 'a';
+
+// For all printable ASCII
+const int ALPHA = 128;
+const char L = '\0';
+
+// For digits only
+const int ALPHA = 10;
+const char L = '0';
+
+// For uppercase letters
+const int ALPHA = 26;
+const char L = 'A';
+```
+
+<Tip>
+  The automaton implementation is faster and more cache-friendly but uses more memory. Use it when the alphabet size is small and fixed.
+</Tip>
+
+## Dynamic Trie
+
+Pointer-based implementation with dynamic memory allocation and additional features.
+
+### Implementation
+
+```cpp
+const int ALPHABET = 26;
+
+class TrieNode {
+public:
+    array<TrieNode*, ALPHABET> children;
+    bool isEnd;
+    TrieNode() {
+        children.fill(NULL);
+        isEnd = false;
+    }
+};
+
+class Trie {
+public:
+    TrieNode *root;
+    Trie() {
+        root = new TrieNode();
+    }
+    
+    void insert(string word) {
+        int n = word.size();
+        if(n == 0) return;
+        TrieNode* tmp = root;
+        int index = 0;
+        for(int i = 0; i < n; ++i) {
+            index = word[i] - 'a';
+            if(tmp->children[index] == NULL) {
+                tmp->children[index] = new TrieNode();
+            }
+            tmp = tmp->children[index];
+        }
+        tmp->isEnd = true;
+    }
+    
+    bool search(string word) {
+        int n = word.size();
+        if(n == 0) return false;
+        TrieNode* tmp = root;
+        int index = 0;
+        for(int i = 0; i < n; ++i) {
+            index = word[i] - 'a';
+            if(tmp->children[index] == NULL) {
+                return false;
+            }
+            tmp = tmp->children[index];
+        }
+        return (tmp != NULL) ? tmp->isEnd : false;
+    }
+    
+    bool startsWith(string prefix) {
+        int n = prefix.size();
+        if(n == 0) return false;
+        TrieNode* tmp = root;
+        int index = 0;
+        for(int i = 0; i < n; ++i) {
+            index = prefix[i] - 'a';
+            if(tmp->children[index] == NULL) {
+                return false;
+            }
+            tmp = tmp->children[index];
+        }
+        return true;
+    }
+    
+    vector<string> getWordsWithPrefix(string prefix) {
+        vector<string> words;
+        int n = prefix.size();
+        if(n == 0) return words;
+        int index = 0;
+        TrieNode* tmp = root;
+        for(int i = 0; i < n; ++i) {
+            index = prefix[i] - 'a';
+            if(tmp->children[index] == NULL) {
+                return words;
+            }
+            tmp = tmp->children[index];
+        }
+        dfs(tmp, prefix, words);
+        return words;
+    }
+    
+    vector<string> getWords() {
+        vector<string> words;
+        dfs(root, "", words);
+        return words;
+    }
+    
+    void dfs(TrieNode* node, string characters, vector<string> &words) {
+        if(isEmpty(node)) return;
+        if(node->isEnd) {
+            words.push_back(characters);
+        }
+        string newWord = "";
+        int n = ALPHABET;
+        for(int i = 0; i < n; ++i) {
+            if(!isEmpty(node->children[i])) {
+                newWord = characters + (char)(i + 'a') + "";
+                dfs(node->children[i], newWord, words);
+            }
+        }
+    }
+    
+    bool isEmpty(TrieNode* node) {
+        return node == NULL;
+    }
+};
+
+// Time Complexity: O(n), Space Complexity: O(n*ALPHABET)
+```
+
+### Usage Example
+
+```cpp
+int main() {
+    Trie trie;
+    
+    // Insert words
+    trie.insert("cat");
+    trie.insert("car");
+    trie.insert("card");
+    trie.insert("care");
+    trie.insert("careful");
+    trie.insert("dog");
+    
+    // Search operations
+    cout << "Search 'car': " << trie.search("car") << "\n";
+    cout << "Search 'cart': " << trie.search("cart") << "\n";
+    
+    // Get all words with prefix
+    vector<string> words = trie.getWordsWithPrefix("car");
+    cout << "Words with prefix 'car':\n";
+    for(const string &w : words) {
+        cout << w << "\n";
+    }
+    // Output:
+    // car
+    // card
+    // care
+    // careful
+    
+    // Get all words
+    vector<string> allWords = trie.getWords();
+    cout << "All words in trie:\n";
+    for(const string &w : allWords) {
+        cout << w << "\n";
+    }
+    
+    return 0;
+}
+```
+
+<Note>
+  **Time Complexity**:
+  - Insert/Search/StartsWith: O(L) where L is word length
+  - Get all words: O(N × L) where N is total nodes
+  
+  **Space Complexity**: O(N × ALPHABET)
+</Note>
+
+### Additional Features
+
+The dynamic trie includes:
+- **getWordsWithPrefix()**: Returns all words matching a prefix
+- **getWords()**: Returns all words in the trie
+- **DFS traversal**: Enables custom tree operations
+
+<Tip>
+  Use the dynamic trie when you need advanced operations like retrieving all words with a given prefix or when you need to manipulate the tree structure dynamically.
+</Tip>
+
+## Comparison: Automaton vs Dynamic
+
+<CodeGroup>
+
+```cpp Automaton (Static)
+// Pros:
+// - Faster access (array indexing)
+// - Better cache locality
+// - Simpler memory management
+
+// Cons:
+// - Fixed alphabet size
+// - More memory usage
+// - Less flexible
+
+Trie trie;
+trie.insert("word");
+```
+
+```cpp Dynamic (Pointer-based)
+// Pros:
+// - More flexible
+// - Additional operations (getWords, etc.)
+// - Can be extended easily
+
+// Cons:
+// - Slower (pointer dereferencing)
+// - More complex memory management
+// - Potential memory leaks if not careful
+
+Trie trie;
+trie.insert("word");
+vector<string> words = trie.getWords();
+```
+
+</CodeGroup>
+
+## Common Applications
+
+### 1. Dictionary/Spell Checker
+
+```cpp
+Trie dictionary;
+// Load dictionary
+for(const string &word : words) {
+    dictionary.insert(word);
+}
+
+// Check spelling
+if(dictionary.search(input)) {
+    cout << "Correct\n";
+}
+```
+
+### 2. Autocomplete
+
+```cpp
+Trie autocomplete;
+vector<string> suggestions = autocomplete.getWordsWithPrefix(userInput);
+```
+
+### 3. IP Routing (Longest Prefix Matching)
+
+```cpp
+Trie routingTable;
+// Store IP prefixes
+routingTable.insert(ipToBinary("192.168.1.0/24"));
+```
+
+### 4. Word Games (Boggle, Scrabble)
+
+```cpp
+Trie validWords;
+// Check if path forms valid word during game
+```
+
+<Warning>
+  The dynamic trie uses raw pointers and does not implement a destructor. In production code, consider using smart pointers or implementing proper cleanup to avoid memory leaks.
+</Warning>
+
+## Performance Tips
+
+1. **Choose the right variant**: Use automaton for speed, dynamic for flexibility
+2. **Adjust alphabet size**: Reduce ALPHA constant if possible to save memory
+3. **Batch insertions**: Insert all words before performing queries
+4. **Consider alternatives**: For simple prefix checking, sorting + binary search may suffice
+
+<Tip>
+  For competitive programming, the automaton version is usually preferred due to its speed and simplicity. Use the dynamic version only when you need advanced features like word enumeration.
+</Tip>

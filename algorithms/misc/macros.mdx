@@ -1,0 +1,558 @@
+---
+title: Useful Macros
+description: Essential macros and shortcuts for competitive programming to write faster and cleaner code
+icon: code
+---
+
+Common macros and utility definitions that make competitive programming code more concise and efficient.
+
+## Overview
+
+Macros help reduce boilerplate code and make common patterns more readable. This collection includes:
+
+- Type aliases for common data types
+- Loop macros for cleaner iteration
+- Utility functions for min/max operations
+- Constants and precision helpers
+- Pair and tuple shortcuts
+
+## Type Aliases
+
+### Integer Types
+
+```cpp
+using uint     = uint32_t;
+using uint64   = uint64_t;
+using int64    = int64_t;
+using f64      = long double;
+```
+
+**Usage:**
+
+```cpp
+int64 big_number = 1e18;
+uint64 unsigned_big = 1e19;
+f64 precise = 3.14159265358979323846L;
+```
+
+### Pair and Tuple Types
+
+```cpp
+using pii  = pair<int, int>;
+using piii = tuple<int, int, int>;
+using pll  = pair<int64_t, int64_t>;
+using plll = tuple<int64_t, int64_t, int64_t>;
+
+#define F  first
+#define S  second
+```
+
+**Usage:**
+
+```cpp
+pii point = {3, 5};
+cout << point.F << " " << point.S << "\n";  // 3 5
+
+piii triple = {1, 2, 3};
+auto [x, y, z] = triple;
+
+pll big_pair = {1000000000LL, 2000000000LL};
+
+vector<pii> edges = {{1, 2}, {2, 3}, {3, 4}};
+for(auto [u, v] : edges) {
+    cout << u << " -> " << v << "\n";
+}
+```
+
+## Constants
+
+### Infinity Values
+
+```cpp
+const int     inf    = int(1e9);
+const int64_t inf64  = int64_t(1e18);
+const int N = int(1e5);
+const int M = int(1e5);
+const int K = int(1e5);
+```
+
+**Usage:**
+
+```cpp
+vector<int> dist(n, inf);
+dist[0] = 0;
+
+int64 result = inf64;
+for(int i = 0; i < n; i++) {
+    result = min(result, compute(i));
+}
+```
+
+### Infinity Macro
+
+```cpp
+#define infinity while(1)
+```
+
+**Usage:**
+
+```cpp
+infinity {
+    // Infinite loop
+    if(condition) break;
+}
+```
+
+### Unreachable Assertion
+
+```cpp
+#define unreachable assert(false && "Unreachable");
+```
+
+**Usage:**
+
+```cpp
+switch(type) {
+    case TYPE_A: handle_a(); break;
+    case TYPE_B: handle_b(); break;
+    default: unreachable
+}
+```
+
+## Loop Macros
+
+### For Loop Variants
+
+```cpp
+#define overload4(a, b, c, d, e, ...) e
+
+#define for1(a) for(int i = 0; i < int(a); ++i)
+#define for2(i, a) for(int i = 0; i < int(a); ++i)
+#define for3(i, a, b) for(int i = int(a); i <= int(b); ++i)
+#define for4(i, a, b, c) for(int i = int(a); i <= int(b); i += int(c))
+
+#define rof1(a) for(int i = int(a)-1; i >= 0; --i)
+#define rof2(i, a) for(int i = int(a)-1; i >= 0; --i)
+#define rof3(i, a, b) for(int i = int(b); i >= int(a); --i)
+#define rof4(i, a, b, c) for(int i = int(b); i >= int(a); i -= int(c))
+
+#define forn(...) overload4(__VA_ARGS__, for4, for3, for2, for1)(__VA_ARGS__)
+#define rof(...)  overload4(__VA_ARGS__, rof4, rof3, rof2, rof1)(__VA_ARGS__)
+```
+
+**Features:**
+- Overloaded macros that adapt to the number of arguments
+- Default variable name `i` when not specified
+- Forward iteration with `forn`
+- Reverse iteration with `rof`
+
+### Usage Examples
+
+#### Forward Loops
+
+```cpp
+// forn(n) - loop from 0 to n-1 with variable i
+forn(5) {
+    cout << i << " ";  // 0 1 2 3 4
+}
+cout << "\n";
+
+// forn(j, n) - loop from 0 to n-1 with variable j
+forn(j, 5) {
+    cout << j << " ";  // 0 1 2 3 4
+}
+cout << "\n";
+
+// forn(i, a, b) - loop from a to b (inclusive)
+forn(i, 1, 5) {
+    cout << i << " ";  // 1 2 3 4 5
+}
+cout << "\n";
+
+// forn(i, a, b, step) - loop from a to b with step
+forn(i, 0, 10, 2) {
+    cout << i << " ";  // 0 2 4 6 8 10
+}
+cout << "\n";
+```
+
+#### Reverse Loops
+
+```cpp
+// rof(n) - loop from n-1 to 0 with variable i
+rof(5) {
+    cout << i << " ";  // 4 3 2 1 0
+}
+cout << "\n";
+
+// rof(j, n) - loop from n-1 to 0 with variable j
+rof(j, 5) {
+    cout << j << " ";  // 4 3 2 1 0
+}
+cout << "\n";
+
+// rof(i, a, b) - loop from b to a (inclusive)
+rof(i, 1, 5) {
+    cout << i << " ";  // 5 4 3 2 1
+}
+cout << "\n";
+
+// rof(i, a, b, step) - loop from b to a with step
+rof(i, 0, 10, 2) {
+    cout << i << " ";  // 10 8 6 4 2 0
+}
+cout << "\n";
+```
+
+#### Practical Examples
+
+```cpp
+vector<int> arr = {1, 2, 3, 4, 5};
+
+// Sum array elements
+int sum = 0;
+forn(arr.size()) {
+    sum += arr[i];
+}
+
+// Reverse array
+forn(i, 0, arr.size()/2 - 1) {
+    swap(arr[i], arr[arr.size() - 1 - i]);
+}
+
+// Fill 2D array
+vector<vector<int>> matrix(n, vector<int>(m));
+forn(i, n) {
+    forn(j, m) {
+        matrix[i][j] = i * m + j;
+    }
+}
+
+// Traverse backwards
+rof(arr.size()) {
+    cout << arr[i] << " ";
+}
+```
+
+## Min/Max Utilities
+
+### Update if Better
+
+```cpp
+template <class T, class S>
+inline bool xmax(T &a, const S &b) {
+    return (a < b ? a = b, 1 : 0);
+}
+
+template <class T, class S>
+inline bool xmin(T &a, const S &b) {
+    return (a > b ? a = b, 1 : 0);
+}
+```
+
+**Features:**
+- Updates `a` if `b` is better
+- Returns `true` if update happened
+- Useful in DP and graph algorithms
+
+### Usage Examples
+
+```cpp
+int maxVal = -inf;
+forn(arr.size()) {
+    if(xmax(maxVal, arr[i])) {
+        cout << "New max: " << maxVal << "\n";
+    }
+}
+
+int minVal = inf;
+forn(arr.size()) {
+    if(xmin(minVal, arr[i])) {
+        cout << "New min: " << minVal << "\n";
+    }
+}
+
+// Dijkstra's algorithm
+if(xmin(dist[v], dist[u] + w)) {
+    pq.push({dist[v], v});
+}
+
+// Dynamic programming
+forn(i, 1, n) {
+    xmax(dp[i], dp[i-1] + arr[i]);  // Maximum subarray
+}
+```
+
+## Precision Control
+
+```cpp
+#define precise(n, k) fixed << setprecision(k) << n
+
+// Alternative: Set globally at main()
+// cout << fixed << setprecision(9);
+```
+
+**Usage:**
+
+```cpp
+double pi = 3.14159265358979323846;
+
+cout << precise(pi, 2) << "\n";   // 3.14
+cout << precise(pi, 5) << "\n";   // 3.14159
+cout << precise(pi, 10) << "\n";  // 3.1415926536
+
+// Set globally for entire program
+int main() {
+    cout << fixed << setprecision(9);
+    
+    double x = 1.0 / 3.0;
+    cout << x << "\n";  // 0.333333333
+    
+    return 0;
+}
+```
+
+## Pragma Optimizations
+
+```cpp
+// Reference: https://codeforces.com/blog/entry/96344
+#pragma GCC optimize("O3,unroll-loops")
+#pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
+```
+
+**Features:**
+- Aggressive compiler optimizations
+- SIMD vectorization support
+- Useful for tight time limits
+
+<Warning>
+  Use pragma optimizations carefully. They can sometimes cause issues with certain judges or compilers.
+</Warning>
+
+**Usage:**
+
+```cpp
+#pragma GCC optimize("O3,unroll-loops")
+#pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    // Your optimized code here
+    return 0;
+}
+```
+
+## Complete Template
+
+Here's a complete template combining all useful macros:
+
+```cpp
+#pragma GCC optimize("O3,unroll-loops")
+#pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
+
+#include <bits/stdc++.h>
+using namespace std;
+
+// Type aliases
+using uint     = uint32_t;
+using uint64   = uint64_t;
+using int64    = int64_t;
+using f64      = long double;
+
+using pii  = pair<int, int>;
+using piii = tuple<int, int, int>;
+using pll  = pair<int64_t, int64_t>;
+using plll = tuple<int64_t, int64_t, int64_t>;
+
+#define F  first
+#define S  second
+
+// Constants
+const int     inf    = int(1e9);
+const int64_t inf64  = int64_t(1e18);
+const int N = int(1e5);
+const int M = int(1e5);
+const int K = int(1e5);
+
+#define infinity while(1)
+#define unreachable assert(false && "Unreachable");
+
+// Loop macros
+#define overload4(a, b, c, d, e, ...) e
+#define for1(a) for(int i = 0; i < int(a); ++i)
+#define for2(i, a) for(int i = 0; i < int(a); ++i)
+#define for3(i, a, b) for(int i = int(a); i <= int(b); ++i)
+#define for4(i, a, b, c) for(int i = int(a); i <= int(b); i += int(c))
+#define rof1(a) for(int i = int(a)-1; i >= 0; --i)
+#define rof2(i, a) for(int i = int(a)-1; i >= 0; --i)
+#define rof3(i, a, b) for(int i = int(b); i >= int(a); --i)
+#define rof4(i, a, b, c) for(int i = int(b); i >= int(a); i -= int(c))
+#define forn(...) overload4(__VA_ARGS__, for4, for3, for2, for1)(__VA_ARGS__)
+#define rof(...)  overload4(__VA_ARGS__, rof4, rof3, rof2, rof1)(__VA_ARGS__)
+
+// Min/Max utilities
+template <class T, class S>
+inline bool xmax(T &a, const S &b) {
+    return (a < b ? a = b, 1 : 0);
+}
+
+template <class T, class S>
+inline bool xmin(T &a, const S &b) {
+    return (a > b ? a = b, 1 : 0);
+}
+
+// Precision
+#define precise(n, k) fixed << setprecision(k) << n
+
+void solve() {
+    // Your solution here
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t = 1;
+    // cin >> t;
+    
+    while(t--) {
+        solve();
+    }
+    
+    return 0;
+}
+```
+
+## Usage Best Practices
+
+<Tip>
+  **Choose meaningful variable names in loops**: Use `i`, `j`, `k` for different nested levels
+</Tip>
+
+```cpp
+// Good
+forn(i, n) {
+    forn(j, m) {
+        matrix[i][j] = 0;
+    }
+}
+
+// Confusing
+forn(n) {
+    forn(m) {
+        matrix[i][i] = 0;  // Both use 'i'
+    }
+}
+```
+
+<Tip>
+  **Use xmax/xmin for cleaner update logic**
+</Tip>
+
+```cpp
+// Instead of:
+if(arr[i] > maxVal) {
+    maxVal = arr[i];
+    cout << "Updated!\n";
+}
+
+// Use:
+if(xmax(maxVal, arr[i])) {
+    cout << "Updated!\n";
+}
+```
+
+<Tip>
+  **Set precision once in main() for consistency**
+</Tip>
+
+```cpp
+int main() {
+    cout << fixed << setprecision(9);
+    // Now all floating point output uses 9 decimal places
+}
+```
+
+## When to Use Macros
+
+### Good Use Cases
+
+- **Competitive programming**: Speed and conciseness matter
+- **Type aliases**: Make code more readable
+- **Loop patterns**: Reduce repetitive boilerplate
+- **Constants**: Avoid magic numbers
+
+### Avoid in Production Code
+
+- **Macros can hide bugs**: No type checking
+- **Hard to debug**: Preprocessor expands before compilation
+- **Name conflicts**: Macros don't respect namespaces
+- **Modern alternatives**: Use templates, constexpr, auto
+
+## Common Pitfalls
+
+<Warning>
+  **Loop variable conflicts**: Be careful with nested loops using default variable names
+</Warning>
+
+```cpp
+// Bad: Both loops use 'i'
+forn(5) {
+    forn(5) {
+        cout << i << " ";  // Which i?
+    }
+}
+
+// Good: Specify different variables
+forn(i, 5) {
+    forn(j, 5) {
+        cout << i << "," << j << " ";
+    }
+}
+```
+
+<Warning>
+  **Macro side effects**: Expressions are evaluated multiple times
+</Warning>
+
+```cpp
+// Bad: function called multiple times
+if(xmax(result, expensive_function())) {
+    // expensive_function() called twice!
+}
+
+// Good: Store result first
+int val = expensive_function();
+if(xmax(result, val)) {
+    // Only called once
+}
+```
+
+## Alternative Approaches
+
+For production or larger projects, consider modern C++ alternatives:
+
+```cpp
+// Instead of type aliases
+auto x = 5;  // int
+auto y = 5LL;  // long long
+
+// Instead of loop macros
+for(auto x : container) { }  // Range-based for
+for(int i = 0; i < n; ++i) { }  // Traditional for
+
+// Instead of xmax/xmin
+result = max(result, value);
+
+// Instead of constants
+constexpr int INF = 1e9;
+constexpr int64_t INF64 = 1e18;
+```
+
+## Related Topics
+
+- [Debug Utilities](/algorithms/misc/debugging) - Debug macros and utilities
+- [Fast I/O](/algorithms/misc/io) - Optimized input/output
+- [Templates](/algorithms/misc/templates) - Complete competitive programming templates

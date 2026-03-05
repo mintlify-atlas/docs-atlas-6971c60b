@@ -1,0 +1,430 @@
+---
+title: "Number Theory"
+description: "Primes, GCD, LCM, divisors, and Euler's totient function"
+---
+
+## GCD (Greatest Common Divisor)
+
+The GCD is the largest positive integer that divides both numbers without remainder.
+
+### Euclid's Algorithm - Iterative
+
+```cpp
+template<class T>
+T gcd(T a, T b) {
+    T tmp = 0;
+    while (b){
+        tmp = a;
+        a = b;
+        b = tmp % b;
+    }
+    return a;
+}
+// Time Complexity: O(log min(a,b))
+```
+
+### Euclid's Algorithm - Recursive
+
+```cpp
+template<class T>
+T gcd(T a, T b) {
+    return (b == 0)?a:gcd(b, a % b);
+}
+```
+
+**Usage:**
+```cpp
+int ans = gcd(15, 25); // Returns 5
+int g = gcd(48, 18);   // Returns 6
+```
+
+## LCM (Least Common Multiple)
+
+The LCM is the smallest positive integer divisible by both numbers.
+
+```cpp
+template <class T>
+T lcm(T a, T b) {
+    return a / gcd<T>(a, b) * b;
+}
+```
+
+**Important:** Divide first to avoid overflow: `a / gcd(a,b) * b` not `a * b / gcd(a,b)`
+
+**Usage:**
+```cpp
+int ans = lcm(15, 25); // Returns 75
+int l = lcm(12, 18);   // Returns 36
+```
+
+## Extended GCD
+
+Finds integers x and y such that: `a*x + b*y = gcd(a,b)`
+
+### Iterative Implementation
+
+```cpp
+template<typename T>
+tuple<T, T, T> extgcd(T a, T b) {
+    if(b == T(0)) return {a, 1, 0};
+    T x=1, xtmp=0, y=0, ytmp=1;
+    while(b != 0) {
+        T q = a / b;
+        T r = a - b * q;
+        T u = x - q * xtmp;
+        T v = y - q * ytmp;
+        a = b;
+        b = r;
+        x = xtmp;
+        xtmp = u;
+        y = ytmp;
+        ytmp = v;
+    }
+    return {a, x, y};
+}
+```
+
+### Recursive Implementation
+
+```cpp
+template<typename T>
+tuple<T, T, T> extgcd(T a, T b) {
+    if (a == 0)
+        return {b, 0, 1};
+    T p = b / a;
+    auto [g, y, x] = extgcd(b - p * a, a);
+    x -= p * y;
+    return {g, x, y};
+}
+```
+
+**Usage:**
+```cpp
+auto [g, x, y] = extgcd(a, b);
+// Now: a*x + b*y = g = gcd(a,b)
+
+// Finding modular inverse:
+// a*x ≡ 1 (mod m) if and only if gcd(a, m) == 1
+auto [g, x, y] = extgcd(a, m);
+if (g == 1) {
+    int inv = (x % m + m) % m; // modular inverse of a mod m
+}
+```
+
+<Accordion title="Mathematical Proof of Extended GCD">
+The Extended Euclidean Algorithm is based on the observation that:
+
+If `gcd(a,b) = g` and we can express `g = b*x' + (a mod b)*y'`, then:
+```
+g = b*x' + (a - ⌊a/b⌋*b)*y'
+g = b*x' + a*y' - ⌊a/b⌋*b*y'
+g = a*y' + b*(x' - ⌊a/b⌋*y')
+```
+
+Thus: `x = y'` and `y = x' - ⌊a/b⌋*y'`
+
+Base case: When `b = 0`, we have `gcd(a,0) = a = a*1 + 0*0`
+</Accordion>
+
+## Prime Numbers
+
+### Sieve of Eratosthenes
+
+Efficiently finds all primes up to n.
+
+```cpp
+const int M = 1e6 + 2;
+bool marked[M+1];
+vector<int> primes;
+
+void sieve() {
+    marked[0] = marked[1] = true;
+    for (int i = 2; i <= M; i++) {
+        if (marked[i]) continue;
+        primes.push_back(i);
+        for (int64_t j = 1LL * i * i; j <= M; j += i)
+            marked[j] = true;
+    }
+}
+// Time: O(M*log(log(M)))
+// Space: O(M)
+```
+
+### Sieve Class (Full Implementation)
+
+```cpp
+class Sieve {
+    int maximum;
+    vector<int> primes;
+    vector<int> smallest_factor;
+    vector<bool> isprime;
+public:
+    Sieve(int mx) : maximum(mx) {
+        isprime.resize(maximum+1, true);
+        smallest_factor.resize(maximum+1, 0);
+        
+        smallest_factor[0] = smallest_factor[1] = 1;
+        isprime[0] = isprime[1] = false;
+        
+        for(int prime = 2; prime <= maximum; ++prime) {
+            if(isprime[prime]) {
+                primes.push_back(prime);
+                smallest_factor[prime] = prime;
+                for(int64_t j = 1LL*prime*prime; j <= maximum; j += prime) {
+                    if(isprime[j]) {
+                        isprime[j] = false;
+                        smallest_factor[j] = prime;
+                    }
+                }
+            }
+        }
+    }
+
+    int prime_kth(int k) {
+        // returns the k-th prime (1-indexed)
+        return primes[k-1];
+    }
+    
+    bool is_prime(int number) {
+        return isprime[number];
+    }
+    
+    int smallest(int number) {
+        // smallest prime factor
+        return smallest_factor[number];
+    }
+};
+```
+
+**Usage:**
+```cpp
+Sieve sieve(1000000);
+if (sieve.is_prime(97)) {
+    cout << "97 is prime\n";
+}
+int spf = sieve.smallest(100); // Returns 2
+```
+
+### Miller-Rabin Primality Test
+
+Probabilistic test for large numbers, deterministic for `n < 2^64`.
+
+```cpp
+bool miller_rabin(uint64_t number) {
+    if (number < 2) return false;
+    vector<uint32_t> small_primes = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29};
+    for (uint32_t x : small_primes) {
+        if (number == x) return true;
+        if (number % x == 0) return false;
+    }
+    if (number < 31 * 31) return true;
+    
+    uint32_t s = __builtin_ctzll(number - 1);
+    uint64_t d = (number - 1) >> s;
+    
+    function<bool(uint64_t)> witness = [&](uint64_t a) {
+        uint64_t cur = 1, p = d;
+        while (p > 0) {
+            if (p & 1) cur = cur * a % number;
+            a = a * a % number;
+            p >>= 1;
+        }
+        if (cur == 1) return false;
+        for (uint32_t r = 0; r < s; r++) {
+            if (cur == number - 1) return false;
+            cur = cur * cur % number;
+        }
+        return true;
+    };
+    
+    vector<uint64_t> bases = {2, 325, 9375, 28178, 450775, 9780504, 1795265022};
+    for (uint64_t a : bases) {
+        if (a % number == 0) return true;
+        if (witness(a)) return false;
+    }
+    return true;
+}
+// Time: O(k log³ n) where k is number of witnesses
+```
+
+## Prime Factorization
+
+### As Vector (with repetitions)
+
+```cpp
+template<class T>
+vector<T> prime_factors(T number)  {
+    vector<T> factors;
+    while (number % 2 == 0) {
+        factors.push_back(2);
+        number = number / 2;
+    }
+    for (T i = 3; i*i <= number; i += 2) {
+        while (number % i == 0) {
+            factors.push_back(i);
+            number = number / i; 
+        }
+    }
+    if (number > 2)
+        factors.push_back(number);
+    return factors;
+}
+// Time: O(√n)
+```
+
+**Usage:**
+```cpp
+vector<int> factors = prime_factors<int>(100);
+// Returns: {2, 2, 5, 5}
+// Because: 2*2*5*5 = 2² * 5² = 100
+```
+
+### As Map (prime → exponent)
+
+```cpp
+template<class T>
+map<T, int> prime_factors(T number)  {
+    map<T, int> factors;
+    while (number % 2 == 0) {
+        factors[2]++;
+        number = number / 2;
+    }
+    for (T i = 3; i*i <= number; i += 2) {
+        while (number % i == 0) {
+            factors[i]++;
+            number = number / i; 
+        }
+    }
+    if (number > 2)
+        factors[number]++;
+    return factors;
+}
+```
+
+**Usage:**
+```cpp
+map<int, int> factors = prime_factors<int>(100);
+// Returns: {2: 2, 5: 2}
+// Because: 2² * 5² = 100
+```
+
+## Divisors
+
+Finds all divisors of a number.
+
+```cpp
+template<typename T>
+vector<T> divisors(T number) {
+    vector<T> ans;
+    for (T i = 1; i*i <= number; ++i) {
+        if (number % i == 0) {
+            if (number/i == i) {
+                ans.push_back(i);
+            } else {
+                ans.push_back(i);
+                ans.push_back(number/i);
+            }
+        }
+    }
+    return ans;
+}
+// Time: O(√n)
+```
+
+**Usage:**
+```cpp
+vector<int> divs = divisors<int>(12);
+// Returns: {1, 12, 2, 6, 3, 4} (order may vary)
+```
+
+## Euler's Totient Function
+
+Counts integers from 1 to n that are coprime to n.
+
+```cpp
+template<typename T>
+T phi_euler(T number) {
+    T result = number;
+    for(T i = 2; i*i <= number; ++i) {
+        if(number % i != 0) continue;
+        while(number % i == 0) {
+            number /= i;
+        }
+        result -= result / i;
+    }
+    if(number > 1)
+        result -= result / number;
+    return result;
+}
+// Time: O(√n)
+```
+
+**Properties:**
+- φ(1) = 1
+- φ(p) = p - 1 for prime p
+- φ(p^k) = p^k - p^(k-1) = p^(k-1)(p-1)
+- φ(mn) = φ(m)φ(n) if gcd(m,n) = 1
+- Σ φ(d) = n where sum is over all divisors d of n
+
+**Usage:**
+```cpp
+int phi = phi_euler(12); // Returns 4
+// Numbers coprime to 12: {1, 5, 7, 11}
+```
+
+<Accordion title="Applications of Euler's Totient">
+1. **Euler's Theorem**: If gcd(a,n) = 1, then a^φ(n) ≡ 1 (mod n)
+2. **Modular Inverse**: a^(-1) ≡ a^(φ(n)-1) (mod n) when gcd(a,n) = 1
+3. **Cycle Length**: The multiplicative order of a modulo n divides φ(n)
+4. **Cryptography**: Used in RSA encryption
+</Accordion>
+
+## Contest Examples
+
+### Example 1: Finding Modular Inverse
+
+```cpp
+int mod_inverse(int a, int m) {
+    auto [g, x, y] = extgcd(a, m);
+    if (g != 1) return -1; // inverse doesn't exist
+    return (x % m + m) % m;
+}
+
+// Or using Euler's theorem when m is prime:
+int mod_inverse_prime(int a, int p) {
+    return fastpow(a, p-2, p); // a^(p-2) mod p
+}
+```
+
+### Example 2: Counting Coprime Pairs
+
+```cpp
+// Count pairs (i,j) where 1 ≤ i < j ≤ n and gcd(i,j) = 1
+long long count_coprime_pairs(int n) {
+    long long total = 0;
+    for (int i = 1; i <= n; i++) {
+        total += phi_euler(i);
+    }
+    return total;
+}
+```
+
+### Example 3: Prime Factorization with Sieve
+
+```cpp
+Sieve sieve(1000000);
+
+vector<pair<int,int>> fast_factorize(int n) {
+    vector<pair<int,int>> factors;
+    while (n > 1) {
+        int p = sieve.smallest(n);
+        int cnt = 0;
+        while (n % p == 0) {
+            n /= p;
+            cnt++;
+        }
+        factors.push_back({p, cnt});
+    }
+    return factors;
+}
+```

@@ -1,0 +1,397 @@
+---
+title: "Ternary Search"
+description: "Ternary search for finding extrema of unimodal functions"
+---
+
+## Overview
+
+Ternary search is an optimization algorithm for finding the maximum or minimum of a **unimodal function**. Unlike binary search (which works on monotonic functions), ternary search works on functions with a single peak (or valley).
+
+## When to Use Ternary Search
+
+Use ternary search when:
+- Function has exactly one local extremum (maximum or minimum)
+- Function is **unimodal**: strictly increases then strictly decreases (or vice versa)
+- You need to find the point where the extremum occurs
+- Can't compute derivative or don't have closed-form solution
+
+## Unimodal Function
+
+A function f(x) is unimodal if:
+- **One peak**: Has exactly one maximum (or minimum)
+- **Monotonic on both sides**: Strictly increases before peak, strictly decreases after
+
+```
+Maximum (concave):          Minimum (convex):
+       *                            /\
+      / \                          /  \
+     /   \                        /    \
+    /     \                      /      \
+```
+
+## Algorithm Intuition
+
+Ternary search divides the range into three parts:
+1. Split range [L, R] at two points: m1 and m2
+2. Compare f(m1) and f(m2)
+3. Eliminate one third of the range
+4. Repeat until convergence
+
+**For finding minimum:**
+- If f(m1) > f(m2): minimum is in [m1, R]
+- If f(m1) < f(m2): minimum is in [L, m2]
+
+**For finding maximum:**
+- If f(m1) < f(m2): maximum is in [m1, R]
+- If f(m1) > f(m2): maximum is in [L, m2]
+
+## Integer Ternary Search
+
+For discrete integer domains.
+
+```cpp
+int64_t ternary_search(const function<int64_t(int64_t)> &func, 
+                       int64_t low, int64_t high) {
+    while (high - low > 2) {
+        int64_t delta = (high - low) / 3LL;
+        int64_t m1 = low + delta;
+        int64_t m2 = high - delta;
+
+        if (func(m1) > func(m2)) {  // Finding minimum
+            low = m1;
+        } else {
+            high = m2;
+        }
+    }
+    
+    // Check remaining elements
+    int64_t best = LLONG_MAX;
+    for (int64_t mid = low; mid <= high; ++mid) {
+        best = min(best, func(mid));
+    }
+    return best;
+}
+// Time: O(log n × f(x) evaluation)
+```
+
+**To find maximum**: Change `func(m1) > func(m2)` to `func(m1) < func(m2)`
+
+**Usage:**
+```cpp
+auto f = [](int64_t x) {
+    return x * x - 4 * x + 7;  // Parabola with minimum at x=2
+};
+
+int64_t min_value = ternary_search(f, -100, 100);
+cout << min_value << endl;  // Outputs: 3
+```
+
+## Real-Valued Ternary Search
+
+### Template I: Fixed Iterations
+
+```cpp
+double ternary_search(const function<double(double)> &func, 
+                      double low, double high) {
+    int it = 0;
+    while (it < 100) {  // 100 iterations ≈ (2/3)^100 ≈ 1e-18 precision
+        double diff = (high - low) / 3.0;
+        double mid1 = low + diff;
+        double mid2 = high - diff;
+
+        double f1 = func(mid1);
+        double f2 = func(mid2);
+
+        if (f1 > f2) {  // Finding minimum
+            low = mid1;
+        } else {
+            high = mid2;
+        }
+        it++;
+    }
+    return func(low);  // Or func((low+high)/2)
+}
+```
+
+### Template II: Epsilon Threshold
+
+```cpp
+double ternary_search(const function<double(double)> &func,
+                      double low, double high, double eps = 1e-9) {
+    while (high - low > eps) {
+        double mid1 = low + (high - low) / 3.0;
+        double mid2 = high - (high - low) / 3.0;
+
+        if (func(mid1) > func(mid2)) {  // Finding minimum
+            low = mid1;
+        } else {
+            high = mid2;
+        }
+    }
+    return (low + high) / 2.0;
+}
+```
+
+**Usage:**
+```cpp
+auto f = [](double x) {
+    return x * x - 4 * x + 7;
+};
+
+double min_x = ternary_search(f, -10.0, 10.0);
+cout << fixed << setprecision(10) << min_x << endl;  // ~2.0
+```
+
+## Applications
+
+### 1. Minimize Distance to Point
+
+```cpp
+// Find point on line segment closest to external point
+struct Point {
+    double x, y;
+    double dist(const Point &other) {
+        double dx = x - other.x;
+        double dy = y - other.y;
+        return sqrt(dx*dx + dy*dy);
+    }
+};
+
+Point lerp(Point a, Point b, double t) {
+    return {a.x + t * (b.x - a.x), a.y + t * (b.y - a.y)};
+}
+
+double closest_distance(Point a, Point b, Point p) {
+    auto dist_func = [&](double t) {
+        Point on_line = lerp(a, b, t);
+        return on_line.dist(p);
+    };
+    
+    return ternary_search(dist_func, 0.0, 1.0);
+}
+```
+
+### 2. Maximize Product
+
+```cpp
+// Maximize (x)(10-x) for x in [0, 10]
+double maximize_product() {
+    auto f = [](double x) {
+        return x * (10.0 - x);  // Parabola, max at x=5
+    };
+    
+    // Finding maximum: negate function or swap comparison
+    auto neg_f = [&](double x) { return -f(x); };
+    double result = -ternary_search(neg_f, 0.0, 10.0);
+    return result;
+}
+```
+
+### 3. Minimize Time
+
+```cpp
+// Boat crosses river with current
+// Find angle to minimize crossing time
+double river_width = 100.0;
+double boat_speed = 10.0;
+double current_speed = 3.0;
+
+double crossing_time(double angle) {
+    // angle in radians, 0 = perpendicular to current
+    double vx = boat_speed * cos(angle);
+    double vy = boat_speed * sin(angle) - current_speed;
+    
+    if (vy <= 0) return 1e18;  // Can't cross
+    
+    double time = river_width / vy;
+    return time;
+}
+
+double optimal_angle = ternary_search(crossing_time, 0.0, PI/2);
+```
+
+### 4. Allocation Problem
+
+```cpp
+// Allocate resources to minimize maximum load
+vector<int> tasks = {5, 10, 15, 20};
+
+double max_load(double split_point) {
+    double load1 = 0, load2 = 0;
+    for (int i = 0; i < tasks.size(); i++) {
+        if (i < split_point) {
+            load1 += tasks[i];
+        } else {
+            load2 += tasks[i];
+        }
+    }
+    return max(load1, load2);
+}
+
+// Find best split point
+int n = tasks.size();
+double best_split = ternary_search(max_load, 0.0, (double)n);
+```
+
+### 5. Golden Ratio Search (Variation)
+
+```cpp
+// Slightly more efficient: uses golden ratio
+const double PHI = (1 + sqrt(5)) / 2;
+const double RESPHI = 2 - PHI;
+
+double golden_search(const function<double(double)> &f,
+                     double a, double b, double eps = 1e-9) {
+    double x1 = a + RESPHI * (b - a);
+    double x2 = b - RESPHI * (b - a);
+    double f1 = f(x1);
+    double f2 = f(x2);
+    
+    while (abs(b - a) > eps) {
+        if (f1 < f2) {
+            b = x2;
+            x2 = x1;
+            f2 = f1;
+            x1 = a + RESPHI * (b - a);
+            f1 = f(x1);
+        } else {
+            a = x1;
+            x1 = x2;
+            f1 = f2;
+            x2 = b - RESPHI * (b - a);
+            f2 = f(x2);
+        }
+    }
+    return (a + b) / 2;
+}
+```
+
+## Ternary Search vs Binary Search
+
+| Feature | Binary Search | Ternary Search |
+|---------|--------------|----------------|
+| Function type | Monotonic | Unimodal |
+| Divisions | 2 parts | 3 parts |
+| Comparisons/iteration | 1 | 2 |
+| Convergence rate | (1/2)^n | (2/3)^n |
+| Iterations needed | log₂(range) | log₃/₂(range) ≈ 1.585×log₂(range) |
+| Use case | Find value | Find extremum |
+
+## Common Mistakes
+
+### 1. Non-Unimodal Function
+
+```cpp
+// WRONG: Multiple peaks
+auto f = [](double x) {
+    return sin(x);  // Has multiple maxima/minima
+};
+
+// Ternary search will fail!
+```
+
+### 2. Discrete vs Continuous
+
+```cpp
+// WRONG: Using continuous ternary search on discrete problem
+vector<int> arr = {3, 5, 7, 9, 11, 10, 8};
+auto f = [&](double x) {
+    return arr[(int)x];  // Don't interpolate discrete values!
+};
+
+// CORRECT: Use integer ternary search
+auto g = [&](int64_t x) {
+    return arr[x];
+};
+```
+
+### 3. Insufficient Iterations
+
+```cpp
+// WRONG: Too few iterations for required precision
+for (int iter = 0; iter < 10; iter++) {  // Only 10 iterations
+    // Precision: (2/3)^10 ≈ 1.7e-2 (not enough!)
+}
+
+// CORRECT: Use enough iterations
+for (int iter = 0; iter < 100; iter++) {  // 100 iterations
+    // Precision: (2/3)^100 ≈ 1e-18 (good)
+}
+```
+
+### 4. Wrong Comparison for Maximum
+
+```cpp
+// Finding maximum, but using minimum comparison
+if (f(m1) > f(m2)) {  // WRONG for maximum!
+    low = m1;
+}
+
+// CORRECT: Swap comparison or negate function
+if (f(m1) < f(m2)) {  // Correct for maximum
+    low = m1;
+}
+```
+
+## Optimization Tips
+
+1. **Cache function evaluations** if expensive
+   ```cpp
+   map<double, double> memo;
+   auto cached_f = [&](double x) {
+       if (memo.count(x)) return memo[x];
+       return memo[x] = expensive_function(x);
+   };
+   ```
+
+2. **Choose appropriate epsilon** based on problem constraints
+   ```cpp
+   double eps = 1e-6;  // For most problems
+   double eps = 1e-9;  // High precision
+   double eps = 1e-3;  // Fast, low precision
+   ```
+
+3. **Use integer search when possible** (faster, no floating point issues)
+
+4. **Consider golden ratio search** for slightly better constant factor
+
+## Complexity Analysis
+
+| Version | Time Complexity | Space Complexity |
+|---------|----------------|------------------|
+| Integer search | O(log₃/₂(n) × f) | O(1) |
+| Real-valued (iterations) | O(k × f) | O(1) |
+| Real-valued (epsilon) | O(log₃/₂(range/ε) × f) | O(1) |
+
+where f is the cost to evaluate the function
+
+<Accordion title="Why Ternary Search Works">
+**Key insight**: For unimodal function with maximum at x*:
+
+1. If x₁ < x₂ < x*:
+   - Function is increasing: f(x₁) < f(x₂)
+   - Maximum is to the right: eliminate [L, x₁]
+
+2. If x* < x₁ < x₂:
+   - Function is decreasing: f(x₁) > f(x₂)
+   - Maximum is to the left: eliminate [x₂, R]
+
+3. If x₁ < x* < x₂:
+   - Can't determine which third to eliminate
+   - But both comparisons narrow the range
+
+**Invariant**: Maximum is always in range [low, high]
+
+**Convergence**: Each iteration reduces range by factor of 2/3
+- After k iterations: range = initial_range × (2/3)^k
+- Reaches epsilon when: (2/3)^k × range < ε
+- Iterations needed: k = log₃/₂(range/ε)
+</Accordion>
+
+## Practice Problems
+
+1. **Minimize maximum distance**: Place k points to minimize maximum distance
+2. **Optimal meeting point**: Find location minimizing total travel distance
+3. **Resource allocation**: Divide resources to minimize worst-case load
+4. **Geometric optimization**: Find point on curve closest to target
+5. **Physical simulation**: Optimize angle/force for maximum range

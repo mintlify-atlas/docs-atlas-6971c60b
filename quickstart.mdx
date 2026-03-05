@@ -1,80 +1,424 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start Guide
+description: Get started with C++ Algorithm Snippets in competitive programming
 ---
 
-## Get started in three steps
+## Your First Problem
 
-Get your documentation site running locally and make your first customization.
+Let's solve a classic shortest path problem using the Dijkstra algorithm snippet. This guide will walk you through a complete example from template to solution.
 
-### Step 1: Set up your local environment
+### Problem Statement
+
+Given a weighted graph with `n` nodes and `m` edges, find the shortest distance from a source node to all other nodes.
+
+**Input:**
+- First line: `n` (number of nodes), `m` (number of edges)
+- Next `m` lines: `u v w` (edge from `u` to `v` with weight `w`)
+- Last line: `s` (source node)
+
+**Output:**
+- `n` space-separated integers representing shortest distances from source
+
+## Building the Solution
+
+<Steps>
+  <Step title="Start with a Template">
+    Create a new file `solution.cpp` and type `template_std` then trigger autocomplete:
+    
+    ```cpp
+    /**
+     * @created     : March 05, 2026
+     * @handle      : @LuchoBazz
+     */
+    
+    #include <bits/stdc++.h>
+    
+    using namespace std;
+    
+    int main() {
+        ios_base::sync_with_stdio(0);
+        cin.tie(0);
+        
+        return 0;
+    }
+    ```
+    
+    <Tip>
+    The `ios_base::sync_with_stdio(0)` and `cin.tie(0)` optimize I/O operations for competitive programming.
+    </Tip>
+  </Step>
+
+  <Step title="Add Graph Structure">
+    Before `main()`, type `graph_graph` to add the base graph structure:
+    
+    ```cpp
+    template <typename T>
+    struct edge {
+        int from;
+        int to;
+        T cost;
+    };
+    
+    template <typename T>
+    struct link {
+        int to;
+        T cost;
+        bool operator>(const link& other) const {return cost > other.cost;}
+        bool operator<(const link& other) const {return cost < other.cost;}
+    };
+    
+    template <typename T>
+    class graph {
+    public:
+        vector<edge<T>> edges;
+        vector<vector<link<T>>> adj;
+        int n;
+        graph(int sz) : n(sz) {
+            adj.resize(n);
+        }
+        virtual void add(int from, int to, T cost) = 0;
+    };
+    ```
+  </Step>
+
+  <Step title="Add Directed Graph Implementation">
+    Type `graph_digraph` to add the directed graph class:
+    
+    ```cpp
+    template <typename T>
+    class digraph : public graph<T> {
+    public:
+        using graph<T>::edges;
+        using graph<T>::adj;
+        using graph<T>::n;
+    
+        digraph(int sz) : graph<T>(sz) {}
+    
+        void add(int from, int to, T cost = 1) {
+            assert(0 <= from && from < n && 0 <= to && to < n);
+            edges.push_back({from, to, cost});
+            adj[from].push_back({to, cost});
+        }
+    };
+    ```
+    
+    <Note>
+    Use `graph_undigraph` for undirected graphs instead.
+    </Note>
+  </Step>
+
+  <Step title="Add Dijkstra Algorithm">
+    Type `graph_dijkstra_std` to add the Dijkstra implementation:
+    
+    ```cpp
+    template <typename T>
+    vector <T> dijkstra(const graph<T> &g, int start) {
+        assert(0 <= start && start < g.n);
+        priority_queue<link<T>, vector<link<T>>, greater<link<T>>> Q;
+        vector<T> dist(g.n, numeric_limits<T>::max());
+        dist[start] = static_cast<T>(0);
+        Q.push({start, static_cast<T>(0)});
+        while (!Q.empty()) {
+            link<T> node = Q.top(); Q.pop();
+            int to = node.to;
+            if(node.cost > dist[to]) {
+                continue;
+            }
+            for (link<T> neighbor: g.adj[to]) {
+                T newCost = dist[to] + neighbor.cost;
+                if (newCost < dist[neighbor.to]) {
+                    Q.push({neighbor.to, newCost});
+                    dist[neighbor.to] = newCost;
+                }
+            }
+        }
+        return dist;
+        // returns numeric_limits<T>::max() if there's no path
+    }
+    ```
+  </Step>
+
+  <Step title="Complete the Solution">
+    Add the main logic to read input and call the algorithm:
+    
+    ```cpp
+    int main() {
+        ios_base::sync_with_stdio(0);
+        cin.tie(0);
+        
+        int n, m;
+        cin >> n >> m;
+        
+        digraph<int> g(n);
+        
+        for(int i = 0; i < m; i++) {
+            int u, v, w;
+            cin >> u >> v >> w;
+            g.add(u, v, w);
+        }
+        
+        int source;
+        cin >> source;
+        
+        vector<int> dist = dijkstra(g, source);
+        
+        for(int i = 0; i < n; i++) {
+            if(dist[i] == numeric_limits<int>::max()) {
+                cout << "INF";
+            } else {
+                cout << dist[i];
+            }
+            if(i < n - 1) cout << " ";
+        }
+        cout << endl;
+        
+        return 0;
+    }
+    ```
+  </Step>
+</Steps>
+
+## Complete Solution
+
+Here's the final solution combining all snippets:
+
+```cpp solution.cpp
+/**
+ * @created     : March 05, 2026
+ * @handle      : @LuchoBazz
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+template <typename T>
+struct edge {
+    int from;
+    int to;
+    T cost;
+};
+
+template <typename T>
+struct link {
+    int to;
+    T cost;
+    bool operator>(const link& other) const {return cost > other.cost;}
+    bool operator<(const link& other) const {return cost < other.cost;}
+};
+
+template <typename T>
+class graph {
+public:
+    vector<edge<T>> edges;
+    vector<vector<link<T>>> adj;
+    int n;
+    graph(int sz) : n(sz) {
+        adj.resize(n);
+    }
+    virtual void add(int from, int to, T cost) = 0;
+};
+
+template <typename T>
+class digraph : public graph<T> {
+public:
+    using graph<T>::edges;
+    using graph<T>::adj;
+    using graph<T>::n;
+
+    digraph(int sz) : graph<T>(sz) {}
+
+    void add(int from, int to, T cost = 1) {
+        assert(0 <= from && from < n && 0 <= to && to < n);
+        edges.push_back({from, to, cost});
+        adj[from].push_back({to, cost});
+    }
+};
+
+template <typename T>
+vector <T> dijkstra(const graph<T> &g, int start) {
+    assert(0 <= start && start < g.n);
+    priority_queue<link<T>, vector<link<T>>, greater<link<T>>> Q;
+    vector<T> dist(g.n, numeric_limits<T>::max());
+    dist[start] = static_cast<T>(0);
+    Q.push({start, static_cast<T>(0)});
+    while (!Q.empty()) {
+        link<T> node = Q.top(); Q.pop();
+        int to = node.to;
+        if(node.cost > dist[to]) {
+            continue;
+        }
+        for (link<T> neighbor: g.adj[to]) {
+            T newCost = dist[to] + neighbor.cost;
+            if (newCost < dist[neighbor.to]) {
+                Q.push({neighbor.to, newCost});
+                dist[neighbor.to] = newCost;
+            }
+        }
+    }
+    return dist;
+}
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    digraph<int> g(n);
+    
+    for(int i = 0; i < m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        g.add(u, v, w);
+    }
+    
+    int source;
+    cin >> source;
+    
+    vector<int> dist = dijkstra(g, source);
+    
+    for(int i = 0; i < n; i++) {
+        if(dist[i] == numeric_limits<int>::max()) {
+            cout << "INF";
+        } else {
+            cout << dist[i];
+        }
+        if(i < n - 1) cout << " ";
+    }
+    cout << endl;
+    
+    return 0;
+}
+```
+
+## Testing the Solution
+
+### Sample Input
+
+```
+5 6
+0 1 4
+0 2 1
+2 1 2
+1 3 1
+2 3 5
+3 4 3
+0
+```
+
+### Expected Output
+
+```
+0 3 1 4 7
+```
+
+### Compile and Run
+
+```bash
+g++ -std=c++17 -O2 -o solution solution.cpp
+./solution < input.txt
+```
+
+<Tip>
+Use the `-DDEBUG` flag during development to enable debug macros from `misc_debug`:
+
+```bash
+g++ -std=c++17 -O2 -DDEBUG -o solution solution.cpp
+```
+</Tip>
+
+## Competitive Programming Workflow
+
+### Efficient Snippet Usage
+
+1. **Start Fast**: Use `template_std` or competition-specific templates like `template_google` or `template_usaco`
+2. **Build Incrementally**: Add only the snippets you need for the problem
+3. **Test Quickly**: Use `template_random` to generate test cases
+4. **Debug Efficiently**: Add `misc_debug` when you need detailed output
+
+### Common Snippet Combinations
 
 <AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
+  <Accordion title="Graph Problems">
+    ```
+    template_std
+    + graph_graph
+    + graph_digraph (or graph_undigraph)
+    + graph_dijkstra_std (or other graph algorithm)
+    ```
   </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
+
+  <Accordion title="Range Query Problems">
+    ```
+    template_std
+    + range_query_segment_tree
+    (or range_query_fenwick_tree_std)
+    ```
+  </Accordion>
+
+  <Accordion title="String Problems">
+    ```
+    template_std
+    + string_kmp_std
+    (or string_hashing_static_compress)
+    ```
+  </Accordion>
+
+  <Accordion title="Dynamic Programming with Math">
+    ```
+    template_std
+    + numeric_mint_compress
+    + combinatorics_ncr_compress
+    ```
   </Accordion>
 </AccordionGroup>
 
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
+## Pro Tips
 
 <CardGroup cols={2}>
+  <Card title="Use Template Headers" icon="file-code">
+    `template_header` provides optimized pragmas and common macros:
+    - Compiler optimizations with `#pragma GCC`
+    - Shortened macros: `PB`, `SZ`, `all`, `rall`
+    - Loop macros: `forn`, `rof`
+  </Card>
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+  <Card title="Debug Smartly" icon="bug">
+    `misc_debug` provides comprehensive debug output:
+    - Works with vectors, maps, sets, pairs
+    - Only compiles when `-DDEBUG` flag is set
+    - Use `log(variable)` to print
+  </Card>
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+  <Card title="Handle Multiple Test Cases" icon="list">
+    Use `template_cases` for problems with multiple test cases:
+    - Automatic case numbering
+    - Clean structure for T test cases
+  </Card>
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Fast I/O Operations" icon="bolt">
+    All templates include fast I/O:
+    - `ios_base::sync_with_stdio(0)`
+    - `cin.tie(0)`
+    - Critical for large input problems
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Snippet Usage" icon="keyboard" href="/concepts/snippet-usage">
+    Learn advanced snippet triggers and editor configuration
+  </Card>
+  <Card title="Available Templates" icon="file-lines" href="/concepts/templates">
+    Explore all available template options
+  </Card>
+  <Card title="Competitive Programming" icon="trophy" href="/concepts/competitive-programming">
+    Master best practices and optimization techniques
+  </Card>
+  <Card title="API Reference" icon="book" href="/reference/graph">
+    Browse all available algorithms and data structures
+  </Card>
+</CardGroup>

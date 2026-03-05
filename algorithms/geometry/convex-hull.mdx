@@ -1,0 +1,481 @@
+---
+title: Convex Hull - Monotone Chain
+description: Compute the convex hull of a set of points using Andrew's Monotone Chain algorithm
+icon: circle
+---
+
+The convex hull of a set of points is the smallest convex polygon that contains all the points. This page covers Andrew's Monotone Chain algorithm, an efficient method for computing convex hulls.
+
+## Overview
+
+Given a set of 2D points, the **convex hull** is the smallest convex polygon that encloses all points. Think of it as stretching a rubber band around the outermost points.
+
+**Applications:**
+- Computer graphics (collision detection)
+- Pattern recognition
+- Image processing
+- Geographic information systems
+- Finding outermost boundary of data points
+
+## Algorithm: Monotone Chain
+
+Andrew's Monotone Chain algorithm constructs the convex hull in two passes:
+1. **Upper hull**: Process points left to right
+2. **Lower hull**: Process points right to left
+
+### Implementation
+
+```cpp
+template<typename T>
+Polygon<T> convex_hull(Polygon<T> points) {
+    int n = points.size();
+    if(n <= 1) return points;
+    
+    vector<Point<T>> hull;
+    
+    // Sort points by x-coordinate (then by y-coordinate)
+    sort(points.begin(), points.end());
+    
+    // Build hull in two passes
+    // it=0: Upper Hull
+    // it=1: Lower Hull
+    for(int it = 0; it < 2; ++it) {
+        int sz = hull.size();
+        
+        for(int i = 0; i < n; ++i) {
+            // Remove points that make clockwise turn
+            // Use < for including collinear points, <= for excluding
+            while((int)hull.size() >= sz + 2 && 
+                  hull[hull.size()-2].orient(hull.back(), points[i]) <= 0) {
+                hull.pop_back();
+            }
+            hull.push_back(points[i]);
+        }
+        
+        // Remove the last point (duplicate of first point in next iteration)
+        hull.pop_back();
+        
+        // Reverse for lower hull
+        reverse(points.begin(), points.end());
+    }
+    
+    // Handle edge case: two identical points
+    if(hull.size() == 2 && hull[0] == hull[1]) {
+        hull.pop_back();
+    }
+    
+    return Polygon<T>(hull);
+}
+```
+
+**Time Complexity:** O(n log n) - Dominated by sorting  
+**Space Complexity:** O(n) - For the hull storage
+
+## How It Works
+
+<Steps>
+  <Step title="Sort points">
+    Sort all points by x-coordinate (and y-coordinate as tiebreaker). This gives us a left-to-right ordering.
+  </Step>
+  <Step title="Build upper hull">
+    Process points from left to right. For each point, remove points from the hull that would create a clockwise turn (non-convex).
+  </Step>
+  <Step title="Build lower hull">
+    Reverse the points and repeat the process to build the lower hull from right to left.
+  </Step>
+  <Step title="Combine results">
+    The upper and lower hulls together form the complete convex hull.
+  </Step>
+</Steps>
+
+## Visualization
+
+Consider points: `{(0,0), (1,1), (2,0), (3,1), (1,0)}`
+
+```
+Step 1: Sort points
+(0,0) (1,0) (1,1) (2,0) (3,1)
+
+Step 2: Upper hull (left to right)
+  Start: (0,0)
+  Add: (0,0) -> (1,0)
+  Add: (0,0) -> (1,0) -> (1,1)
+  Check (1,0): makes right turn, remove it
+  Now: (0,0) -> (1,1) -> (2,0)
+  Check (1,1): makes right turn, remove it  
+  Now: (0,0) -> (2,0) -> (3,1)
+
+Step 3: Lower hull (right to left)
+  Continue from: (3,1)
+  Add: (3,1) -> (2,0)
+  Add: (3,1) -> (2,0) -> (1,1)
+  Check (2,0): makes right turn, remove it
+  Add: (3,1) -> (1,1) -> (1,0)
+  Add: (3,1) -> (1,1) -> (1,0) -> (0,0)
+
+Final hull: (0,0) -> (2,0) -> (3,1) -> (1,1) -> (0,0)
+```
+
+## Example Usage
+
+### Basic Example
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+// Include Point and Polygon structures
+// Include convex_hull function
+
+int main() {
+    // Create a set of points
+    vector<Point<int>> points = {
+        {0, 0}, {1, 1}, {2, 2}, {0, 2}, 
+        {2, 0}, {1, 0}, {0, 1}
+    };
+    
+    Polygon<int> poly(points);
+    Polygon<int> hull = convex_hull(poly);
+    
+    cout << "Convex hull has " << hull.size() << " vertices:\n";
+    for(int i = 0; i < hull.size(); i++) {
+        cout << "(" << hull[i].x << ", " << hull[i].y << ")\n";
+    }
+    
+    return 0;
+}
+```
+
+**Output:**
+```
+Convex hull has 4 vertices:
+(0, 0)
+(2, 0)
+(2, 2)
+(0, 2)
+```
+
+### Finding Hull Area
+
+```cpp
+Polygon<int> points = {
+    {{0, 0}, {4, 0}, {4, 3}, {2, 2}, {0, 3}}
+};
+
+Polygon<int> hull = convex_hull(points);
+floating_t hullArea = area(hull);
+
+cout << "Area of convex hull: " << hullArea << "\n";
+// Output: Area of convex hull: 12.0
+```
+
+### Detecting All Points on Hull
+
+```cpp
+template<typename T>
+set<Point<T>> pointsOnHull(Polygon<T>& points) {
+    Polygon<T> hull = convex_hull(points);
+    set<Point<T>> onHull(hull.begin(), hull.end());
+    return onHull;
+}
+
+// Usage
+vector<Point<int>> points = {{0,0}, {1,0}, {2,0}, {1,1}};
+Polygon<int> poly(points);
+auto hullPoints = pointsOnHull(poly);
+
+for(auto& p : hullPoints) {
+    cout << "(" << p.x << ", " << p.y << ")\n";
+}
+```
+
+## Key Concepts
+
+### Orientation Test
+
+The algorithm relies on the orientation of three consecutive points:
+
+```cpp
+T orient(Point<T> a, Point<T> b, Point<T> c) {
+    return (b - a).cross(c - a);
+}
+```
+
+- **Positive**: Counter-clockwise turn (left turn) - Keep the point
+- **Zero**: Collinear - Optionally keep or remove
+- **Negative**: Clockwise turn (right turn) - Remove middle point
+
+### Including Collinear Points
+
+To include collinear points on the hull boundary:
+
+```cpp
+// Use < instead of <=
+while((int)hull.size() >= sz + 2 && 
+      hull[hull.size()-2].orient(hull.back(), points[i]) < 0) {
+    hull.pop_back();
+}
+```
+
+To exclude collinear points (vertices only):
+
+```cpp
+// Use <= (as in original implementation)
+while((int)hull.size() >= sz + 2 && 
+      hull[hull.size()-2].orient(hull.back(), points[i]) <= 0) {
+    hull.pop_back();
+}
+```
+
+## Edge Cases
+
+### Single Point
+
+```cpp
+vector<Point<int>> points = {{1, 1}};
+Polygon<int> hull = convex_hull(Polygon<int>(points));
+// Result: hull with 1 point
+```
+
+### Two Points
+
+```cpp
+vector<Point<int>> points = {{0, 0}, {1, 1}};
+Polygon<int> hull = convex_hull(Polygon<int>(points));
+// Result: hull with 2 points (line segment)
+```
+
+### All Collinear Points
+
+```cpp
+vector<Point<int>> points = {{0, 0}, {1, 1}, {2, 2}, {3, 3}};
+Polygon<int> hull = convex_hull(Polygon<int>(points));
+// Result: Only first and last point (or all points if including collinear)
+```
+
+### All Points Identical
+
+```cpp
+vector<Point<int>> points = {{1, 1}, {1, 1}, {1, 1}};
+Polygon<int> hull = convex_hull(Polygon<int>(points));
+// Result: Single point
+```
+
+## Complete Working Example
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long double floating_t;
+
+template<typename T>
+struct Point {
+    T x, y;
+    Point<T> operator - (Point<T> p) { return {x-p.x, y-p.y}; }
+    bool operator == (const Point<T> &p) const { return x==p.x && y==p.y; }
+    bool operator < (const Point<T> &p) const { 
+        return x < p.x || (x == p.x && y < p.y); 
+    }
+    T cross(Point<T> p) { return x*p.y - y*p.x; }
+    T orient(Point<T> b, Point<T> c) { return (b-*this).cross(c-*this); }
+    floating_t eucl_dist(Point<T> p) { 
+        return sqrt((x-p.x)*(x-p.x) + (y-p.y)*(y-p.y)); 
+    }
+};
+
+template<typename T>
+class Polygon {
+    vector<Point<T>> points;
+public:
+    Polygon() {}
+    Polygon(vector<Point<T>> pts) : points(pts) {}
+    auto begin() { return points.begin(); }
+    auto end() { return points.end(); }
+    int size() { return points.size(); }
+    Point<T>& operator[](int i) { return points[i]; }
+};
+
+template<typename T>
+Polygon<T> convex_hull(Polygon<T> points) {
+    int n = points.size();
+    if(n <= 1) return points;
+    
+    vector<Point<T>> hull;
+    sort(points.begin(), points.end());
+    
+    for(int it = 0; it < 2; ++it) {
+        int sz = hull.size();
+        for(int i = 0; i < n; ++i) {
+            while((int)hull.size() >= sz+2 && 
+                  hull[hull.size()-2].orient(hull.back(), points[i]) <= 0) {
+                hull.pop_back();
+            }
+            hull.push_back(points[i]);
+        }
+        hull.pop_back();
+        reverse(points.begin(), points.end());
+    }
+    
+    if(hull.size() == 2 && hull[0] == hull[1])
+        hull.pop_back();
+        
+    return Polygon<T>(hull);
+}
+
+template<typename T>
+floating_t area(Polygon<T> poly) {
+    floating_t ans = 0;
+    int n = poly.size();
+    for(int i = 0; i < n; ++i)
+        ans += poly[i].cross(poly[(i+1)%n]);
+    return abs(ans) / 2.0;
+}
+
+template<typename T>
+floating_t perimeter(Polygon<T> poly) {
+    floating_t ans = 0;
+    int n = poly.size();
+    for(int i = 0; i < n; ++i)
+        ans += poly[i].eucl_dist(poly[(i+1)%n]);
+    return ans;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    
+    vector<Point<int>> points(n);
+    for(int i = 0; i < n; i++) {
+        cin >> points[i].x >> points[i].y;
+    }
+    
+    Polygon<int> poly(points);
+    Polygon<int> hull = convex_hull(poly);
+    
+    cout << "Convex Hull Vertices: " << hull.size() << "\n";
+    for(int i = 0; i < hull.size(); i++) {
+        cout << hull[i].x << " " << hull[i].y << "\n";
+    }
+    
+    cout << fixed << setprecision(2);
+    cout << "Area: " << area(hull) << "\n";
+    cout << "Perimeter: " << perimeter(hull) << "\n";
+    
+    return 0;
+}
+```
+
+**Sample Input:**
+```
+7
+0 0
+1 1
+2 2
+0 2
+2 0
+1 0
+0 1
+```
+
+**Sample Output:**
+```
+Convex Hull Vertices: 4
+0 0
+2 0
+2 2
+0 2
+Area: 4.00
+Perimeter: 8.00
+```
+
+## Comparison with Other Algorithms
+
+| Algorithm | Time Complexity | Space Complexity | Notes |
+|-----------|----------------|------------------|-------|
+| **Monotone Chain** | O(n log n) | O(n) | Simple, efficient, recommended |
+| Graham Scan | O(n log n) | O(n) | Classic algorithm |
+| Jarvis March | O(nh) | O(h) | Good for small hulls (h vertices) |
+| QuickHull | O(n log n) avg | O(n) | Fast in practice |
+| Chan's Algorithm | O(n log h) | O(n) | Optimal output-sensitive |
+
+<Tip>
+  **Monotone Chain** is generally preferred for its simplicity and reliability. It's easier to implement correctly than Graham Scan.
+</Tip>
+
+## Common Mistakes
+
+<Warning>
+  **Not handling duplicate points**: The algorithm handles this automatically after sorting
+</Warning>
+
+<Warning>
+  **Integer overflow**: Use `long long` for cross products if coordinates are large
+</Warning>
+
+<Warning>
+  **Floating point comparison**: Use epsilon when working with floating point coordinates
+</Warning>
+
+## Applications
+
+### 1. Minimum Bounding Rectangle
+
+```cpp
+template<typename T>
+pair<Point<T>, Point<T>> boundingBox(Polygon<T>& points) {
+    Polygon<T> hull = convex_hull(points);
+    T minX = INT_MAX, maxX = INT_MIN;
+    T minY = INT_MAX, maxY = INT_MIN;
+    
+    for(auto& p : hull) {
+        minX = min(minX, p.x);
+        maxX = max(maxX, p.x);
+        minY = min(minY, p.y);
+        maxY = max(maxY, p.y);
+    }
+    
+    return {{minX, minY}, {maxX, maxY}};
+}
+```
+
+### 2. Check if Point Inside Convex Hull
+
+```cpp
+template<typename T>
+bool insideConvexHull(Polygon<T>& hull, Point<T> p) {
+    int n = hull.size();
+    int sign = 0;
+    
+    for(int i = 0; i < n; i++) {
+        T cross = hull[i].orient(hull[(i+1)%n], p);
+        if(cross != 0) {
+            int currSign = (cross > 0) ? 1 : -1;
+            if(sign == 0) sign = currSign;
+            else if(sign != currSign) return false;
+        }
+    }
+    
+    return true;
+}
+```
+
+### 3. Convex Hull of Union
+
+```cpp
+template<typename T>
+Polygon<T> hullUnion(Polygon<T>& hull1, Polygon<T>& hull2) {
+    vector<Point<T>> combined;
+    for(auto& p : hull1) combined.push_back(p);
+    for(auto& p : hull2) combined.push_back(p);
+    
+    return convex_hull(Polygon<T>(combined));
+}
+```
+
+## Related Topics
+
+- [Point and Polygon Basics](/algorithms/geometry/overview)
+- [Line Intersection](/algorithms/geometry/line-intersection)
+- [Rotating Calipers](/algorithms/geometry/rotating-calipers)
+- [Closest Pair of Points](/algorithms/geometry/closest-pair)

@@ -1,0 +1,355 @@
+---
+title: 'Sparse Table'
+description: 'O(1) range queries for static arrays with idempotent operations'
+icon: 'table'
+---
+
+## Overview
+
+Sparse Table is a data structure that answers range queries in **O(1)** time after O(n log n) preprocessing. It works for **idempotent operations** - operations where f(x, x) = x, such as min, max, and gcd.
+
+<Note>
+**Time Complexity**
+- Build: O(n log n)
+- Query: O(1)
+- Update: Not supported (static structure)
+
+**Space Complexity**: O(n log n)
+</Note>
+
+<Note>
+**Idempotent Operations**: An operation f is idempotent if f(x, x) = x.
+
+**Supported**: min, max, gcd, lcm, bitwise AND, bitwise OR
+
+**Not Supported**: sum, xor, product (not idempotent)
+</Note>
+
+## Implementation
+
+```cpp range_query_sparse_table_std.cpp
+template <typename T, typename Operate> class SparseTable {
+public:
+  int n;
+  vector<vector<T>> table;
+  Operate func;
+
+  SparseTable(const vector<T> &v) {
+    n = (int)v.size();
+    int max_log = 32 - __builtin_clz(n);
+    table.resize(max_log);
+    table[0] = v;
+    for (int j = 1; j < max_log; j++) {
+      table[j].resize(n - (1 << j) + 1);
+      for (int i = 0; i <= n - (1 << j); i++) {
+        table[j][i] = func(table[j - 1][i], table[j - 1][i + (1 << (j - 1))]);
+      }
+    }
+  }
+
+  T query(int from, int to) const {
+    assert(0 <= from && from <= to && to <= n - 1);
+    int lg = 32 - __builtin_clz(to - from + 1) - 1;
+    return func(table[lg][from], table[lg][to - (1 << lg) + 1]);
+  }
+};
+
+struct Min {
+  template <typename T> T operator()(T x, T y) const { return min<T>(x, y); }
+};
+struct Max {
+  template <typename T> T operator()(T x, T y) const { return max<T>(x, y); }
+};
+struct Add {
+  template <typename T> T operator()(T x, T y) const { return x + y; }
+};
+
+template <typename T> using SparseTMin = SparseTable<T, Min>;
+template <typename T> using SparseTMax = SparseTable<T, Max>;
+template <typename T> using SparseTAdd = SparseTable<T, Add>;
+```
+
+## Basic Usage
+
+<Tabs>
+  <Tab title="Range Minimum Query">
+    ```cpp
+    vector<int> values = {5, 2, 8, 1, 9, 3, 7, 4, 6};
+    
+    // Create sparse table for minimum queries
+    SparseTMin<int> st(values);
+    
+    // Query minimum in range [2, 6]
+    int min_val = st.query(2, 6);  // Returns 1
+    
+    // Query minimum in range [0, 3]
+    min_val = st.query(0, 3);      // Returns 1
+    
+    // Query minimum of single element
+    min_val = st.query(4, 4);      // Returns 9
+    
+    // Multiple queries - all O(1)
+    for (int i = 0; i < 5; i++) {
+        int result = st.query(i, i + 4);
+        cout << "Min [" << i << ", " << i + 4 << "]: " << result << endl;
+    }
+    ```
+  </Tab>
+  <Tab title="Range Maximum Query">
+    ```cpp
+    vector<int> values = {3, 1, 4, 1, 5, 9, 2, 6, 5};
+    
+    SparseTMax<int> st(values);
+    
+    // Find maximum in various ranges
+    cout << st.query(0, 5) << endl;  // 9
+    cout << st.query(2, 7) << endl;  // 9
+    cout << st.query(6, 8) << endl;  // 6
+    
+    // Process many queries efficiently
+    int q = 100000;
+    for (int i = 0; i < q; i++) {
+        int l = rand() % values.size();
+        int r = l + rand() % (values.size() - l);
+        int max_val = st.query(l, r);  // O(1) per query
+    }
+    ```
+  </Tab>
+  <Tab title="Custom Operations">
+    ```cpp
+    // GCD operation
+    struct GCD {
+        template <typename T>
+        T operator()(T x, T y) const {
+            return __gcd(x, y);
+        }
+    };
+    
+    vector<int> values = {12, 18, 24, 30, 36};
+    SparseTable<int, GCD> st(values);
+    
+    // Query GCD in range
+    int g = st.query(1, 4);  // gcd(18, 24, 30, 36) = 6
+    
+    // Bitwise AND operation
+    struct BitwiseAnd {
+        int operator()(int x, int y) const { return x & y; }
+    };
+    
+    vector<int> bits = {15, 14, 12, 8};
+    SparseTable<int, BitwiseAnd> st_and(bits);
+    int result = st_and.query(0, 3);  // 15 & 14 & 12 & 8 = 8
+    ```
+  </Tab>
+</Tabs>
+
+## How It Works
+
+Sparse table precomputes answers for all ranges of length 2^k:
+
+```
+table[j][i] = answer for range [i, i + 2^j - 1]
+
+For array: [5, 2, 8, 1, 9, 3, 7, 4]
+
+table[0]: [5, 2, 8, 1, 9, 3, 7, 4]  // length 1
+table[1]: [2, 2, 1, 1, 3, 3, 4, -]  // length 2
+table[2]: [1, 1, 1, 1, 3, -, -, -]  // length 4
+table[3]: [1, 1, -, -, -, -, -, -]  // length 8
+```
+
+For a query [l, r]:
+1. Find largest k where 2^k ≤ (r - l + 1)
+2. Answer = func(table[k][l], table[k][r - 2^k + 1])
+3. These ranges may overlap, but that's OK for idempotent operations!
+
+## Why Overlapping Works
+
+```cpp
+// For query [2, 6] with min operation:
+// Length = 5, so k = 2 (largest power: 2^2 = 4)
+
+Range 1: [2, 5]  // table[2][2]
+Range 2: [3, 6]  // table[2][6-4+1]
+
+// Element 3, 4, 5 are in both ranges
+// min(min(2,5), min(3,6)) = correct answer
+// This works because min(x, x) = x (idempotent)
+```
+
+<Note>
+**Why sum doesn't work:**
+```cpp
+// If using sum on [2, 6]:
+Range 1: [2, 5]  // sum = 20
+Range 2: [3, 6]  // sum = 18
+// Result: 20 + 18 = 38 (WRONG! counts middle elements twice)
+```
+</Note>
+
+## Advanced Usage
+
+### Combining Multiple Sparse Tables
+
+```cpp
+vector<int> values = {5, 2, 8, 1, 9, 3, 7, 4};
+
+// Track both min and max
+SparseTMin<int> st_min(values);
+SparseTMax<int> st_max(values);
+
+// Find range with smallest difference between min and max
+int best_l = 0, best_r = 0;
+int min_diff = INT_MAX;
+
+for (int l = 0; l < values.size(); l++) {
+    for (int r = l; r < values.size(); r++) {
+        int mn = st_min.query(l, r);
+        int mx = st_max.query(l, r);
+        int diff = mx - mn;
+        if (diff < min_diff) {
+            min_diff = diff;
+            best_l = l;
+            best_r = r;
+        }
+    }
+}
+```
+
+### LCA (Lowest Common Ancestor) using RMQ
+
+```cpp
+// Convert LCA problem to RMQ problem using Euler tour
+vector<int> euler_tour;  // Nodes visited in DFS
+vector<int> depth;       // Depth of each node in tour
+vector<int> first_occurrence;  // First occurrence of each node
+
+// Build sparse table on depths
+SparseTMin<int> st(depth);
+
+// Query LCA of nodes u and v
+auto lca = [&](int u, int v) {
+    int l = first_occurrence[u];
+    int r = first_occurrence[v];
+    if (l > r) swap(l, r);
+    
+    int min_depth_idx = st.query(l, r);
+    return euler_tour[min_depth_idx];
+};
+```
+
+## Sparse Table vs Other Structures
+
+| Feature | Sparse Table | Segment Tree | Fenwick Tree |
+|---------|-------------|--------------|-------------|
+| **Query Time** | O(1) | O(log n) | O(log n) |
+| **Build Time** | O(n log n) | O(n) | O(n log n) |
+| **Update** | ❌ No | ✅ O(log n) | ✅ O(log n) |
+| **Space** | O(n log n) | O(4n) | O(n) |
+| **Operations** | Idempotent only | Any | Invertible only |
+| **Implementation** | Simple | Medium | Simple |
+
+<Note>
+**When to use Sparse Table:**
+- Array is static (no updates)
+- Need O(1) query time
+- Operation is idempotent (min, max, gcd)
+- Can afford O(n log n) space
+
+**Common use cases:**
+- Range Minimum/Maximum Query (RMQ)
+- Lowest Common Ancestor (LCA)
+- Static range GCD queries
+- Competitive programming where array doesn't change
+</Note>
+
+## Optimizations
+
+### Precompute Logarithms
+
+```cpp
+vector<int> log_table(n + 1);
+log_table[1] = 0;
+for (int i = 2; i <= n; i++) {
+    log_table[i] = log_table[i / 2] + 1;
+}
+
+// Use in query
+T query(int l, int r) {
+    int lg = log_table[r - l + 1];
+    return func(table[lg][l], table[lg][r - (1 << lg) + 1]);
+}
+```
+
+### Memory-Optimized Version
+
+```cpp
+// Only store needed levels
+template <typename T, typename Operate>
+class CompactSparseTable {
+    vector<T> data;
+    Operate func;
+    int n, levels;
+    
+    int index(int level, int pos) {
+        return (n - (1 << level) + 1) * level + pos;
+    }
+    
+public:
+    CompactSparseTable(const vector<T> &v) {
+        n = v.size();
+        levels = 32 - __builtin_clz(n);
+        
+        int total_size = 0;
+        for (int i = 0; i < levels; i++) {
+            total_size += n - (1 << i) + 1;
+        }
+        data.resize(total_size);
+        
+        // Build table
+        for (int i = 0; i < n; i++) data[i] = v[i];
+        
+        int offset = n;
+        for (int j = 1; j < levels; j++) {
+            int len = 1 << j;
+            for (int i = 0; i <= n - len; i++) {
+                data[offset + i] = func(
+                    data[offset - (n - len / 2 + 1) + i],
+                    data[offset - (n - len / 2 + 1) + i + len / 2]
+                );
+            }
+            offset += n - len + 1;
+        }
+    }
+};
+```
+
+## Applications
+
+<CardGroup cols={2}>
+  <Card title="Range Minimum/Maximum" icon="chart-line">
+    Classic RMQ problem with O(1) queries
+  </Card>
+  <Card title="Lowest Common Ancestor" icon="sitemap">
+    LCA via RMQ on Euler tour
+  </Card>
+  <Card title="Static Range GCD" icon="calculator">
+    GCD queries on unchanging arrays
+  </Card>
+  <Card title="Bitwise Operations" icon="binary">
+    Range AND/OR on static data
+  </Card>
+</CardGroup>
+
+## Practice Problems
+
+1. **Range Minimum Query** (CSES)
+2. **Static Range Sum Queries** (CSES) - Note: Use prefix sums instead!
+3. **Lowest Common Ancestor** (CSES) - Using RMQ
+4. **Range GCD Queries** (Various OJs)
+5. **Maximum Subarray Sum** - Combined with other techniques
+
+## See Also
+
+- [Segment Tree](/algorithms/range-query/segment-tree) - For dynamic arrays
+- [Fenwick Tree](/algorithms/range-query/fenwick-tree) - For prefix sum operations

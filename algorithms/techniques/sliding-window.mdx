@@ -1,0 +1,453 @@
+---
+title: Sliding Window Technique
+description: Learn the sliding window pattern for efficient subarray and substring problems
+icon: window-maximize
+---
+
+The sliding window technique is an optimization pattern that transforms nested loops into a single loop by maintaining a dynamic window of elements.
+
+## Overview
+
+Sliding window is a technique where you maintain a contiguous subset (window) of elements and slide it through the data structure. The window can expand or contract based on problem constraints.
+
+**Key Insight**: Instead of recalculating from scratch for each position, maintain state as the window moves.
+
+## Pattern Template
+
+The standard sliding window pattern from the source code:
+
+```cpp
+int n = any.size();
+int start = 0, end = 0;
+map<int, int> counter;
+int ans = 0;
+
+while(end < n) {
+    // Add current element to window
+    counter[any[end]]++;
+    
+    // Shrink window while condition is violated
+    while(condition(start, end) && start <= end) {
+        counter[any[start]]--;
+        process_logic1(start, end);
+        start++;
+    }
+    
+    // Process current window
+    process_logic2(start, end);
+    ans = max(ans, end - start + 1);
+    end++;
+}
+```
+
+## Visualization
+
+```
+sequence: [a1, a2, a3, a4, a5, a6, a7, ..., an]
+               |<- sliding window ->|
+               v                    v
+            [start]-->            [end]-->
+```
+
+The window expands by moving `end` forward and contracts by moving `start` forward.
+
+## How It Works
+
+<Steps>
+  <Step title="Initialize window">
+    Start with `start = 0` and `end = 0`. Use a data structure (usually hash map) to track window state.
+  </Step>
+  <Step title="Expand window">
+    Move `end` forward and add the new element to your tracking structure.
+  </Step>
+  <Step title="Check condition">
+    If the window violates a constraint, enter the shrinking phase.
+  </Step>
+  <Step title="Shrink window">
+    Move `start` forward, removing elements until the condition is satisfied again.
+  </Step>
+  <Step title="Update answer">
+    Track the maximum/minimum window size or other metric based on the problem.
+  </Step>
+  <Step title="Repeat">
+    Continue until `end` reaches the end of the array.
+  </Step>
+</Steps>
+
+## Problem Types
+
+<CardGroup cols={2}>
+  <Card title="Fixed Size Window" icon="rectangle-wide">
+    Window size is constant throughout
+  </Card>
+  <Card title="Variable Size Window" icon="left-right">
+    Window expands and contracts dynamically
+  </Card>
+  <Card title="Maximum Window" icon="maximize">
+    Find largest window satisfying condition
+  </Card>
+  <Card title="Minimum Window" icon="minimize">
+    Find smallest window satisfying condition
+  </Card>
+</CardGroup>
+
+## Example 1: Longest Substring Without Repeating Characters
+
+Find the length of the longest substring without repeating characters.
+
+```cpp
+int lengthOfLongestSubstring(string s) {
+    int n = s.length();
+    int start = 0, end = 0;
+    unordered_map<char, int> counter;
+    int maxLen = 0;
+    
+    while(end < n) {
+        // Add current character to window
+        counter[s[end]]++;
+        
+        // Shrink window if we have duplicates
+        while(counter[s[end]] > 1 && start <= end) {
+            counter[s[start]]--;
+            if(counter[s[start]] == 0) {
+                counter.erase(s[start]);
+            }
+            start++;
+        }
+        
+        // Update maximum length
+        maxLen = max(maxLen, end - start + 1);
+        end++;
+    }
+    
+    return maxLen;
+}
+
+// Example usage
+string s = "abcabcbb";
+int result = lengthOfLongestSubstring(s);
+// Result: 3 ("abc")
+```
+
+**Walkthrough for "abcabcbb"**:
+
+```
+Window: [a]         -> length = 1
+Window: [ab]        -> length = 2
+Window: [abc]       -> length = 3 ✓ (max)
+Window: [bc][a]     -> shrink left, length = 3
+Window: [ca][b]     -> length = 3
+Window: [ab][c]     -> length = 3
+Window: [bc][b]     -> duplicate, shrink
+Window: [cb]        -> length = 2
+```
+
+## Example 2: Minimum Window Substring
+
+Find the minimum window in `s` that contains all characters of `t`.
+
+```cpp
+string minWindow(string s, string t) {
+    if(s.empty() || t.empty()) return "";
+    
+    unordered_map<char, int> need, window;
+    for(char c : t) need[c]++;
+    
+    int start = 0, end = 0;
+    int valid = 0;  // Count of satisfied characters
+    int minLen = INT_MAX;
+    int minStart = 0;
+    
+    while(end < s.length()) {
+        char c = s[end];
+        end++;
+        
+        // Update window
+        if(need.count(c)) {
+            window[c]++;
+            if(window[c] == need[c]) {
+                valid++;
+            }
+        }
+        
+        // Try to shrink window
+        while(valid == need.size()) {
+            // Update minimum window
+            if(end - start < minLen) {
+                minLen = end - start;
+                minStart = start;
+            }
+            
+            char d = s[start];
+            start++;
+            
+            if(need.count(d)) {
+                if(window[d] == need[d]) {
+                    valid--;
+                }
+                window[d]--;
+            }
+        }
+    }
+    
+    return minLen == INT_MAX ? "" : s.substr(minStart, minLen);
+}
+
+// Example usage
+string s = "ADOBECODEBANC";
+string t = "ABC";
+string result = minWindow(s, t);
+// Result: "BANC"
+```
+
+## Example 3: Maximum Sum Subarray of Size K
+
+Fixed-size window: Find maximum sum of any subarray of size k.
+
+```cpp
+int maxSumSubarray(vector<int>& arr, int k) {
+    if(arr.size() < k) return -1;
+    
+    int n = arr.size();
+    int windowSum = 0;
+    
+    // Calculate sum of first window
+    for(int i = 0; i < k; i++) {
+        windowSum += arr[i];
+    }
+    
+    int maxSum = windowSum;
+    
+    // Slide the window
+    for(int end = k; end < n; end++) {
+        // Add new element and remove leftmost element
+        windowSum += arr[end] - arr[end - k];
+        maxSum = max(maxSum, windowSum);
+    }
+    
+    return maxSum;
+}
+
+// Example usage
+vector<int> arr = {2, 1, 5, 1, 3, 2};
+int k = 3;
+int result = maxSumSubarray(arr, k);
+// Result: 9 (subarray [5, 1, 3])
+```
+
+## Example 4: Longest Subarray with Sum ≤ K
+
+Find the longest subarray where the sum is at most k.
+
+```cpp
+int longestSubarrayWithSumAtMostK(vector<int>& arr, int k) {
+    int n = arr.size();
+    int start = 0, end = 0;
+    int currentSum = 0;
+    int maxLen = 0;
+    
+    while(end < n) {
+        // Expand window
+        currentSum += arr[end];
+        
+        // Shrink window if sum exceeds k
+        while(currentSum > k && start <= end) {
+            currentSum -= arr[start];
+            start++;
+        }
+        
+        // Update maximum length
+        maxLen = max(maxLen, end - start + 1);
+        end++;
+    }
+    
+    return maxLen;
+}
+
+// Example usage
+vector<int> arr = {1, 2, 3, 4, 5};
+int k = 9;
+int result = longestSubarrayWithSumAtMostK(arr, k);
+// Result: 3 (subarray [2, 3, 4])
+```
+
+## Example 5: Count Subarrays with K Different Integers
+
+```cpp
+int subarraysWithAtMostK(vector<int>& arr, int k) {
+    int n = arr.size();
+    int start = 0, end = 0;
+    unordered_map<int, int> counter;
+    int count = 0;
+    
+    while(end < n) {
+        counter[arr[end]]++;
+        
+        // Shrink while we have more than k distinct elements
+        while(counter.size() > k && start <= end) {
+            counter[arr[start]]--;
+            if(counter[arr[start]] == 0) {
+                counter.erase(arr[start]);
+            }
+            start++;
+        }
+        
+        // All subarrays ending at 'end' with start in [start, end]
+        count += end - start + 1;
+        end++;
+    }
+    
+    return count;
+}
+
+int subarraysWithKDistinct(vector<int>& arr, int k) {
+    // Exactly k = At most k - At most (k-1)
+    return subarraysWithAtMostK(arr, k) - subarraysWithAtMostK(arr, k - 1);
+}
+
+// Example usage
+vector<int> arr = {1, 2, 1, 2, 3};
+int k = 2;
+int result = subarraysWithKDistinct(arr, k);
+// Result: 7
+```
+
+## Complexity Analysis
+
+| Aspect | Complexity | Notes |
+|--------|-----------|-------|
+| Time | O(n) | Each element visited at most twice |
+| Space | O(k) | k is the size of the character set or distinct elements |
+
+**Why O(n)?** Although there's a nested while loop, each element is added once (by `end++`) and removed at most once (by `start++`), giving amortized O(n) time.
+
+## When to Use Sliding Window
+
+Use sliding window when:
+
+- Problem involves **contiguous sequences** (subarrays/substrings)
+- Asked to find **optimal window** (maximum/minimum length)
+- Keywords: "consecutive", "contiguous", "substring", "subarray"
+- Can maintain window state incrementally
+- Problem has a **monotonic property** (if valid at size k, might be invalid at k+1)
+
+## Fixed vs Variable Window
+
+### Fixed Window
+- Window size is **constant**
+- Simpler: just add new element and remove oldest
+- Example: "maximum sum of k consecutive elements"
+
+```cpp
+for(int end = k; end < n; end++) {
+    windowSum += arr[end] - arr[end - k];
+    maxSum = max(maxSum, windowSum);
+}
+```
+
+### Variable Window
+- Window size **changes dynamically**
+- Two pointers expand and contract
+- Example: "longest substring without repeating characters"
+
+```cpp
+while(end < n) {
+    // Expand
+    add(arr[end++]);
+    
+    // Contract if needed
+    while(invalid()) {
+        remove(arr[start++]);
+    }
+    
+    updateAnswer();
+}
+```
+
+## Common Patterns
+
+### Pattern 1: Maximum Window Size
+```cpp
+while(end < n) {
+    expand_window(end);
+    while(window_invalid()) shrink_window(start);
+    maxSize = max(maxSize, end - start + 1);
+    end++;
+}
+```
+
+### Pattern 2: Minimum Window Size
+```cpp
+while(end < n) {
+    expand_window(end);
+    while(window_valid()) {
+        minSize = min(minSize, end - start + 1);
+        shrink_window(start);
+    }
+    end++;
+}
+```
+
+### Pattern 3: Count Valid Windows
+```cpp
+while(end < n) {
+    expand_window(end);
+    while(window_invalid()) shrink_window(start);
+    count += end - start + 1;  // All subarrays ending at end
+    end++;
+}
+```
+
+## Common Pitfalls
+
+<Warning>
+  **Not checking start and end**: The condition `start <= end` prevents invalid window states
+</Warning>
+
+<Warning>
+  **Incorrect counter updates**: Remember to both increment when expanding and decrement when shrinking
+</Warning>
+
+<Warning>
+  **Off-by-one in window size**: Window size is `end - start + 1`, not `end - start`
+</Warning>
+
+<Warning>
+  **Memory leaks with maps**: Remove entries from map when count reaches 0 to avoid inflated map size
+</Warning>
+
+## Template Selection Guide
+
+```cpp
+// For MAXIMUM window size
+while(end < n) {
+    add(end);
+    while(BAD) remove(start++);
+    ans = max(ans, size);
+    end++;
+}
+
+// For MINIMUM window size  
+while(end < n) {
+    add(end++);
+    while(GOOD) {
+        ans = min(ans, size);
+        remove(start++);
+    }
+}
+
+// For FIXED window size
+for(end = 0; end < n; end++) {
+    add(end);
+    if(end >= k-1) {
+        process_window();
+        remove(end - k + 1);
+    }
+}
+```
+
+## Related Techniques
+
+- [Two Pointers](/algorithms/techniques/two-pointers) - Foundation for sliding window
+- [Monotonic Queue](/algorithms/data-structures/monotonic-queue) - Optimization for window min/max queries
+- [Prefix Sum](/algorithms/techniques/prefix-sum) - Alternative for some sum-based problems

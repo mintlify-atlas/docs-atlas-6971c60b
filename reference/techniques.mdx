@@ -1,0 +1,410 @@
+---
+title: "Algorithmic Techniques API"
+description: "Two pointers, sliding window, divide and conquer, and sweep line techniques"
+---
+
+## Overview
+
+Common algorithmic techniques and patterns used in competitive programming to optimize solutions.
+
+## Two Pointers
+
+A technique using two pointers to traverse data structures, often reducing time complexity from O(n²) to O(n).
+
+### Pattern 1: Two Sequences (Pointer-1 and Pointer-2)
+
+Two pointers moving through different sequences.
+
+```cpp
+// seq1: [a1, a2, a3, ..., an]
+// [p1] ->->->->->
+
+// seq2: [b1, b2, b3, ..., bn]
+// [p2] ->->->
+
+int n = (int) seq1.size();
+int m = (int) seq2.size();
+int p1 = 0, p2 = 0;
+
+while(p1 < n && p2 < m) {
+    if(p1_condition(p1)) {
+        p1++;
+    }
+    if(p2_condition(p2)) {
+        p2++;
+    }
+    process_logic(p1, p2);
+}
+```
+
+**Usage Example:**
+
+```cpp
+// Merge two sorted arrays
+vector<int> a, b;
+vector<int> result;
+int i = 0, j = 0;
+
+while(i < a.size() && j < b.size()) {
+    if(a[i] <= b[j]) {
+        result.push_back(a[i++]);
+    } else {
+        result.push_back(b[j++]);
+    }
+}
+
+while(i < a.size()) result.push_back(a[i++]);
+while(j < b.size()) result.push_back(b[j++]);
+```
+
+### Pattern 2: Left and Right Boundary
+
+Two pointers starting from opposite ends moving toward each other.
+
+```cpp
+// sequence: [a1, a2, a3, ..., an]
+//          [left]-->      <--[right]
+
+int left = 0, right = n - 1;
+
+while(left < right) {
+    if(condition(left, right)) {
+        process_logic(left, right);
+        left++;
+    } else {
+        right--;
+    }
+}
+```
+
+**Usage Example:**
+
+```cpp
+// Two sum on sorted array
+vector<int> arr;
+int target;
+int left = 0, right = n - 1;
+
+while(left < right) {
+    int sum = arr[left] + arr[right];
+    if(sum == target) {
+        cout << left << " " << right << endl;
+        break;
+    } else if(sum < target) {
+        left++;
+    } else {
+        right--;
+    }
+}
+```
+
+### Pattern 3: Slow and Fast Pointers
+
+Two pointers moving at different speeds, often used for cycle detection.
+
+```cpp
+// sequence: [a1, a2, a3, a4, a5, a6, ..., an]
+//          [slow]-->-->
+//          [fast]-->-->-->-->
+
+int slow = 0, fast = 0;
+
+while(fast < n && fast + 1 < n) {
+    slow++;
+    fast += 2;
+    
+    if(condition(slow, fast)) {
+        process_logic(slow, fast);
+    }
+}
+```
+
+**Usage Example:**
+
+```cpp
+// Find middle of linked list
+ListNode* slow = head;
+ListNode* fast = head;
+
+while(fast && fast->next) {
+    slow = slow->next;
+    fast = fast->next->next;
+}
+// slow is at middle
+```
+
+### Pattern 4: Old and New State
+
+Tracking previous and current positions.
+
+```cpp
+// sequence: [a1, a2, a3, a4, a5, a6, ..., an]
+//          [old]-->-->
+//                [new]-->-->
+
+int old_state = 0, new_state = 0;
+
+while(new_state < n) {
+    if(condition(old_state, new_state)) {
+        process_logic(old_state, new_state);
+        old_state = new_state;
+    }
+    new_state++;
+}
+```
+
+## Sliding Window
+
+A technique for finding subarrays that satisfy certain conditions.
+
+```cpp
+// sequence: [a1, a2, a3, a4, a5, a6, a7, ..., an]
+//                |<- sliding window ->|
+//                v                    v
+//             [start]-->            [end]-->
+
+int n = (int) arr.size();
+int start = 0, end = 0;
+map<int, int> counter;
+int ans = 0;
+
+while(end < n) {
+    counter[arr[end]]++;
+    
+    while(condition(start, end) && start <= end) {
+        counter[arr[start]]--;
+        process_logic1(start, end);
+        start++;
+    }
+    
+    process_logic2(start, end);
+    ans = max(ans, end - start + 1);
+    end++;
+}
+```
+
+### Common Sliding Window Problems
+
+**Fixed Size Window:**
+
+```cpp
+// Maximum sum of k consecutive elements
+int k = 3;
+int sum = 0;
+for(int i = 0; i < k; i++) sum += arr[i];
+int maxSum = sum;
+
+for(int i = k; i < n; i++) {
+    sum += arr[i] - arr[i - k];
+    maxSum = max(maxSum, sum);
+}
+```
+
+**Variable Size Window:**
+
+```cpp
+// Longest substring with at most k distinct characters
+map<char, int> freq;
+int start = 0, maxLen = 0;
+
+for(int end = 0; end < s.size(); end++) {
+    freq[s[end]]++;
+    
+    while(freq.size() > k) {
+        freq[s[start]]--;
+        if(freq[s[start]] == 0) freq.erase(s[start]);
+        start++;
+    }
+    
+    maxLen = max(maxLen, end - start + 1);
+}
+```
+
+**Minimum Window:**
+
+```cpp
+// Minimum window containing all characters
+map<char, int> required, window;
+for(char c : target) required[c]++;
+
+int start = 0, formed = 0;
+int minLen = INT_MAX, minStart = 0;
+
+for(int end = 0; end < s.size(); end++) {
+    window[s[end]]++;
+    if(required.count(s[end]) && window[s[end]] == required[s[end]]) {
+        formed++;
+    }
+    
+    while(formed == required.size()) {
+        if(end - start + 1 < minLen) {
+            minLen = end - start + 1;
+            minStart = start;
+        }
+        window[s[start]]--;
+        if(required.count(s[start]) && window[s[start]] < required[s[start]]) {
+            formed--;
+        }
+        start++;
+    }
+}
+```
+
+## Divide and Conquer
+
+Break problem into smaller subproblems, solve recursively, and combine results.
+
+```cpp
+template<typename T>
+T divide_and_conquer(vector<T> &arr, int left, int right) {
+    // Base case
+    if(left == right) {
+        return arr[left];
+    }
+    
+    // Divide
+    int mid = left + (right - left) / 2;
+    T leftResult = divide_and_conquer(arr, left, mid);
+    T rightResult = divide_and_conquer(arr, mid + 1, right);
+    
+    // Conquer - combine results
+    return combine(leftResult, rightResult);
+}
+```
+
+**Usage Example:**
+
+```cpp
+// Maximum subarray sum (Divide and Conquer)
+int maxCrossingSum(vector<int>& arr, int l, int m, int r) {
+    int sum = 0, leftSum = INT_MIN;
+    for(int i = m; i >= l; i--) {
+        sum += arr[i];
+        leftSum = max(leftSum, sum);
+    }
+    
+    sum = 0;
+    int rightSum = INT_MIN;
+    for(int i = m + 1; i <= r; i++) {
+        sum += arr[i];
+        rightSum = max(rightSum, sum);
+    }
+    
+    return leftSum + rightSum;
+}
+
+int maxSubarraySum(vector<int>& arr, int l, int r) {
+    if(l == r) return arr[l];
+    
+    int m = l + (r - l) / 2;
+    return max({maxSubarraySum(arr, l, m),
+                maxSubarraySum(arr, m + 1, r),
+                maxCrossingSum(arr, l, m, r)});
+}
+```
+
+## Sweep Line
+
+Process events in sorted order, often used for interval problems.
+
+```cpp
+struct Event {
+    int pos;
+    int type;  // 1 for start, -1 for end
+    bool operator<(const Event& other) const {
+        if(pos != other.pos) return pos < other.pos;
+        return type > other.type;  // Process starts before ends
+    }
+};
+
+vector<Event> events;
+// Add events for all intervals
+for(auto [start, end] : intervals) {
+    events.push_back({start, 1});
+    events.push_back({end, -1});
+}
+
+sort(events.begin(), events.end());
+
+int active = 0;
+for(Event& e : events) {
+    active += e.type;
+    // Process current state
+}
+```
+
+**Usage Example:**
+
+```cpp
+// Maximum number of overlapping intervals
+struct Event {
+    int time;
+    int type;  // 1 for arrival, -1 for departure
+};
+
+vector<Event> events;
+for(auto [start, end] : intervals) {
+    events.push_back({start, 1});
+    events.push_back({end + 1, -1});  // +1 for inclusive end
+}
+
+sort(events.begin(), events.end(), [](Event& a, Event& b) {
+    if(a.time != b.time) return a.time < b.time;
+    return a.type > b.type;
+});
+
+int current = 0, maxOverlap = 0;
+for(Event& e : events) {
+    current += e.type;
+    maxOverlap = max(maxOverlap, current);
+}
+```
+
+## Available Implementations
+
+| Technique | File | Description |
+|-----------|------|-------------|
+| Two Pointers (Two Sequences) | `techniques_two_pointer1_pointer2.cpp` | Different sequences |
+| Two Pointers (Left-Right) | `techniques_two_pointer_left_right_boundary.cpp` | Opposite ends |
+| Two Pointers (Slow-Fast) | `techniques_two_pointers_slow_fast.cpp` | Different speeds |
+| Two Pointers (Old-New) | `techniques_two_pointers_old_and_new_state.cpp` | State tracking |
+| Sliding Window | `techniques_sliding_windows.cpp` | Variable window |
+| Divide and Conquer | `techniques_divide_and_conquer.cpp` | Recursive splitting |
+| Sweep Line | `techniques_sweep_line.cpp` | Event processing |
+
+## Complexity Analysis
+
+| Technique | Time | Space | Best For |
+|-----------|------|-------|----------|
+| Two Pointers | O(n) | O(1) | Sorted arrays |
+| Sliding Window | O(n) | O(k) | Subarray problems |
+| Divide and Conquer | O(n log n) | O(log n) | Recursive problems |
+| Sweep Line | O(n log n) | O(n) | Interval problems |
+
+## When to Use
+
+<CardGroup cols={2}>
+  <Card title="Two Pointers" icon="arrows-left-right">
+    Use for sorted arrays, pair problems, or when you need O(n) instead of O(n²)
+  </Card>
+  <Card title="Sliding Window" icon="window-maximize">
+    Use for contiguous subarray/substring problems with conditions
+  </Card>
+  <Card title="Divide and Conquer" icon="code-branch">
+    Use when problem can be split into independent subproblems
+  </Card>
+  <Card title="Sweep Line" icon="ruler-horizontal">
+    Use for interval overlap, merge, or event-based problems
+  </Card>
+</CardGroup>
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Search Algorithms" icon="magnifying-glass" href="/reference/search">
+    Binary and ternary search techniques
+  </Card>
+  <Card title="Data Structures" icon="database" href="/reference/data-structures">
+    Structures that complement these techniques
+  </Card>
+</CardGroup>

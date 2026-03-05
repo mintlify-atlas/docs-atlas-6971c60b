@@ -1,0 +1,300 @@
+---
+title: "Range Query Structures API"
+description: "Segment trees, Fenwick trees, sparse tables, and other range query data structures"
+---
+
+## Overview
+
+Range query structures efficiently answer queries and perform updates on array ranges. This module includes segment trees, Fenwick trees (Binary Indexed Trees), sparse tables, and more.
+
+## Segment Tree
+
+A versatile data structure for range queries and point updates.
+
+```cpp
+template <typename T, class F = function<T(const T &, const T &)>>
+class SegmentTree {
+public:
+    SegmentTree(const vector<T> &values, T neutral, const F &f);
+    void modify(int index, T value);
+    T query(int l, int r);
+};
+
+template <typename T> using segtree = SegmentTree<T>;
+```
+
+<ParamField path="values" type="vector<T>">
+  Initial array values
+</ParamField>
+
+<ParamField path="neutral" type="T">
+  Identity element for the operation (0 for sum, INF for min, -INF for max)
+</ParamField>
+
+<ParamField path="f" type="function<T(const T&, const T&)>">
+  Associative binary operation (sum, min, max, gcd, etc.)
+</ParamField>
+
+### Methods
+
+<ParamField path="modify" type="void modify(int index, T value)">
+  Update element at index to value
+</ParamField>
+
+<ParamField path="query" type="T query(int l, int r)">
+  Query the range [l, r). Returns the result of applying the operation.
+</ParamField>
+
+**Complexity:**
+- Build: O(n)
+- Query: O(log n)
+- Update: O(log n)
+- Space: O(n)
+
+**Usage Example:**
+
+```cpp
+vector<int> values = {1, 3, 5, 7, 9, 11};
+auto func = [](int x, int y) { return max(x, y); };
+segtree<int, decltype(func)> st(values, -1e9, func);
+
+cout << st.query(1, 4) << endl;  // 7 (max of [3,5,7])
+st.modify(2, 10);
+cout << st.query(1, 4) << endl;  // 10
+```
+
+## Lazy Segment Tree
+
+Segment tree with lazy propagation for efficient range updates.
+
+```cpp
+template <typename T>
+class LazySegmentTree {
+public:
+    LazySegmentTree(const vector<T> &values);
+    void update(int l, int r, T value);
+    T query(int l, int r);
+};
+```
+
+<ParamField path="update" type="void update(int l, int r, T value)">
+  Apply update to range [l, r)
+</ParamField>
+
+<ParamField path="query" type="T query(int l, int r)">
+  Query the range [l, r)
+</ParamField>
+
+**Complexity:**
+- Build: O(n)
+- Range Query: O(log n)
+- Range Update: O(log n)
+- Space: O(n)
+
+**Usage Example:**
+
+```cpp
+vector<int> arr = {1, 2, 3, 4, 5};
+LazySegmentTree<int> st(arr);
+st.update(1, 4, 10);  // Add 10 to [1,4)
+cout << st.query(0, 5) << endl;
+```
+
+## Fenwick Tree (Binary Indexed Tree)
+
+Efficient data structure for prefix sums and point updates.
+
+```cpp
+template <typename T>
+class Fenwick {
+public:
+    Fenwick(int n);
+    void modify(int x, T v);  // Add v to position x
+    T query(int x);           // Sum of [0, x]
+    T query(int l, int r);    // Sum of [l, r]
+};
+
+template <typename T> using fenwick = Fenwick<T>;
+```
+
+<ParamField path="modify" type="void modify(int x, T v)">
+  Add value v to element at position x
+</ParamField>
+
+<ParamField path="query" type="T query(int x)">
+  Return prefix sum from 0 to x
+</ParamField>
+
+**Complexity:**
+- Build: O(n)
+- Query: O(log n)
+- Update: O(log n)
+- Space: O(n)
+
+**Usage Example:**
+
+```cpp
+fenwick<int> fw(n);
+for (int i = 0; i < n; i++) {
+    fw.modify(i, arr[i]);
+}
+int sum = fw.query(r) - fw.query(l - 1);  // Sum of [l, r]
+```
+
+### Custom Fenwick with Structs
+
+```cpp
+struct node {
+    int a;
+    inline void operator+=(const node &other) { a += other.a; }
+    inline node operator-(const node &other) { 
+        node res; res.a = a - other.a; return res; 
+    }
+};
+
+fenwick<node> fw(n);
+```
+
+## Sparse Table
+
+Answers static range queries in O(1) time (no updates).
+
+```cpp
+template <typename T, typename Operate>
+class SparseTable {
+public:
+    SparseTable(const vector<T> &v);
+    T query(int from, int to) const;
+};
+
+struct Min {
+    template <typename T> T operator()(T x, T y) const { return min<T>(x, y); }
+};
+
+struct Max {
+    template <typename T> T operator()(T x, T y) const { return max<T>(x, y); }
+};
+
+template <typename T> using SparseTMin = SparseTable<T, Min>;
+template <typename T> using SparseTMax = SparseTable<T, Max>;
+```
+
+**Complexity:**
+- Build: O(n log n)
+- Query: O(1)
+- Space: O(n log n)
+- Note: Only works for idempotent operations (min, max, gcd)
+
+**Usage Example:**
+
+```cpp
+vector<int> arr = {3, 1, 4, 1, 5, 9, 2, 6};
+SparseTMin<int> st(arr);
+cout << st.query(2, 5) << endl;  // 1 (min of [4,1,5,9])
+```
+
+## Sqrt Decomposition
+
+Divides array into blocks of size √n for range queries.
+
+```cpp
+class SqrtDecomposition {
+public:
+    SqrtDecomposition(const vector<int> &arr);
+    void update(int idx, int value);
+    int query(int l, int r);
+};
+```
+
+**Complexity:**
+- Build: O(n)
+- Query: O(√n)
+- Update: O(1)
+- Space: O(n)
+
+## 2D Range Sum Queries
+
+Efficiently computes sum of subarrays in 2D grids.
+
+```cpp
+class RangeSum2D {
+public:
+    RangeSum2D(const vector<vector<int>> &matrix);
+    int sumRegion(int row1, int col1, int row2, int col2);
+};
+```
+
+<ParamField path="sumRegion" type="int sumRegion(int row1, int col1, int row2, int col2)">
+  Return sum of rectangle from (row1, col1) to (row2, col2) inclusive
+</ParamField>
+
+**Complexity:**
+- Build: O(m × n)
+- Query: O(1)
+- Space: O(m × n)
+
+**Usage Example:**
+
+```cpp
+vector<vector<int>> matrix = {
+    {3, 0, 1, 4, 2},
+    {5, 6, 3, 2, 1},
+    {1, 2, 0, 1, 5}
+};
+RangeSum2D rs(matrix);
+cout << rs.sumRegion(1, 1, 2, 2) << endl;  // Sum of submatrix
+```
+
+## Persistent Segment Tree
+
+Supports querying previous versions of the segment tree.
+
+```cpp
+class PersistentSegmentTree {
+public:
+    int update(int prev_root, int idx, int value);
+    int query(int root, int l, int r);
+};
+```
+
+**Complexity:**
+- Update: O(log n) time, O(log n) space per version
+- Query: O(log n)
+
+## Dynamic Segment Tree
+
+Segment tree with dynamic node allocation for sparse arrays.
+
+**Complexity:**
+- Update: O(log n)
+- Query: O(log n)
+- Space: O(q log n) where q is number of updates
+
+## Available Structures
+
+| Structure | File | Best For |
+|-----------|------|----------|
+| Segment Tree | `range_query_segment_tree.cpp` | General range queries |
+| Lazy Segment Tree (Full) | `range_query_segment_tree_lazy_full.cpp` | Range updates |
+| Lazy Segment Tree (Compress) | `range_query_segment_tree_lazy_compress.cpp` | Range updates (compact) |
+| Lazy Segment Tree (Template) | `range_query_segment_tree_lazy_template.cpp` | Customizable lazy prop |
+| Fenwick Tree | `range_query_fenwick_tree_std.cpp` | Prefix sums |
+| Sparse Table | `range_query_sparse_table_std.cpp` | Static RMQ |
+| Sqrt Decomposition | `range_query_sqrt_decomposition.cpp` | Simple range queries |
+| Persistent Segment Tree | `range_query_persistent_segment_tree.cpp` | Version control |
+| Dynamic Segment Tree | `range_query_dynamic_segment_tree.cpp` | Sparse arrays |
+| 2D Range Sum | `range_query_sum_2d_immutable.cpp` | 2D prefix sums |
+| 1D Range Sum | `range_query_sum_immutable.cpp` | 1D prefix sums |
+| Less Than Query | `range_query_less_than_segment_tree_lazy.cpp` | Count < x queries |
+| Sum + Lower Bound | `range_query_sum_lower_bound_segment_tree_lazy.cpp` | Binary search on segtree |
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Data Structures" icon="database" href="/reference/data-structures">
+    Other advanced data structures
+  </Card>
+  <Card title="Techniques" icon="lightbulb" href="/reference/techniques">
+    Algorithmic techniques and patterns
+  </Card>
+</CardGroup>

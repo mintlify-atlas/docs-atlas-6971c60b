@@ -1,0 +1,264 @@
+---
+title: Installation & Setup
+description: Install and configure C++ Algorithm Snippets for VS Code and Vim/Neovim
+---
+
+## Overview
+
+The C++ Algorithm Snippets library provides automated snippet generation scripts that scan the repository and create code snippets for your editor. This enables instant access to over 100+ competitive programming algorithms and data structures.
+
+### Available Scripts
+
+- **`generate_vscode_snippets.py`** - Automatically generates VS Code snippets from all `.cpp` files
+- **`generate_snippets.sh`** - Creates UltiSnips format snippets for Vim/Neovim
+
+## VS Code Setup
+
+<Steps>
+  <Step title="Clone the Repository">
+    First, clone the repository to your local machine:
+    
+    ```bash
+    git clone https://github.com/LuchoBazz/cpp-algorithm-snippets.git
+    cd cpp-algorithm-snippets
+    ```
+  </Step>
+
+  <Step title="Run the Snippet Generator">
+    Execute the Python script to generate VS Code snippets:
+    
+    ```bash
+    python3 generate_vscode_snippets.py
+    ```
+    
+    The script will:
+    - Scan all subdirectories for `.cpp` files
+    - Extract code from each file
+    - Convert Vim date placeholders to VS Code variables
+    - Generate snippets in your VS Code snippets directory
+  </Step>
+
+  <Step title="Snippet Location">
+    Snippets are automatically placed in the correct location based on your OS:
+    
+    <CodeGroup>
+    ```bash Windows
+    %APPDATA%\Code\User\snippets\cpp.json
+    ```
+    
+    ```bash Linux
+    ~/.config/Code/User/snippets/cpp.json
+    ```
+    
+    ```bash macOS
+    ~/Library/Application Support/Code/User/snippets/cpp.json
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Verify Installation">
+    Open VS Code and create a new `.cpp` file. Start typing a snippet prefix like `graph_dijkstra_std` and you should see autocomplete suggestions.
+    
+    <Tip>
+    The snippet prefix is always the filename without the `.cpp` extension.
+    </Tip>
+  </Step>
+</Steps>
+
+### How the VS Code Generator Works
+
+The `generate_vscode_snippets.py` script performs the following operations:
+
+```python
+def add_snippets_to_vscode(root_path, filename, ext):
+    # 1. Read the existing cpp.json file
+    with open(PATH, 'r') as json_data:
+        snippets = json.loads(json_data.read())
+    
+    # 2. Read the .cpp source file
+    code = []
+    with open(path, 'r') as reader:
+        code = reader.read().split('\n')
+    
+    # 3. Convert Vim date placeholders to VS Code variables
+    if 'template_' in filename:
+        for i in range(len(code)):
+            line = code[i].replace(
+                '`!v strftime("%B %d, %Y")`',
+                '${CURRENT_MONTH_NAME} ${CURRENT_DATE}, ${CURRENT_YEAR}'
+            )
+            code[i] = line
+    
+    # 4. Create snippet with filename as prefix
+    data = {
+        'prefix': filename,
+        'body': code
+    }
+    snippets[filename] = data
+```
+
+<Note>
+The script automatically handles OS detection and places snippets in the correct platform-specific directory.
+</Note>
+
+## Vim/Neovim Setup
+
+<Steps>
+  <Step title="Prerequisites">
+    Ensure you have UltiSnips plugin installed. If not, install it using your plugin manager:
+    
+    ```vim
+    " Using vim-plug
+    Plug 'SirVer/ultisnips'
+    
+    " Using Vundle
+    Plugin 'SirVer/ultisnips'
+    ```
+  </Step>
+
+  <Step title="Create UltiSnips Directory">
+    Create the required directory structure:
+    
+    ```bash
+    mkdir -p ~/.vim/UltiSnips/cpp
+    ```
+  </Step>
+
+  <Step title="Run the Snippet Generator">
+    Execute the bash script from the repository root:
+    
+    ```bash
+    bash generate_snippets.sh
+    ```
+    
+    The script will recursively find all `.cpp` files and generate UltiSnips format snippets.
+  </Step>
+
+  <Step title="Verify Installation">
+    Open Vim/Neovim and create a new `.cpp` file. Type a snippet prefix (e.g., `graph_dijkstra_std`) and press your UltiSnips trigger key (default: `<Tab>`).
+  </Step>
+</Steps>
+
+### How the Vim Generator Works
+
+The `generate_snippets.sh` script uses a simple but effective approach:
+
+```bash
+#!/bin/bash
+
+# Clear existing snippets
+echo "" > ~/.vim/UltiSnips/cpp/cpp_generate.snippets
+
+# Find all .cpp files and generate snippets
+for i in $(find -name '*.cpp'); do
+   [ -f "$i" ] || break
+   echo "Snippet ${i##*/} was generated"
+   
+   # Write snippet header
+   echo "" >> ~/.vim/UltiSnips/cpp/cpp_generate.snippets
+   echo "snippet $(basename -- "$i" .cpp) \"$(basename -- "$i" .cpp) autocomplete\"" >> ~/.vim/UltiSnips/cpp/cpp_generate.snippets
+   
+   # Append file contents
+   cat "$i" >> ~/.vim/UltiSnips/cpp/cpp_generate.snippets
+   
+   # Close snippet
+   echo "" >> ~/.vim/UltiSnips/cpp/cpp_generate.snippets
+   echo "endsnippet" >> ~/.vim/UltiSnips/cpp/cpp_generate.snippets
+   echo "" >> ~/.vim/UltiSnips/cpp/cpp_generate.snippets
+done
+```
+
+<Warning>
+The script overwrites the existing `cpp_generate.snippets` file each time it runs. Any manual modifications will be lost.
+</Warning>
+
+## Verification
+
+### Test Your Installation
+
+Create a test file to verify snippets are working:
+
+<CodeGroup>
+```cpp test.cpp
+// Type: template_std
+// Then trigger autocomplete
+```
+</CodeGroup>
+
+You should see the complete template expand:
+
+```cpp
+/**
+ * @created     : March 05, 2026
+ * @handle      : @LuchoBazz
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    return 0;
+}
+```
+
+### Common Issues
+
+<AccordionGroup>
+  <Accordion title="Snippets not appearing in VS Code">
+    1. Check that `cpp.json` exists in your snippets directory
+    2. Restart VS Code after running the script
+    3. Verify you're editing a `.cpp` file
+    4. Check VS Code's snippet settings are enabled
+  </Accordion>
+
+  <Accordion title="Permission denied when running scripts">
+    Make the script executable:
+    ```bash
+    chmod +x generate_snippets.sh
+    ```
+  </Accordion>
+
+  <Accordion title="UltiSnips not triggering in Vim">
+    1. Verify UltiSnips is installed: `:echo exists('g:UltiSnipsExpandTrigger')`
+    2. Check your trigger key mapping in `.vimrc`
+    3. Ensure the snippets file exists: `~/.vim/UltiSnips/cpp/cpp_generate.snippets`
+  </Accordion>
+</AccordionGroup>
+
+## Updating Snippets
+
+When you pull new changes from the repository or modify snippet files:
+
+<CodeGroup>
+```bash VS Code
+python3 generate_vscode_snippets.py
+```
+
+```bash Vim/Neovim
+bash generate_snippets.sh
+```
+</CodeGroup>
+
+<Tip>
+Consider adding these commands as shell aliases for quick access:
+
+```bash
+alias update-cpp-snippets-vscode='cd ~/cpp-algorithm-snippets && python3 generate_vscode_snippets.py'
+alias update-cpp-snippets-vim='cd ~/cpp-algorithm-snippets && bash generate_snippets.sh'
+```
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Learn how to use snippets in competitive programming
+  </Card>
+  <Card title="Snippet Usage" icon="code" href="/concepts/snippet-usage">
+    Master snippet triggers and customization
+  </Card>
+</CardGroup>

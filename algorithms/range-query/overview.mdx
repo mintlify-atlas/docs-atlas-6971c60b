@@ -1,0 +1,95 @@
+---
+title: 'Range Query Overview'
+description: 'Efficient data structures for range queries and updates'
+icon: 'chart-line'
+---
+
+## Introduction
+
+Range query data structures are fundamental in competitive programming for efficiently answering queries over array segments. These structures support operations like:
+
+- **Range Sum/Min/Max**: Find aggregate values over a range
+- **Range Updates**: Modify multiple elements efficiently
+- **Point Queries**: Access individual elements after updates
+
+<CardGroup cols={2}>
+  <Card title="Segment Tree" icon="tree" href="/algorithms/range-query/segment-tree">
+    Versatile tree structure supporting range queries and updates in O(log n)
+  </Card>
+  <Card title="Fenwick Tree" icon="binary" href="/algorithms/range-query/fenwick-tree">
+    Memory-efficient structure for prefix sums and point updates
+  </Card>
+  <Card title="Sparse Table" icon="table" href="/algorithms/range-query/sparse-table">
+    Static RMQ with O(1) query time for idempotent operations
+  </Card>
+</CardGroup>
+
+## Choosing the Right Structure
+
+### Segment Tree
+- **Best for**: General range queries with range updates
+- **Supports**: Any associative operation
+- **Updates**: O(log n) point and range updates
+- **Queries**: O(log n)
+- **Space**: O(4n)
+
+### Fenwick Tree (BIT)
+- **Best for**: Prefix sums and frequency counting
+- **Supports**: Operations with inverse (addition/subtraction)
+- **Updates**: O(log n) point updates
+- **Queries**: O(log n) prefix queries
+- **Space**: O(n)
+
+### Sparse Table
+- **Best for**: Static arrays with idempotent operations
+- **Supports**: min, max, gcd (operations where f(x,x) = x)
+- **Updates**: Not supported (static)
+- **Queries**: O(1)
+- **Space**: O(n log n)
+
+## Common Use Cases
+
+<Note>
+**Idempotent Operations**: An operation f is idempotent if f(x, x) = x. Examples include min, max, gcd, but NOT sum or xor.
+</Note>
+
+### Range Sum Queries
+```cpp
+// Fenwick Tree - most efficient
+fenwick<int> ft(n);
+ft.modify(i, val);  // Add val to position i
+int sum = ft.query(r) - ft.query(l-1);  // Sum [l, r]
+```
+
+### Range Minimum Query (RMQ)
+```cpp
+// Sparse Table - O(1) queries on static array
+auto func = [](int x, int y) { return min(x, y); };
+SparseTMin<int> st(values);
+int min_val = st.query(l, r);  // O(1)
+```
+
+### Range Updates with Lazy Propagation
+```cpp
+// Segment Tree with lazy propagation
+segtree<int> st(n);
+st.modify(l, r, val);  // Set all elements in [l, r] to val
+auto result = st.query(l, r);  // Get sum, min, max
+```
+
+## Performance Comparison
+
+| Structure | Build | Point Update | Range Update | Point Query | Range Query | Space |
+|-----------|-------|--------------|--------------|-------------|-------------|-------|
+| Segment Tree | O(n) | O(log n) | O(log n) | O(log n) | O(log n) | O(4n) |
+| Segment Tree (Lazy) | O(n) | O(log n) | O(log n) | O(log n) | O(log n) | O(4n) |
+| Fenwick Tree | O(n log n) | O(log n) | - | O(log n) | O(log n) | O(n) |
+| Sparse Table | O(n log n) | - | - | O(1) | O(1) | O(n log n) |
+
+## Next Steps
+
+Explore specific implementations:
+
+1. [Segment Tree](/algorithms/range-query/segment-tree) - Learn about basic and lazy propagation variants
+2. [Fenwick Tree](/algorithms/range-query/fenwick-tree) - Master efficient prefix sum queries
+3. [Sparse Table](/algorithms/range-query/sparse-table) - Understand O(1) RMQ for static arrays

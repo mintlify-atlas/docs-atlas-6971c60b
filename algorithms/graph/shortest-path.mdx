@@ -1,0 +1,243 @@
+---
+title: 'Shortest Path Algorithms'
+description: 'Dijkstra, Bellman-Ford, and Floyd-Warshall implementations'
+icon: 'route'
+---
+
+## Overview
+
+Shortest path algorithms find the minimum cost path between vertices in a graph. Different algorithms are optimized for different scenarios based on edge weights and problem requirements.
+
+## Dijkstra's Algorithm
+
+Dijkstra's algorithm finds the shortest path from a source vertex to all other vertices in a graph with **non-negative edge weights**.
+
+### Implementation
+
+```cpp
+// graph_graph
+// graph_undigraph or graph_digraph
+
+template <typename T>
+vector <T> dijkstra(const graph<T> &g, int start) {
+    assert(0 <= start && start < g.n);
+    priority_queue<link<T>, vector<link<T>>, greater<link<T>>> Q;
+    vector<T> dist(g.n, numeric_limits<T>::max());
+    dist[start] = static_cast<T>(0);
+    Q.push({start, static_cast<T>(0)});
+    while (!Q.empty()) {
+        link<T> node = Q.top(); Q.pop();
+        int to = node.to;
+        if(node.cost > dist[to]) {
+            continue;
+        }
+        for (link<T> neighbor: g.adj[to]) {
+            T newCost = dist[to] + neighbor.cost;
+            if (newCost < dist[neighbor.to]) {
+                Q.push({neighbor.to, newCost});
+                dist[neighbor.to] = newCost;
+            }
+        }
+    }
+    return dist;
+    // returns numeric_limits<T>::max() if there's no path
+}
+```
+
+### Usage Example
+
+```cpp
+// Create graph
+digraph<int> g(5);
+g.add(0, 1, 4);
+g.add(0, 2, 1);
+g.add(2, 1, 2);
+g.add(1, 3, 1);
+g.add(2, 3, 5);
+
+// Find shortest paths from node 0
+vector<int> dist = dijkstra(g, 0);
+
+// Print distances
+for(int i = 0; i < g.n; ++i) {
+    if(dist[i] == numeric_limits<int>::max()) {
+        cout << "Node " << i << ": unreachable\n";
+    } else {
+        cout << "Node " << i << ": " << dist[i] << "\n";
+    }
+}
+```
+
+<Note>
+  **Time Complexity**: O(E log V) where E is the number of edges and V is the number of vertices
+  
+  **Space Complexity**: O(V)
+</Note>
+
+<Warning>
+  Dijkstra's algorithm does NOT work correctly with negative edge weights. Use Bellman-Ford for graphs with negative weights.
+</Warning>
+
+## Bellman-Ford Algorithm
+
+Bellman-Ford finds shortest paths from a source vertex and can handle **negative edge weights**. It also detects negative cycles.
+
+### Implementation
+
+```cpp
+// graph_graph
+// graph_undigraph
+
+template<typename T>
+vector<T> bellman_ford(const undigraph<T> &G, int source, bool &cycle) {
+    assert(0 <= source && source < G.n);
+    T inf = static_cast<T>(numeric_limits<T>::max() >> 1);
+    vector<T> dist(G.n, inf);
+    dist[source] = static_cast<T>(0);
+    for(int i = 0; i < G.n + 1; ++i){
+        for(const edge<T> &e: G.edges) {
+            if(dist[e.from] != inf && dist[e.from] + e.cost < dist[e.to]) {
+                dist[e.to] = dist[e.from] + e.cost;
+                if(i == G.n)
+                    cycle = true; // There are negative edges
+            }
+        }
+    }
+    return dist;
+    // Time Complexity: O(V*E), Space Complexity: O(V)
+}
+```
+
+### Usage Example
+
+```cpp
+// Create graph with potential negative weights
+undigraph<int> g(4);
+g.add(0, 1, 4);
+g.add(0, 2, 3);
+g.add(1, 2, -2);
+g.add(2, 3, 1);
+
+// Run Bellman-Ford
+bool has_negative_cycle = false;
+vector<int> dist = bellman_ford(g, 0, has_negative_cycle);
+
+if(has_negative_cycle) {
+    cout << "Graph contains a negative cycle!\n";
+} else {
+    for(int i = 0; i < g.n; ++i) {
+        cout << "Distance to " << i << ": " << dist[i] << "\n";
+    }
+}
+```
+
+<Note>
+  **Time Complexity**: O(V × E)
+  
+  **Space Complexity**: O(V)
+</Note>
+
+<Tip>
+  Use Bellman-Ford when you need to detect negative cycles or when the graph has negative edge weights.
+</Tip>
+
+## Floyd-Warshall Algorithm
+
+Floyd-Warshall computes shortest paths between **all pairs of vertices**. It's simple to implement and works with negative weights (but not negative cycles).
+
+### Implementation
+
+```cpp
+// Ref: https://cp-algorithms.com/graph/all-pair-shortest-path-floyd-warshall.html
+// Verification: https://cses.fi/problemset/task/1672/
+
+const int mxN = 500 + 10;
+const int64 inf = 1e18;
+int64 dp[mxN][mxN];
+
+// Initialize
+for(int i = 0; i < n; ++i)
+    for(int j = 0; j < n; ++j)
+        dp[i][j] = (i == j)? 0 : inf;
+
+// Adding edges
+// dp[from][to] = min(dp[from][to], cost);
+// dp[to][from] = min(dp[to][from], cost);  // for undirected
+
+// Floyd-Warshall
+for(int k = 0; k < n; ++k) {
+    for(int i = 0; i < n; ++i) {
+        for(int j = 0; j < n; ++j) {
+            if(dp[i][k] < inf && dp[k][j] < inf) {
+                dp[i][j] = min(dp[i][j], dp[i][k] + dp[k][j]);
+            }
+        }
+    }
+}
+
+// answer: dp[from][to]
+```
+
+### Usage Example
+
+```cpp
+const int64 inf = 1e18;
+int n = 4;  // number of nodes
+int64 dp[4][4];
+
+// Initialize
+for(int i = 0; i < n; ++i)
+    for(int j = 0; j < n; ++j)
+        dp[i][j] = (i == j) ? 0 : inf;
+
+// Add edges
+dp[0][1] = min(dp[0][1], 3LL);
+dp[1][0] = min(dp[1][0], 3LL);
+dp[1][2] = min(dp[1][2], 1LL);
+dp[2][1] = min(dp[2][1], 1LL);
+dp[2][3] = min(dp[2][3], 5LL);
+dp[3][2] = min(dp[3][2], 5LL);
+
+// Run Floyd-Warshall
+for(int k = 0; k < n; ++k)
+    for(int i = 0; i < n; ++i)
+        for(int j = 0; j < n; ++j)
+            if(dp[i][k] < inf && dp[k][j] < inf)
+                dp[i][j] = min(dp[i][j], dp[i][k] + dp[k][j]);
+
+// Print all pairs shortest paths
+for(int i = 0; i < n; ++i) {
+    for(int j = 0; j < n; ++j) {
+        if(dp[i][j] == inf)
+            cout << "INF ";
+        else
+            cout << dp[i][j] << " ";
+    }
+    cout << "\n";
+}
+```
+
+<Note>
+  **Time Complexity**: O(V³)
+  
+  **Space Complexity**: O(V²)
+</Note>
+
+<Warning>
+  Floyd-Warshall is only practical for small graphs (V ≤ 500) due to its O(V³) complexity.
+</Warning>
+
+## Algorithm Comparison
+
+| Algorithm | Time Complexity | Space | Negative Weights | Use Case |
+|-----------|----------------|-------|------------------|----------|
+| Dijkstra | O(E log V) | O(V) | No | Single-source, non-negative weights |
+| Bellman-Ford | O(VE) | O(V) | Yes | Single-source, negative weights, cycle detection |
+| Floyd-Warshall | O(V³) | O(V²) | Yes | All-pairs, small graphs |
+
+<Tip>
+  **Quick Selection Guide**:
+  - Use **Dijkstra** for most single-source problems with non-negative weights
+  - Use **Bellman-Ford** when you need to handle negative weights or detect negative cycles
+  - Use **Floyd-Warshall** when you need all-pairs shortest paths and V ≤ 500
+</Tip>

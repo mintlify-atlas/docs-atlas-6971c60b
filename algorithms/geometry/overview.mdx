@@ -1,0 +1,478 @@
+---
+title: Computational Geometry
+description: Introduction to 2D geometry algorithms for competitive programming
+icon: shapes
+---
+
+Computational geometry deals with algorithms for solving geometric problems. This section covers essential 2D geometry primitives and algorithms commonly used in competitive programming.
+
+## Overview
+
+Geometric algorithms are fundamental for solving problems involving:
+
+- Points, lines, and polygons
+- Distances and angles
+- Area and perimeter calculations
+- Convex hulls
+- Intersection detection
+- Closest pair problems
+
+## Core Components
+
+<CardGroup cols={2}>
+  <Card title="Point" icon="location-dot" href="#point-structure">
+    2D point with arithmetic operations and distance metrics
+  </Card>
+  <Card title="Polygon" icon="draw-polygon" href="#polygon-structure">
+    Collection of points forming a polygon
+  </Card>
+  <Card title="Convex Hull" icon="circle" href="/algorithms/geometry/convex-hull">
+    Find the smallest convex polygon containing all points
+  </Card>
+  <Card title="Area & Perimeter" icon="ruler-combined" href="#area-and-perimeter">
+    Calculate geometric properties of polygons
+  </Card>
+</CardGroup>
+
+## Point Structure
+
+The fundamental building block for all geometry algorithms is the Point structure.
+
+### Implementation
+
+```cpp
+typedef long double floating_t;
+
+template<typename T>
+struct Point {
+    T x;
+    T y;
+
+    // Arithmetic operators
+    Point<T> operator + (Point<T> p) { return {x+p.x, y+p.y}; }
+    Point<T> operator - (Point<T> p) { return {x-p.x, y-p.y}; }
+    Point<T> operator * (Point<T> p) { return {x*p.x-y*p.y, x*p.y+y*p.x}; }
+    Point<T> operator * (T p) { return {x*p, y*p}; }
+    Point<T> operator / (T p) { return {x/p, y/p}; } // floating point only
+    
+    // Comparison operators
+    bool operator == (const Point<T> &p) const { return x==p.x && y == p.y; }
+    bool operator != (const Point<T> &p) const { return !(*this == p); }
+    bool operator <  (const Point<T> &p) const { return x < p.x || (x == p.x && y < p.y); }
+    bool operator >  (const Point<T> &p) const { return x > p.x || (x == p.x && y > p.y); }
+    
+    // Dot and cross products
+    T dot(Point<T> p) { return x*p.x + y*p.y; }
+    T cross(Point<T> p) { return x*p.y - y*p.x; }
+    T orient(Point<T> b, Point<T> c) { return (b-*this).cross(c-*this); }
+    
+    // Norms and distances
+    T norm() { return x*x + y*y; }
+    floating_t eucl_dist() { return sqrt(norm()); }
+    T man_dist() { return abs(x) + abs(y); }
+    T ch_dist() { return max(abs(x), abs(y)); }
+};
+
+template<typename T>
+using point = Point<T>;
+```
+
+### Key Operations
+
+#### Dot Product
+
+The dot product measures the projection of one vector onto another.
+
+```cpp
+T dot(Point<T> p) { 
+    return x*p.x + y*p.y; 
+}
+```
+
+**Properties:**
+- If `a · b > 0`: vectors point in similar direction
+- If `a · b = 0`: vectors are perpendicular
+- If `a · b < 0`: vectors point in opposite directions
+
+```cpp
+Point<int> a = {3, 4};
+Point<int> b = {1, 0};
+int dotProduct = a.dot(b);  // 3
+```
+
+#### Cross Product
+
+The cross product (in 2D, returns scalar) determines orientation.
+
+```cpp
+T cross(Point<T> p) { 
+    return x*p.y - y*p.x; 
+}
+```
+
+**Properties:**
+- If `a × b > 0`: b is counter-clockwise from a
+- If `a × b = 0`: vectors are collinear
+- If `a × b < 0`: b is clockwise from a
+
+```cpp
+Point<int> a = {1, 0};
+Point<int> b = {0, 1};
+int crossProduct = a.cross(b);  // 1 (counter-clockwise)
+```
+
+#### Orientation
+
+Determine the orientation of three points (a, b, c).
+
+```cpp
+T orient(Point<T> b, Point<T> c) { 
+    return (b-*this).cross(c-*this); 
+}
+```
+
+**Returns:**
+- Positive: counter-clockwise turn
+- Zero: collinear
+- Negative: clockwise turn
+
+```cpp
+Point<int> a = {0, 0};
+Point<int> b = {1, 0};
+Point<int> c = {1, 1};
+int orientation = a.orient(b, c);  // 1 (CCW)
+```
+
+### Distance Metrics
+
+#### Euclidean Distance
+
+Standard straight-line distance.
+
+```cpp
+floating_t eucl_dist() { 
+    return sqrt(norm()); 
+}
+
+floating_t eucl_dist(Point<T> p) { 
+    return sqrt(norm(p)); 
+}
+```
+
+```cpp
+Point<int> a = {0, 0};
+Point<int> b = {3, 4};
+double dist = a.eucl_dist(b);  // 5.0
+```
+
+#### Manhattan Distance
+
+Sum of absolute differences (taxicab geometry).
+
+```cpp
+T man_dist() { 
+    return abs(x) + abs(y); 
+}
+
+T man_dist(Point<T> p) { 
+    return abs(x-p.x) + abs(y-p.y); 
+}
+```
+
+```cpp
+Point<int> a = {1, 2};
+Point<int> b = {4, 6};
+int dist = a.man_dist(b);  // |4-1| + |6-2| = 7
+```
+
+#### Chebyshev Distance
+
+Maximum of absolute differences.
+
+```cpp
+T ch_dist() { 
+    return max(abs(x), abs(y)); 
+}
+
+T ch_dist(Point<T> p) { 
+    return max(abs(x-p.x), abs(y-p.y)); 
+}
+```
+
+```cpp
+Point<int> a = {1, 2};
+Point<int> b = {4, 6};
+int dist = a.ch_dist(b);  // max(|4-1|, |6-2|) = 4
+```
+
+## Polygon Structure
+
+A polygon is represented as a collection of points.
+
+```cpp
+template<typename T>
+class Polygon {
+    vector<Point<T>> points;
+public:
+    Polygon() {}
+    Polygon(int n) : points(n) {}
+    Polygon(vector<Point<T>> pts) : points(pts.begin(), pts.end()) {}
+    
+    typename vector<Point<T>>::iterator begin() { return points.begin(); }
+    typename vector<Point<T>>::iterator end() { return points.end(); }
+    int size() { return (int) points.size(); }
+    Point<T>& operator [] (int i) { return points[i]; }
+    
+    void add(Point<T> point) {
+        points.push_back(point);
+    }
+    
+    void delete_repeated() {
+        vector<Point<T>> aux;
+        sort(points.begin(), points.end());
+        for(Point<T> &pt : points) {
+            if(aux.empty() || aux.back() != pt) {
+                aux.push_back(pt);
+            }
+        }
+        points.swap(aux);
+    }
+};
+
+template<typename T>
+using polygon = Polygon<T>;
+```
+
+### Usage Example
+
+```cpp
+// Create a polygon
+Polygon<int> poly;
+poly.add({0, 0});
+poly.add({4, 0});
+poly.add({4, 3});
+poly.add({0, 3});
+
+// Or initialize with vector
+vector<Point<int>> points = {{0,0}, {4,0}, {4,3}, {0,3}};
+Polygon<int> rect(points);
+
+// Remove duplicate points
+poly.delete_repeated();
+```
+
+## Area and Perimeter
+
+### Area Calculation
+
+Compute the area of a polygon using the Shoelace formula.
+
+```cpp
+template<typename T>
+floating_t area(Polygon<T> points, bool sign = false) {
+    int n = points.size();
+    floating_t ans = 0.0;
+    
+    for(int i = 0; i < n; ++i) {
+        ans += points[i].cross(points[(i + 1) % n]);
+    }
+    
+    ans /= 2.0;
+    // ans >= 0: counter-clockwise
+    // ans < 0: clockwise
+    return (!sign) ? abs(ans) : ans;
+}
+```
+
+**Time Complexity:** O(n)  
+**Space Complexity:** O(1)
+
+#### Example
+
+```cpp
+vector<Point<int>> square = {{0,0}, {4,0}, {4,4}, {0,4}};
+Polygon<int> poly(square);
+
+floating_t a = area(poly);
+// Result: 16.0
+
+// Check orientation
+floating_t signedArea = area(poly, true);
+if(signedArea > 0) {
+    cout << "Counter-clockwise\n";
+} else {
+    cout << "Clockwise\n";
+}
+```
+
+### Perimeter Calculation
+
+Compute the perimeter by summing edge lengths.
+
+```cpp
+template<typename T>
+floating_t perimeter(Polygon<T> points) {
+    int n = points.size();
+    floating_t ans = 0.0;
+    
+    for(int i = 0; i < n; ++i) {
+        ans += points[i].eucl_dist(points[(i + 1) % n]);
+    }
+    
+    return ans;
+}
+```
+
+**Time Complexity:** O(n)  
+**Space Complexity:** O(1)
+
+#### Example
+
+```cpp
+vector<Point<int>> triangle = {{0,0}, {3,0}, {0,4}};
+Polygon<int> poly(triangle);
+
+floating_t p = perimeter(poly);
+// Result: 3 + 4 + 5 = 12.0
+```
+
+## Common Patterns
+
+### Check if Point is Inside Polygon
+
+```cpp
+bool isInside(Polygon<int>& poly, Point<int> p) {
+    int n = poly.size();
+    int count = 0;
+    
+    for(int i = 0; i < n; i++) {
+        Point<int> a = poly[i];
+        Point<int> b = poly[(i + 1) % n];
+        
+        if((a.y <= p.y && p.y < b.y) || (b.y <= p.y && p.y < a.y)) {
+            double x = a.x + (double)(p.y - a.y) / (b.y - a.y) * (b.x - a.x);
+            if(p.x < x) count++;
+        }
+    }
+    
+    return count % 2 == 1;
+}
+```
+
+### Find Centroid
+
+```cpp
+template<typename T>
+Point<floating_t> centroid(Polygon<T>& poly) {
+    int n = poly.size();
+    floating_t cx = 0, cy = 0, area = 0;
+    
+    for(int i = 0; i < n; i++) {
+        int j = (i + 1) % n;
+        floating_t cross = poly[i].x * poly[j].y - poly[j].x * poly[i].y;
+        cx += (poly[i].x + poly[j].x) * cross;
+        cy += (poly[i].y + poly[j].y) * cross;
+        area += cross;
+    }
+    
+    area /= 2.0;
+    cx /= (6.0 * area);
+    cy /= (6.0 * area);
+    
+    return {cx, cy};
+}
+```
+
+### Check if Polygon is Convex
+
+```cpp
+template<typename T>
+bool isConvex(Polygon<T>& poly) {
+    int n = poly.size();
+    if(n < 3) return false;
+    
+    int sign = 0;
+    for(int i = 0; i < n; i++) {
+        T cross = poly[i].orient(
+            poly[(i + 1) % n], 
+            poly[(i + 2) % n]
+        );
+        
+        if(cross != 0) {
+            if(sign == 0) {
+                sign = (cross > 0) ? 1 : -1;
+            } else if((cross > 0 ? 1 : -1) != sign) {
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+```
+
+## Type Definitions
+
+```cpp
+typedef long double floating_t;
+
+using point_i = Point<int>;
+using point_ll = Point<long long>;
+using point_d = Point<double>;
+
+using polygon_i = Polygon<int>;
+using polygon_ll = Polygon<long long>;
+using polygon_d = Polygon<double>;
+```
+
+## Hash Support
+
+For using points in unordered containers:
+
+```cpp
+template<typename T>
+struct hasher {
+    size_t operator()(const Point<T> &p) const { 
+        return hash<T>()(p.x) ^ hash<T>()(p.y);
+    }
+};
+
+// Usage
+unordered_map<Point<int>, int, hasher<int>> mp;
+mp[{1, 2}] = 10;
+```
+
+## Precision Considerations
+
+<Warning>
+  **Floating point errors**: Use appropriate epsilon for comparisons
+</Warning>
+
+```cpp
+const double EPS = 1e-9;
+
+bool equals(double a, double b) {
+    return abs(a - b) < EPS;
+}
+
+bool less(double a, double b) {
+    return a < b - EPS;
+}
+```
+
+<Tip>
+  **Integer coordinates**: Use `long long` for intermediate calculations to avoid overflow
+</Tip>
+
+## Next Steps
+
+Explore advanced geometry algorithms:
+
+<CardGroup cols={2}>
+  <Card title="Convex Hull" icon="circle" href="/algorithms/geometry/convex-hull">
+    Monotone Chain algorithm for finding convex hull
+  </Card>
+  <Card title="Sweep Line Technique" icon="arrows-left-right" href="/algorithms/techniques/divide-conquer">
+    Advanced algorithmic techniques for geometry
+  </Card>
+</CardGroup>

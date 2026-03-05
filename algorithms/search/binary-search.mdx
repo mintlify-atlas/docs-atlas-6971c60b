@@ -1,0 +1,471 @@
+---
+title: "Binary Search"
+description: "Binary search implementations for various scenarios"
+---
+
+## Overview
+
+Binary search is a fundamental algorithm that finds a target in a sorted array in O(log n) time. Beyond simple searches, it's used for finding boundaries, optimizing functions, and solving a wide range of problems.
+
+## Core Concept
+
+Binary search works on monotonic functions - functions that are either non-decreasing or non-increasing. The key insight:
+
+- If a property holds at position `mid`, it holds for all positions on one side
+- This allows eliminating half the search space each iteration
+
+## Template I: Finding First Valid Position
+
+Finds the smallest index where `works(index)` returns true.
+
+```cpp
+int n = oo;
+int low = 0, high = n, mid;
+while (low < high) {
+    mid = low + (high - low) / 2;
+    if (!works(mid)) {
+        low = mid + 1;
+    } else {
+        high = mid;
+    }
+}
+// Answer: low
+```
+
+**Use case**: Find first element ≥ target
+
+**Example:**
+```cpp
+// Find first element >= target in sorted array
+int first_ge(vector<int> &arr, int target) {
+    int low = 0, high = arr.size();
+    while (low < high) {
+        int mid = low + (high - low) / 2;
+        if (arr[mid] < target) {
+            low = mid + 1;
+        } else {
+            high = mid;
+        }
+    }
+    return low;
+}
+```
+
+## Template II: Finding Last Invalid Position
+
+Finds boundary when `high - low > 1` termination is needed.
+
+```cpp
+int n = oo;
+int low = 0, high = n, mid;
+while (high - low > 1) {
+    mid = low + (high - low) / 2;
+    if (!ok(mid)) {
+        low = mid;
+    } else {
+        high = mid;
+    }
+}
+// Answer: low or high (depending on problem)
+```
+
+**Use case**: When you need to check both boundaries
+
+## Template III: Jump Search Style
+
+Uses exponential/binary jumping for unbounded search.
+
+```cpp
+int low = -1, high = oo;
+for (int delta = high + 1; delta >= 1; delta /= 2) {
+    while (delta + low < high && !works(delta + low)) {
+        low += delta;
+    }
+}
+// Answer: low + 1
+```
+
+**Use case**: When upper bound is unknown or very large
+
+## Binary Search on Real Values
+
+### Template I: Real Values (Relative Error)
+
+```cpp
+double low = 0.0, high = 1e9;
+while (high - low > 1e-9) {  // Precision threshold
+    double mid = (low + high) / 2.0;
+    if (!works(mid)) {
+        low = mid;
+    } else {
+        high = mid;
+    }
+}
+// Answer: low or high
+```
+
+### Template II: Real Values (Fixed Iterations)
+
+```cpp
+double low = 0.0, high = 1e9;
+for (int iter = 0; iter < 100; iter++) {  // 100 iterations ≈ 1e-30 precision
+    double mid = (low + high) / 2.0;
+    if (!works(mid)) {
+        low = mid;
+    } else {
+        high = mid;
+    }
+}
+// Answer: low or high
+```
+
+### Template III: Real Values (Absolute Check)
+
+```cpp
+double low = 0.0, high = 1e9;
+double eps = 1e-9;
+while (abs(high - low) > eps) {
+    double mid = low + (high - low) / 2.0;
+    if (works(mid)) {
+        high = mid;
+    } else {
+        low = mid;
+    }
+}
+// Answer: (low + high) / 2.0
+```
+
+## STL Binary Search Functions
+
+### lower_bound
+Finds first element ≥ value
+
+```cpp
+vector<int> arr = {1, 2, 4, 4, 5, 7};
+auto it = lower_bound(arr.begin(), arr.end(), 4);
+int pos = it - arr.begin();  // pos = 2
+```
+
+### upper_bound
+Finds first element > value
+
+```cpp
+vector<int> arr = {1, 2, 4, 4, 5, 7};
+auto it = upper_bound(arr.begin(), arr.end(), 4);
+int pos = it - arr.begin();  // pos = 4
+```
+
+### binary_search
+Checks if element exists
+
+```cpp
+vector<int> arr = {1, 2, 4, 5, 7};
+bool found = binary_search(arr.begin(), arr.end(), 4);  // true
+```
+
+### Count occurrences
+
+```cpp
+vector<int> arr = {1, 2, 4, 4, 4, 5, 7};
+auto low = lower_bound(arr.begin(), arr.end(), 4);
+auto high = upper_bound(arr.begin(), arr.end(), 4);
+int count = high - low;  // count = 3
+```
+
+## Common Applications
+
+### 1. Binary Search the Answer
+
+When answer has monotonic property but direct computation is hard.
+
+```cpp
+// Problem: Minimum capacity to ship packages in D days
+bool canShip(vector<int> &weights, int capacity, int days) {
+    int current_day = 1, current_weight = 0;
+    for (int w : weights) {
+        if (w > capacity) return false;
+        if (current_weight + w > capacity) {
+            current_day++;
+            current_weight = w;
+        } else {
+            current_weight += w;
+        }
+    }
+    return current_day <= days;
+}
+
+int shipWithinDays(vector<int> &weights, int days) {
+    int low = *max_element(weights.begin(), weights.end());
+    int high = accumulate(weights.begin(), weights.end(), 0);
+    
+    while (low < high) {
+        int mid = low + (high - low) / 2;
+        if (canShip(weights, mid, days)) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return low;
+}
+```
+
+### 2. Finding Peak Element
+
+```cpp
+int findPeakElement(vector<int> &nums) {
+    int low = 0, high = nums.size() - 1;
+    while (low < high) {
+        int mid = low + (high - low) / 2;
+        if (nums[mid] > nums[mid + 1]) {
+            high = mid;  // Peak is on the left (or at mid)
+        } else {
+            low = mid + 1;  // Peak is on the right
+        }
+    }
+    return low;
+}
+```
+
+### 3. Rotated Sorted Array
+
+```cpp
+int search(vector<int> &nums, int target) {
+    int low = 0, high = nums.size() - 1;
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+        if (nums[mid] == target) return mid;
+        
+        // Determine which half is sorted
+        if (nums[low] <= nums[mid]) {
+            // Left half is sorted
+            if (nums[low] <= target && target < nums[mid]) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        } else {
+            // Right half is sorted
+            if (nums[mid] < target && target <= nums[high]) {
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+    }
+    return -1;
+}
+```
+
+### 4. Square Root
+
+```cpp
+int mySqrt(int x) {
+    if (x < 2) return x;
+    int low = 1, high = x / 2;
+    while (low <= high) {
+        long long mid = low + (high - low) / 2;
+        long long sq = mid * mid;
+        if (sq == x) return mid;
+        if (sq < x) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    return high;
+}
+```
+
+### 5. Kth Smallest Element in Sorted Matrix
+
+```cpp
+int kthSmallest(vector<vector<int>> &matrix, int k) {
+    int n = matrix.size();
+    int low = matrix[0][0];
+    int high = matrix[n-1][n-1];
+    
+    auto count_less_equal = [&](int target) {
+        int count = 0;
+        int j = n - 1;
+        for (int i = 0; i < n; i++) {
+            while (j >= 0 && matrix[i][j] > target) j--;
+            count += (j + 1);
+        }
+        return count;
+    };
+    
+    while (low < high) {
+        int mid = low + (high - low) / 2;
+        if (count_less_equal(mid) < k) {
+            low = mid + 1;
+        } else {
+            high = mid;
+        }
+    }
+    return low;
+}
+```
+
+## Common Patterns
+
+### Pattern 1: Minimize Maximum
+
+```cpp
+// Minimize the maximum load
+bool canDistribute(vector<int> &arr, int k, int max_load) {
+    int groups = 1, current = 0;
+    for (int x : arr) {
+        if (current + x > max_load) {
+            groups++;
+            current = x;
+        } else {
+            current += x;
+        }
+    }
+    return groups <= k;
+}
+
+int minimizeMaximum(vector<int> &arr, int k) {
+    int low = *max_element(arr.begin(), arr.end());
+    int high = accumulate(arr.begin(), arr.end(), 0);
+    while (low < high) {
+        int mid = low + (high - low) / 2;
+        if (canDistribute(arr, k, mid)) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return low;
+}
+```
+
+### Pattern 2: Maximize Minimum
+
+```cpp
+// Maximize minimum distance between k elements
+bool canPlace(vector<int> &positions, int k, int min_dist) {
+    int count = 1, last_pos = positions[0];
+    for (int i = 1; i < positions.size(); i++) {
+        if (positions[i] - last_pos >= min_dist) {
+            count++;
+            last_pos = positions[i];
+            if (count == k) return true;
+        }
+    }
+    return false;
+}
+
+int maxDistance(vector<int> &positions, int k) {
+    sort(positions.begin(), positions.end());
+    int low = 1;
+    int high = positions.back() - positions.front();
+    while (low < high) {
+        int mid = low + (high - low + 1) / 2;  // Round up
+        if (canPlace(positions, k, mid)) {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+    return low;
+}
+```
+
+## Tips and Tricks
+
+### 1. Avoiding Integer Overflow
+
+```cpp
+// WRONG: Can overflow
+int mid = (low + high) / 2;
+
+// CORRECT: No overflow
+int mid = low + (high - low) / 2;
+
+// ALTERNATIVE: For non-negative values
+int mid = (low + high) >>> 1;  // Unsigned right shift (Java)
+```
+
+### 2. Inclusive vs Exclusive Bounds
+
+```cpp
+// Exclusive upper bound: [low, high)
+while (low < high) {
+    int mid = low + (high - low) / 2;
+    // ...
+}
+
+// Inclusive bounds: [low, high]
+while (low <= high) {
+    int mid = low + (high - low) / 2;
+    // ...
+}
+```
+
+### 3. Finding Exact vs Closest
+
+```cpp
+// Find exact match
+while (low <= high) {
+    int mid = low + (high - low) / 2;
+    if (arr[mid] == target) return mid;
+    // ...
+}
+return -1;  // Not found
+
+// Find closest position
+while (low < high) {
+    int mid = low + (high - low) / 2;
+    // ...
+}
+return low;  // Always returns valid position
+```
+
+### 4. Rounding in Real-Valued Search
+
+```cpp
+// When minimizing: round down
+low = mid;
+
+// When maximizing: round up
+high = mid;
+
+// For real values, use enough iterations
+for (int iter = 0; iter < 100; iter++) {
+    // 100 iterations gives ~1e-30 precision
+}
+```
+
+## Complexity Analysis
+
+| Scenario | Time | Space |
+|----------|------|-------|
+| Binary search in array | O(log n) | O(1) |
+| Binary search the answer | O(log(range) × check) | O(1) |
+| Real-valued search | O(iterations × check) | O(1) |
+
+## Common Mistakes
+
+1. **Off-by-one errors**: Carefully choose inclusive/exclusive bounds
+2. **Infinite loops**: Ensure search space shrinks each iteration
+3. **Wrong mid calculation**: Use `low + (high - low) / 2`
+4. **Forgetting to sort**: Binary search requires sorted input
+5. **Wrong comparison**: Ensure monotonic property holds
+
+<Accordion title="Why Binary Search Works">
+Binary search exploits the **monotonic property**: if a predicate is false at position i, it's false for all positions before i (or after i, depending on direction).
+
+**Invariant maintained**:
+- All positions < low: predicate is false
+- All positions ≥ high: predicate is true
+- Answer is in range [low, high)
+
+Each iteration:
+1. Check middle position
+2. Update low or high based on result
+3. Search space reduces by half
+
+After log₂(n) iterations, search space becomes 1 element.
+</Accordion>

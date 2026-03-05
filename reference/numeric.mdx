@@ -1,0 +1,307 @@
+---
+title: "Numeric Utilities API"
+description: "Modular arithmetic, fast power, and BigInt implementations"
+---
+
+## Overview
+
+Numeric utilities for competitive programming including modular arithmetic with automatic operations, fast exponentiation, and arbitrary precision integers.
+
+## Modular Integer (Mint)
+
+A template class for modular arithmetic that handles all operations automatically.
+
+### Basic Mint
+
+```cpp
+template<typename Type>
+struct Modular {
+    using T = typename decay<decltype(Type::value)>::type;
+    T value;
+    
+    Modular();
+    Modular(int64_t num);
+    
+    Modular& operator+=(const Modular& m);
+    Modular& operator-=(const Modular& m);
+    Modular& operator*=(const Modular& m);
+    Modular& operator/=(const Modular& m);
+    
+    friend Modular operator+(Modular a, const Modular& b);
+    friend Modular operator-(Modular a, const Modular& b);
+    friend Modular operator*(Modular a, const Modular& b);
+    friend Modular operator/(Modular a, const Modular& b);
+    
+    Modular operator-() const;
+    Modular& operator++();
+    Modular& operator--();
+};
+
+const int MOD = 1e9 + 7;
+using Mint = Modular<integral_constant<decay<decltype(MOD)>::type, MOD>>;
+```
+
+### Modular Inverse
+
+```cpp
+template<typename T>
+T inverse(T a, T m);
+
+template<typename Type>
+Modular<Type> inverse(const Modular<Type>& a);
+```
+
+**Complexity:** O(log m)
+
+**Usage Example:**
+
+```cpp
+const int MOD = 1e9 + 7;
+using Mint = Modular<integral_constant<int, MOD>>;
+
+Mint a = 5;
+Mint b = 3;
+Mint c = a + b;    // 8
+Mint d = a * b;    // 15
+Mint e = a / b;    // 5 * inverse(3) mod MOD
+
+cout << c << endl;  // Automatically applies modulo
+```
+
+### Features
+
+<ParamField path="operator+" type="Modular operator+(Modular a, const Modular& b)">
+  Modular addition
+</ParamField>
+
+<ParamField path="operator*" type="Modular operator*(Modular a, const Modular& b)">
+  Modular multiplication
+</ParamField>
+
+<ParamField path="operator/" type="Modular operator/(Modular a, const Modular& b)">
+  Modular division (automatically computes inverse)
+</ParamField>
+
+<ParamField path="inverse" type="Modular inverse(const Modular& a)">
+  Compute modular multiplicative inverse
+</ParamField>
+
+### Compile-time vs Runtime Modulo
+
+**Compile-time (recommended):**
+
+```cpp
+const int MOD = 1e9 + 7;
+using Mint = Modular<integral_constant<int, MOD>>;
+```
+
+**Runtime (variable modulo):**
+
+```cpp
+using ModType = int;
+struct VarMod { static ModType value; };
+ModType VarMod::value;
+ModType& MOD = VarMod::value;
+using Mint = Modular<VarMod>;
+
+// Set modulo at runtime
+MOD = 998244353;
+```
+
+### Versions Available
+
+| Version | File | Description |
+|---------|------|-------------|
+| Compress | `numeric_mint_compress.cpp` | Minimal implementation |
+| Medium | `numeric_mint_medium.cpp` | Balanced features |
+| Full | `numeric_mint_full.cpp` | All features included |
+
+## Fast Power
+
+Computes a^b efficiently using binary exponentiation.
+
+```cpp
+template<typename T, typename U>
+T fastpow(T a, U b);
+```
+
+<ParamField path="a" type="T">
+  Base (can be int, Mint, Matrix, etc.)
+</ParamField>
+
+<ParamField path="b" type="U">
+  Exponent (must be non-negative)
+</ParamField>
+
+**Complexity:** O(log b)
+
+**Usage Example:**
+
+```cpp
+// Integer power
+int result = fastpow(2, 10);  // 1024
+
+// Modular power
+Mint a = 2;
+Mint result = fastpow(a, 1000000000);
+
+// Matrix power
+Matrix<int> mat(n, n);
+Matrix<int> result = fastpow(mat, k);
+```
+
+## Modular Operations
+
+### Basic Modular Operations
+
+```cpp
+template<typename T>
+T mod(T a, T m);  // Always returns positive result
+
+template<typename T>
+T add_mod(T a, T b, T m);
+
+template<typename T>
+T sub_mod(T a, T b, T m);
+
+template<typename T>
+T mul_mod(T a, T b, T m);
+
+template<typename T>
+T pow_mod(T a, T b, T m);
+```
+
+**Usage Example:**
+
+```cpp
+const int MOD = 1e9 + 7;
+int result = mul_mod(123456789, 987654321, MOD);
+```
+
+### Fast Modular Operations
+
+Optimized versions for specific moduli.
+
+```cpp
+template<typename T>
+T fast_mul_mod(T a, T b, T m);  // Using __int128
+```
+
+## BigInt (Arbitrary Precision)
+
+Supports arithmetic with arbitrarily large integers.
+
+```cpp
+class BigInt {
+public:
+    BigInt();
+    BigInt(long long value);
+    BigInt(const string &s);
+    
+    BigInt operator+(const BigInt &other) const;
+    BigInt operator-(const BigInt &other) const;
+    BigInt operator*(const BigInt &other) const;
+    BigInt operator/(const BigInt &other) const;
+    BigInt operator%(const BigInt &other) const;
+    
+    bool operator<(const BigInt &other) const;
+    bool operator==(const BigInt &other) const;
+    
+    string toString() const;
+};
+```
+
+**Usage Example:**
+
+```cpp
+BigInt a("123456789012345678901234567890");
+BigInt b("987654321098765432109876543210");
+BigInt sum = a + b;
+BigInt product = a * b;
+cout << sum.toString() << endl;
+```
+
+**Complexity:**
+- Addition/Subtraction: O(n)
+- Multiplication: O(n²) or O(n log n) with FFT
+- Division: O(n²)
+
+## Common Modular Values
+
+```cpp
+// Common moduli in competitive programming
+const int MOD1 = 1e9 + 7;      // 1000000007 (prime)
+const int MOD2 = 998244353;     // (prime, NTT-friendly)
+const int MOD3 = 1e9 + 9;       // 1000000009 (prime)
+```
+
+## Advanced Usage
+
+### Checking Division by Zero
+
+```cpp
+bool is_zero_division(Mint &a) {
+    using T = Mint::T;
+    return inverse(static_cast<T>(a), MOD) < static_cast<T>(0);
+}
+```
+
+### Using with Combinatorics
+
+```cpp
+Factorial<Mint> fact(1e6);
+
+Mint nCr(int n, int r) {
+    if (r < 0 || r > n) return Mint(0);
+    return fact[n] / (fact[r] * fact[n-r]);
+}
+
+Mint result = nCr(100, 50);
+```
+
+### Fast Power with Mint
+
+```cpp
+Mint result = fastpow(Mint(2), 1000000000);
+// Computes 2^1000000000 mod MOD efficiently
+```
+
+## Performance Tips
+
+<CardGroup cols={2}>
+  <Card title="Use Compile-time MOD" icon="bolt">
+    Compile-time modulo is faster than runtime
+  </Card>
+  <Card title="Precompute Factorials" icon="memory">
+    For multiple nCr queries, precompute factorials
+  </Card>
+  <Card title="Fast Power" icon="rocket">
+    Use fastpow for exponentiation, not repeated multiplication
+  </Card>
+  <Card title="Avoid Division" icon="divide">
+    Modular division is expensive, minimize usage
+  </Card>
+</CardGroup>
+
+## Available Implementations
+
+| Feature | File | Notes |
+|---------|------|-------|
+| Mint (Compress) | `numeric_mint_compress.cpp` | Minimal, fast |
+| Mint (Medium) | `numeric_mint_medium.cpp` | Good balance |
+| Mint (Full) | `numeric_mint_full.cpp` | All features |
+| Fast Power | `numeric_fastpow.cpp` | Binary exponentiation |
+| Modular Ops | `numeric_mod.cpp` | Basic operations |
+| Fast Mod | `numeric_mod_fast.cpp` | Optimized |
+| BigInt | `numeric_bigint.cpp` | Arbitrary precision |
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Math Algorithms" icon="calculator" href="/reference/math">
+    GCD, primes, and number theory
+  </Card>
+  <Card title="Combinatorics" icon="shapes" href="/reference/combinatorics">
+    Use Mint with combinatorial functions
+  </Card>
+</CardGroup>

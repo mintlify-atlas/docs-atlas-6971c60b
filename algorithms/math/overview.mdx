@@ -1,0 +1,65 @@
+---
+title: "Math & Number Theory"
+description: "Essential mathematical algorithms for competitive programming"
+---
+
+## Overview
+
+This section covers fundamental mathematical algorithms commonly used in competitive programming, including number theory, combinatorics, and matrix operations.
+
+## Categories
+
+<CardGroup cols={2}>
+  <Card title="Number Theory" icon="calculator" href="/algorithms/math/number-theory">
+    Primes, GCD, LCM, divisors, and Euler's totient function
+  </Card>
+  
+  <Card title="Combinatorics" icon="grid" href="/algorithms/math/combinatorics">
+    Combinations, permutations, and binomial coefficients
+  </Card>
+  
+  <Card title="Matrix Operations" icon="table" href="/algorithms/math/matrix">
+    Matrix multiplication and fast exponentiation
+  </Card>
+</CardGroup>
+
+## Key Concepts
+
+### Prime Numbers
+Prime numbers are fundamental building blocks in number theory. Testing primality and finding prime factorizations are essential operations.
+
+### Greatest Common Divisor (GCD)
+The GCD of two numbers is the largest positive integer that divides both numbers. Euclid's algorithm computes it efficiently in O(log min(a,b)) time.
+
+### Modular Arithmetic
+Many competitive programming problems require computing results modulo a prime (commonly 10^9+7) to avoid integer overflow.
+
+### Combinatorial Mathematics
+Counting problems frequently appear in contests, requiring knowledge of permutations, combinations, and related formulas.
+
+## Common Applications
+
+- **Cryptography**: RSA encryption relies on prime factorization
+- **Hashing**: Prime numbers help create good hash functions
+- **Optimization**: GCD and LCM appear in scheduling problems
+- **Counting**: Combinatorics solves "how many ways" questions
+- **Dynamic Programming**: Matrix exponentiation speeds up linear recurrences
+
+## Complexity Reference
+
+| Algorithm | Time Complexity | Space Complexity |
+|-----------|----------------|------------------|
+| Sieve of Eratosthenes | O(n log log n) | O(n) |
+| GCD (Euclid's) | O(log min(a,b)) | O(1) |
+| Prime Factorization | O(√n) | O(log n) |
+| Miller-Rabin | O(k log³ n) | O(1) |
+| Matrix Multiplication | O(n³) | O(n²) |
+| Matrix Exponentiation | O(n³ log k) | O(n²) |
+
+## Best Practices
+
+1. **Use 64-bit integers** when dealing with large numbers to avoid overflow
+2. **Precompute factorials** for combinatorial problems with multiple queries
+3. **Cache sieve results** when checking primality multiple times
+4. **Apply modular arithmetic** early to prevent overflow
+5. **Use fast exponentiation** for computing large powers efficiently

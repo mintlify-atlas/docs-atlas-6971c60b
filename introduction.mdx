@@ -1,0 +1,94 @@
+---
+title: "C++ Algorithm Snippets"
+description: "A comprehensive collection of competitive programming algorithms and data structures implemented in C++ with IDE snippet generation support"
+---
+
+<Card
+  title="Get Started"
+  icon="rocket"
+  href="/quickstart"
+  horizontal
+>
+  Start using algorithm snippets in your competitive programming workflow in minutes.
+</Card>
+
+## Why C++ Algorithm Snippets?
+
+This library provides 161+ battle-tested algorithm implementations designed for competitive programming. Every algorithm includes automatic snippet generation for VS Code and Vim/Neovim, allowing you to focus on problem-solving rather than implementing common data structures and algorithms from scratch.
+
+<CardGroup cols={2}>
+  <Card title="Graph Algorithms" icon="diagram-project" href="/algorithms/graph/overview">
+    Dijkstra, Bellman-Ford, Floyd-Warshall, MST, and tree algorithms
+  </Card>
+  <Card title="Data Structures" icon="database" href="/algorithms/data-structures/overview">
+    Tries, segment trees, fenwick trees, and advanced structures
+  </Card>
+  <Card title="String Algorithms" icon="text" href="/algorithms/string/overview">
+    KMP, Rabin-Karp, Aho-Corasick, suffix arrays, and hashing
+  </Card>
+  <Card title="Math & Number Theory" icon="calculator" href="/algorithms/math/overview">
+    Prime factorization, GCD, modular arithmetic, and matrix operations
+  </Card>
+</CardGroup>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Snippet Generation" icon="code" href="/concepts/snippet-usage">
+    Automatic snippet generation for VS Code and Vim/Neovim
+  </Card>
+  <Card title="Contest Templates" icon="trophy" href="/concepts/templates">
+    Optimized templates for USACO, Google Code Jam, and LeetCode
+  </Card>
+  <Card title="Debugging Tools" icon="bug" href="/algorithms/misc/debugging">
+    Comprehensive debugging utilities for competitive programming
+  </Card>
+  <Card title="Fast I/O" icon="bolt" href="/algorithms/misc/io">
+    Optimized input/output utilities and macros
+  </Card>
+</CardGroup>
+
+## Quick Example
+
+Get started with Dijkstra's algorithm in your competitive programming solution:
+
+```cpp
+// Include graph structures
+// graph_graph, graph_undigraph
+
+template <typename T>
+vector <T> dijkstra(const graph<T> &g, int start) {
+    assert(0 <= start && start < g.n);
+    priority_queue<link<T>, vector<link<T>>, greater<link<T>>> Q;
+    vector<T> dist(g.n, numeric_limits<T>::max());
+    dist[start] = static_cast<T>(0);
+    Q.push({start, static_cast<T>(0)});
+    while (!Q.empty()) {
+        link<T> node = Q.top(); Q.pop();
+        int to = node.to;
+        if(node.cost > dist[to]) continue;
+        for (link<T> neighbor: g.adj[to]) {
+            T newCost = dist[to] + neighbor.cost;
+            if (newCost < dist[neighbor.to]) {
+                Q.push({neighbor.to, newCost});
+                dist[neighbor.to] = newCost;
+            }
+        }
+    }
+    return dist;
+}
+```
+
+## Explore the Library
+
+<CardGroup cols={3}>
+  <Card title="Installation" icon="download" href="/installation">
+    Set up snippet generation
+  </Card>
+  <Card title="Algorithms" icon="book-open" href="/algorithms/graph/overview">
+    Browse all algorithms
+  </Card>
+  <Card title="API Reference" icon="terminal" href="/reference/graph">
+    Complete API documentation
+  </Card>
+</CardGroup>

@@ -1,0 +1,344 @@
+---
+title: "Graph Algorithms API"
+description: "Complete API reference for graph algorithms including shortest paths, minimum spanning trees, and tree algorithms"
+---
+
+## Overview
+
+The graph algorithms module provides implementations for various graph and tree algorithms commonly used in competitive programming. All algorithms are implemented as templates to support different numeric types.
+
+## Graph Data Structures
+
+### Base Graph Structure
+
+```cpp
+template <typename T>
+struct edge {
+    int from;
+    int to;
+    T cost;
+};
+
+template <typename T>
+struct link {
+    int to;
+    T cost;
+    bool operator>(const link& other) const;
+    bool operator<(const link& other) const;
+};
+
+template <typename T>
+class graph {
+public:
+    vector<edge<T>> edges;
+    vector<vector<link<T>>> adj;
+    int n;
+    graph(int sz);
+    virtual void add(int from, int to, T cost) = 0;
+};
+```
+
+<ParamField path="edge.from" type="int">
+  Source vertex of the edge
+</ParamField>
+
+<ParamField path="edge.to" type="int">
+  Destination vertex of the edge
+</ParamField>
+
+<ParamField path="edge.cost" type="T">
+  Weight/cost of the edge
+</ParamField>
+
+<ParamField path="graph.n" type="int">
+  Number of vertices in the graph
+</ParamField>
+
+<ParamField path="graph.adj" type="vector<vector<link<T>>>">
+  Adjacency list representation
+</ParamField>
+
+<ParamField path="graph.edges" type="vector<edge<T>>">
+  List of all edges in the graph
+</ParamField>
+
+## Shortest Path Algorithms
+
+### Dijkstra's Algorithm
+
+Finds shortest paths from a source vertex to all other vertices in a graph with non-negative edge weights.
+
+```cpp
+template <typename T>
+vector<T> dijkstra(const graph<T> &g, int start);
+```
+
+<ParamField path="g" type="graph<T>">
+  Input graph (directed or undirected)
+</ParamField>
+
+<ParamField path="start" type="int">
+  Starting vertex (0-indexed)
+</ParamField>
+
+**Returns:** `vector<T>` - Distance from start to each vertex. Returns `numeric_limits<T>::max()` if no path exists.
+
+**Complexity:**
+- Time: O((V + E) log V)
+- Space: O(V)
+
+**Usage Example:**
+
+```cpp
+digraph<int> g(n);
+g.add(0, 1, 4);
+g.add(0, 2, 2);
+g.add(1, 2, 1);
+vector<int> dist = dijkstra(g, 0);
+// dist[i] contains shortest distance from 0 to i
+```
+
+### Bellman-Ford Algorithm
+
+Finds shortest paths from a source vertex, works with negative edge weights and detects negative cycles.
+
+```cpp
+template<typename T>
+vector<T> bellman_ford(const undigraph<T> &G, int source, bool &cycle);
+```
+
+<ParamField path="G" type="undigraph<T>">
+  Input undirected graph
+</ParamField>
+
+<ParamField path="source" type="int">
+  Starting vertex (0-indexed)
+</ParamField>
+
+<ParamField path="cycle" type="bool&">
+  Output parameter - set to true if negative cycle detected
+</ParamField>
+
+**Returns:** `vector<T>` - Distance from source to each vertex
+
+**Complexity:**
+- Time: O(V·E)
+- Space: O(V)
+
+**Usage Example:**
+
+```cpp
+undigraph<int> G(n);
+G.add(0, 1, -5);
+bool has_cycle = false;
+vector<int> dist = bellman_ford(G, 0, has_cycle);
+if (has_cycle) {
+    cout << "Negative cycle detected!" << endl;
+}
+```
+
+### Floyd-Warshall Algorithm
+
+Finds shortest paths between all pairs of vertices.
+
+```cpp
+template<typename T>
+void floyd_warshall(vector<vector<T>> &dist, int n);
+```
+
+<ParamField path="dist" type="vector<vector<T>>&">
+  Adjacency matrix (input/output). Initialize with edge weights and infinity.
+</ParamField>
+
+<ParamField path="n" type="int">
+  Number of vertices
+</ParamField>
+
+**Complexity:**
+- Time: O(V³)
+- Space: O(1) additional
+
+## Minimum Spanning Tree
+
+### Kruskal's Algorithm
+
+Finds the minimum spanning tree using Disjoint Set Union.
+
+```cpp
+template<typename T>
+T kruskal(int n, vector<edge<T>> &edges);
+```
+
+<ParamField path="n" type="int">
+  Number of vertices
+</ParamField>
+
+<ParamField path="edges" type="vector<edge<T>>&">
+  List of edges (will be sorted)
+</ParamField>
+
+**Returns:** `T` - Total cost of the minimum spanning tree
+
+**Complexity:**
+- Time: O(E log E)
+- Space: O(V)
+
+## Disjoint Set Union (DSU)
+
+Also known as Union-Find, efficiently manages disjoint sets with path compression and union by size.
+
+```cpp
+class DisjointSet {
+public:
+    int comps;  // Number of components
+    
+    DisjointSet(int n);
+    int find(int x);
+    bool unite(int left, int right);
+    bool united(int left, int right);
+    int size(int x);
+    int id(int x);
+    vector<vector<int>> groups();
+};
+
+using DSU = DisjointSet;
+```
+
+### Methods
+
+<ParamField path="find" type="int find(int x)">
+  Find the representative of the set containing x
+</ParamField>
+
+<ParamField path="unite" type="bool unite(int left, int right)">
+  Unite the sets containing left and right. Returns true if they were in different sets.
+</ParamField>
+
+<ParamField path="united" type="bool united(int left, int right)">
+  Check if left and right are in the same set
+</ParamField>
+
+<ParamField path="size" type="int size(int x)">
+  Get the size of the set containing x
+</ParamField>
+
+<ParamField path="groups" type="vector<vector<int>> groups()">
+  Get all connected components as groups
+</ParamField>
+
+**Complexity:**
+- Time: O(α(n)) amortized per operation (inverse Ackermann function)
+- Space: O(n)
+
+**Usage Example:**
+
+```cpp
+DSU dsu(n);
+dsu.unite(0, 1);
+dsu.unite(1, 2);
+if (dsu.united(0, 2)) {
+    cout << "Connected!" << endl;
+}
+cout << "Size: " << dsu.size(0) << endl;
+```
+
+## Tree Algorithms
+
+### Tree Diameter
+
+Finds the longest path in a tree.
+
+```cpp
+int dfs(int node, int parent);
+// After calling dfs(0, 0):
+// int diameter = *max_element(dp, dp + n);
+```
+
+**Complexity:**
+- Time: O(V)
+- Space: O(V)
+
+### Binary Lifting
+
+Supports LCA (Lowest Common Ancestor) and k-th ancestor queries.
+
+**Complexity:**
+- Preprocessing: O(V log V)
+- Query: O(log V)
+
+### Euler Tour
+
+Converts a tree into a linear sequence for range queries.
+
+**Complexity:**
+- Time: O(V)
+- Space: O(V)
+
+## Graph Traversal
+
+### Cycle Detection
+
+Detects cycles in directed and undirected graphs.
+
+```cpp
+bool has_cycle(const graph<T> &g);
+```
+
+**Complexity:**
+- Time: O(V + E)
+- Space: O(V)
+
+### Topological Sort
+
+Orders vertices in a DAG (Directed Acyclic Graph).
+
+```cpp
+vector<int> toposort(const digraph<int> &g);
+```
+
+**Returns:** `vector<int>` - Topologically sorted vertices, or empty if cycle exists
+
+**Complexity:**
+- Time: O(V + E)
+- Space: O(V)
+
+### Strongly Connected Components (SCC)
+
+Finds strongly connected components using Kosaraju's algorithm.
+
+**Complexity:**
+- Time: O(V + E)
+- Space: O(V)
+
+## Available Algorithms
+
+| Algorithm | File | Time Complexity |
+|-----------|------|----------------|
+| Dijkstra | `graph_dijkstra_std.cpp` | O((V+E) log V) |
+| Dijkstra (with path) | `graph_dijkstra_path.cpp` | O((V+E) log V) |
+| Bellman-Ford | `graph_bellman_ford.cpp` | O(VE) |
+| Floyd-Warshall | `graph_floyd_warshall.cpp` | O(V³) |
+| Kruskal MST | `graph_kruskal.cpp` | O(E log E) |
+| DSU | `graph_dsu.cpp` | O(α(n)) |
+| Find Cycle | `graph_find_cycle.cpp` | O(V+E) |
+| Topological Sort | `graph_toposort_dfs.cpp` | O(V+E) |
+| SCC (Kosaraju) | `graph_scc_kosaraju.cpp` | O(V+E) |
+| Tree Diameter | `tree_diameter.cpp` | O(V) |
+| Binary Lifting | `tree_binary_lifting_std.cpp` | O(V log V) |
+| Euler Tour | `tree_euler_tour.cpp` | O(V) |
+| Centroid Decomposition | `graph_centroid_decomposition.cpp` | O(V log V) |
+| Tree Distance | `tree_distance_i.cpp` | O(V) |
+| Subtree Queries | `tree_subtree_queries.cpp` | O(V) |
+| Difference Array on Trees | `tree_difference_array_technique_on_trees.cpp` | O(V) |
+| Merge Trick on Trees | `tree_merge_trick_on_trees.cpp` | O(V log V) |
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Data Structures" icon="database" href="/reference/data-structures">
+    Advanced data structures for competitive programming
+  </Card>
+  <Card title="Range Query" icon="layer-group" href="/reference/range-query">
+    Segment trees and other range query structures
+  </Card>
+</CardGroup>

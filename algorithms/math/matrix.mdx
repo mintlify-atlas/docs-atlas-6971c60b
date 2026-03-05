@@ -1,0 +1,462 @@
+---
+title: "Matrix Operations"
+description: "Matrix operations and algorithms for competitive programming"
+---
+
+## Overview
+
+Matrix operations are essential for solving linear recurrences, graph problems, and optimization tasks. Matrix exponentiation can reduce O(n) dynamic programming to O(log n).
+
+## Basic Matrix Structure
+
+### Simple Matrix (Compressed)
+
+```cpp
+const int mod = 1e9+7;
+
+struct matrix {
+    vector<vector<int>> v;
+    int n, m;
+    
+    matrix(int n, int m, bool identity = false) : n(n), m(m), v(n, vector<int>(m)) {
+        if (identity) {
+            for (int i = 0; i < n; i++) 
+                v[i][i] = 1;
+        }
+    }
+
+    matrix operator * (const matrix &o) {
+        matrix ans(n, o.m);
+        for (int i = 0; i < n; i++)
+            for (int k = 0; k < m; k++) if (v[i][k])
+                for (int j = 0; j < o.m; j++)
+                    ans[i][j] = (1LL*v[i][k]*o.v[k][j] + ans[i][j]) % mod;
+        return ans;
+    }
+    
+    vector<int>& operator[] (int i) { return v[i]; }
+};
+
+matrix fastpow(matrix b, int64_t e) {
+    matrix ans(b.n, b.m, true);
+    while(e > 0) {
+        if(e & 1) ans = ans * b;
+        b = b * b;
+        e /= 2;
+    }
+    return ans;
+}
+```
+
+**Usage:**
+```cpp
+matrix A(2, 2);
+A[0][0] = 1; A[0][1] = 1;
+A[1][0] = 1; A[1][1] = 0;
+
+// Compute A^10
+matrix result = fastpow(A, 10);
+```
+
+### Full Matrix Class
+
+```cpp
+const int MOD = 1e9+7;
+
+template<typename T>
+class Matrix {
+public:
+    vector<vector<T>> M;
+    int row, col;
+    
+    Matrix(const vector<vector<T>> &m) : M(m) {
+        row = (int) m.size();
+        col = (row == 0) ? 0 : (int) m[0].size();
+    }
+    
+    Matrix(int r, int c, bool identity = false) : row(r), col(c) {
+        M.resize(row, vector<T>(col, T(0)));
+        if(identity) {
+            for(int i = 0; i < min(r, c); i++) 
+                M[i][i] = T(1);
+        }
+    }
+    
+    vector<T>& operator [] (int i) { return M[i]; }
+    
+    Matrix<T> operator * (Matrix<T> &other) const {
+        assert(col == other.row);
+        Matrix<T> product(row, other.col);
+        for(int i = 0; i < row; i++) {
+            for (int j = 0; j < other.col; j++) {
+                T &ref = product[i][j];
+                for (int k = 0; k < col; k++) {
+                    ref += (M[i][k] * other[k][j]);
+                    // Or with modulo:
+                    // ref = (ref + M[i][k] * other[k][j]) % MOD;
+                }
+            }
+        }
+        return product;
+    }
+    
+    Matrix<T> operator + (Matrix<T> &other) const {
+        assert(row == other.row && col == other.col);
+        Matrix<T> ans(row, col);
+        for(int i = 0; i < row; ++i) {
+            for(int j = 0; j < col; ++j) {
+                ans[i][j] = M[i][j] + other[i][j];
+            }
+        }
+        return ans;
+    }
+
+    Matrix<T> operator - (Matrix<T> &other) const {
+        assert(row == other.row && col == other.col);
+        Matrix<T> ans(row, col);
+        for(int i = 0; i < row; ++i) {
+            for(int j = 0; j < col; ++j) {
+                ans[i][j] = M[i][j] - other[i][j];
+            }
+        }
+        return ans;
+    }
+};
+
+template<typename T>
+using matrix = Matrix<T>;
+```
+
+**Usage:**
+```cpp
+// From vector
+vector<vector<int>> v {{1, 2}, {3, 4}};
+matrix<int> A(v);
+
+// Identity matrix
+matrix<int> I(3, 3, true);
+
+// Operations
+matrix<int> C = A * B;
+matrix<int> D = A + B;
+```
+
+## Matrix Exponentiation
+
+Fast exponentiation for matrices enables solving linear recurrences efficiently.
+
+```cpp
+template<typename T>
+Matrix<T> fastpow(Matrix<T> base, int64_t exp) {
+    assert(base.row == base.col); // Must be square
+    Matrix<T> result(base.row, base.col, true); // Identity
+    while(exp > 0) {
+        if(exp & 1) result = result * base;
+        base = base * base;
+        exp >>= 1;
+    }
+    return result;
+}
+// Time: O(n³ log exp) where n is matrix dimension
+```
+
+## Applications
+
+### 1. Fibonacci Numbers
+
+Compute F(n) in O(log n) time.
+
+```cpp
+long long fibonacci(int n) {
+    if (n == 0) return 0;
+    if (n == 1) return 1;
+    
+    matrix A(2, 2);
+    A[0][0] = 1; A[0][1] = 1;
+    A[1][0] = 1; A[1][1] = 0;
+    
+    matrix result = fastpow(A, n-1);
+    return result[0][0];
+}
+// Time: O(log n)
+```
+
+<Accordion title="Why This Works">
+The recurrence F(n) = F(n-1) + F(n-2) can be written as:
+
+```
+[F(n)  ]   [1 1] [F(n-1)]
+[F(n-1)] = [1 0] [F(n-2)]
+```
+
+Therefore:
+```
+[F(n)  ]   [1 1]^(n-1) [F(1)]
+[F(n-1)] = [1 0]       [F(0)]
+```
+
+Since F(1) = 1 and F(0) = 0:
+```
+[F(n)  ]   [1 1]^(n-1) [1]
+[F(n-1)] = [1 0]       [0]
+```
+
+The result is in the top-left element of the matrix power.
+</Accordion>
+
+### 2. Generic Linear Recurrence
+
+Solve recurrences of the form:
+```
+a(n) = c₁*a(n-1) + c₂*a(n-2) + ... + cₖ*a(n-k)
+```
+
+```cpp
+long long linear_recurrence(vector<long long> coef, vector<long long> init, long long n) {
+    int k = coef.size();
+    if (n < k) return init[n];
+    
+    // Build transition matrix
+    matrix<long long> A(k, k);
+    for (int i = 0; i < k; i++) {
+        A[0][i] = coef[i];
+    }
+    for (int i = 1; i < k; i++) {
+        A[i][i-1] = 1;
+    }
+    
+    // Compute A^(n-k+1)
+    matrix<long long> result = fastpow(A, n - k + 1);
+    
+    // Multiply by initial values (in reverse order)
+    long long ans = 0;
+    for (int i = 0; i < k; i++) {
+        ans += result[0][i] * init[k - 1 - i];
+    }
+    return ans;
+}
+```
+
+**Example - Tribonacci:**
+```cpp
+// T(n) = T(n-1) + T(n-2) + T(n-3)
+vector<long long> coef = {1, 1, 1};
+vector<long long> init = {0, 1, 1}; // T(0), T(1), T(2)
+long long T_100 = linear_recurrence(coef, init, 100);
+```
+
+### 3. Graph Problems
+
+#### Count Paths of Length k
+
+```cpp
+int count_paths(vector<vector<int>> &adj, int start, int end, int k) {
+    int n = adj.size();
+    matrix<int> A(adj); // Adjacency matrix
+    matrix<int> result = fastpow(A, k);
+    return result[start][end];
+}
+// Time: O(n³ log k)
+```
+
+**Explanation:** Entry (i,j) in A^k gives the number of walks of length k from vertex i to vertex j.
+
+### 4. Dynamic Programming Acceleration
+
+Many DP problems with linear transitions can be optimized:
+
+```cpp
+// Original DP: dp[i] = sum of dp[i-1], dp[i-2], ..., dp[i-k]
+// with dp[0] = 1, others = 0
+
+long long accelerated_dp(int n, int k) {
+    matrix<long long> A(k, k);
+    // First row: all 1s (sum of previous k states)
+    for (int i = 0; i < k; i++) A[0][i] = 1;
+    // Rest: shift register
+    for (int i = 1; i < k; i++) A[i][i-1] = 1;
+    
+    matrix<long long> result = fastpow(A, n);
+    return result[0][k-1]; // Adjust index based on initial conditions
+}
+```
+
+## Matrix Properties
+
+### Determinant (Gaussian Elimination)
+
+```cpp
+template<typename T>
+T determinant(Matrix<T> mat) {
+    assert(mat.row == mat.col);
+    int n = mat.row;
+    T det = 1;
+    
+    for (int col = 0; col < n; col++) {
+        // Find pivot
+        int pivot = col;
+        for (int row = col + 1; row < n; row++) {
+            if (abs(mat[row][col]) > abs(mat[pivot][col])) {
+                pivot = row;
+            }
+        }
+        
+        if (mat[pivot][col] == 0) return 0; // Singular
+        
+        if (pivot != col) {
+            swap(mat[pivot], mat[col]);
+            det = -det;
+        }
+        
+        det *= mat[col][col];
+        
+        // Eliminate
+        for (int row = col + 1; row < n; row++) {
+            T factor = mat[row][col] / mat[col][col];
+            for (int c = col; c < n; c++) {
+                mat[row][c] -= factor * mat[col][c];
+            }
+        }
+    }
+    return det;
+}
+// Time: O(n³)
+```
+
+### Matrix Transposition
+
+```cpp
+template<typename T>
+Matrix<T> transpose(const Matrix<T> &mat) {
+    Matrix<T> result(mat.col, mat.row);
+    for (int i = 0; i < mat.row; i++) {
+        for (int j = 0; j < mat.col; j++) {
+            result[j][i] = mat[i][j];
+        }
+    }
+    return result;
+}
+// Time: O(rows × cols)
+```
+
+## Contest Examples
+
+### Example 1: Domino Tiling
+
+```cpp
+// Count ways to tile 2×n board with 1×2 dominoes
+long long count_tilings(int n) {
+    if (n == 0) return 1;
+    if (n == 1) return 1;
+    
+    // Recurrence: f(n) = f(n-1) + f(n-2)
+    matrix A(2, 2);
+    A[0][0] = 1; A[0][1] = 1;
+    A[1][0] = 1; A[1][1] = 0;
+    
+    matrix result = fastpow(A, n);
+    return result[0][0];
+}
+```
+
+### Example 2: Grid Coloring
+
+```cpp
+// Count ways to color n cells with k colors
+// where adjacent cells have different colors
+long long count_colorings(int n, int k) {
+    // Recurrence: C(n) = (k-1) * C(n-1) + (k-1) * C(n-2)
+    // C(1) = k, C(2) = k*(k-1)
+    
+    matrix<long long> A(2, 2);
+    A[0][0] = k-1; A[0][1] = k-1;
+    A[1][0] = 1;   A[1][1] = 0;
+    
+    if (n == 1) return k;
+    
+    matrix<long long> result = fastpow(A, n-1);
+    return result[0][0] * k;
+}
+```
+
+### Example 3: Shortest Path with Exactly k Edges
+
+```cpp
+int shortest_path_k_edges(vector<vector<int>> &dist, int src, int dest, int k) {
+    int n = dist.size();
+    matrix<int> A(dist);
+    
+    // Use min instead of + in multiplication
+    // (This requires custom matrix multiplication)
+    matrix<int> result = fastpow(A, k);
+    return result[src][dest];
+}
+```
+
+## Complexity Analysis
+
+| Operation | Time Complexity | Space Complexity |
+|-----------|----------------|------------------|
+| Matrix Addition | O(n²) | O(n²) |
+| Matrix Multiplication | O(n³) | O(n²) |
+| Matrix Exponentiation | O(n³ log k) | O(n²) |
+| Determinant | O(n³) | O(n²) |
+| Transpose | O(n²) | O(n²) |
+
+## Advanced Topics
+
+### Strassen's Algorithm
+
+Multiplies two n×n matrices in O(n^2.807) time using divide-and-conquer. Not commonly used in competitive programming due to large constants.
+
+### Sparse Matrices
+
+For matrices with mostly zeros, use sparse representations:
+```cpp
+map<pair<int,int>, int> sparse_matrix;
+```
+
+### Matrix Inverse (Gauss-Jordan)
+
+```cpp
+template<typename T>
+Matrix<T> inverse(Matrix<T> mat) {
+    assert(mat.row == mat.col);
+    int n = mat.row;
+    Matrix<T> inv(n, n, true); // Identity
+    
+    // Augment [A | I]
+    // Apply Gauss-Jordan to get [I | A^-1]
+    
+    for (int col = 0; col < n; col++) {
+        // Find pivot and swap rows
+        // ... (similar to determinant)
+        
+        // Normalize pivot row
+        T pivot = mat[col][col];
+        for (int j = 0; j < n; j++) {
+            mat[col][j] /= pivot;
+            inv[col][j] /= pivot;
+        }
+        
+        // Eliminate column
+        for (int row = 0; row < n; row++) {
+            if (row == col) continue;
+            T factor = mat[row][col];
+            for (int j = 0; j < n; j++) {
+                mat[row][j] -= factor * mat[col][j];
+                inv[row][j] -= factor * inv[col][j];
+            }
+        }
+    }
+    return inv;
+}
+```
+
+## Tips for Contests
+
+1. **Always use modular arithmetic** when the problem asks for result mod 10^9+7
+2. **Check matrix dimensions** before multiplication (n×m times m×p)
+3. **Use fast exponentiation** for computing large powers
+4. **Initialize identity matrix** correctly for matrix power
+5. **Consider sparse representation** for large matrices with few non-zero elements

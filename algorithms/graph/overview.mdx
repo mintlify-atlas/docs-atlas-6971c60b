@@ -1,0 +1,156 @@
+---
+title: 'Graph Algorithms Overview'
+description: 'Comprehensive collection of graph algorithms for competitive programming'
+icon: 'share-nodes'
+---
+
+## Introduction
+
+This section covers essential graph algorithms used in competitive programming, from shortest path finding to advanced tree algorithms. All implementations are optimized for contest use with clear time and space complexity guarantees.
+
+## Available Algorithms
+
+<CardGroup cols={2}>
+  <Card title="Shortest Path" icon="route" href="/algorithms/graph/shortest-path">
+    Dijkstra, Bellman-Ford, and Floyd-Warshall algorithms for finding shortest paths
+  </Card>
+  
+  <Card title="Spanning Tree" icon="diagram-project" href="/algorithms/graph/spanning-tree">
+    Kruskal's algorithm for finding minimum spanning trees
+  </Card>
+  
+  <Card title="Connectivity" icon="link" href="/algorithms/graph/connectivity">
+    Disjoint Set Union and Strongly Connected Components
+  </Card>
+  
+  <Card title="Tree Algorithms" icon="tree" href="/algorithms/graph/tree-algorithms">
+    Binary lifting, tree diameter, Euler tour, and advanced tree techniques
+  </Card>
+</CardGroup>
+
+## Graph Representation
+
+All graph algorithms use a consistent representation with templates for flexibility:
+
+```cpp
+template <typename T>
+struct edge {
+    int from;
+    int to;
+    T cost;
+};
+
+template <typename T>
+struct link {
+    int to;
+    T cost;
+    bool operator>(const link& other) const {return cost > other.cost;}
+    bool operator<(const link& other) const {return cost < other.cost;}
+};
+
+template <typename T>
+class graph {
+public:
+    vector<edge<T>> edges;
+    vector<vector<link<T>>> adj;
+    int n;
+    graph(int sz) : n(sz) {
+        adj.resize(n);
+    }
+    virtual void add(int from, int to, T cost) = 0;
+};
+```
+
+### Undirected Graph
+
+```cpp
+template <typename T>
+class undigraph : public graph<T> {
+public:
+    using graph<T>::edges;
+    using graph<T>::adj;
+    using graph<T>::n;
+
+    undigraph(int sz) : graph<T>(sz) {}
+
+    void add(int from, int to, T cost = 1) {
+        assert(0 <= from && from < n && 0 <= to && to < n);
+        edges.push_back({from, to, cost});
+        adj[from].push_back({to, cost});
+        adj[to].push_back({from, cost});
+    }
+};
+```
+
+### Directed Graph
+
+```cpp
+template <typename T>
+class digraph : public graph<T> {
+public:
+    using graph<T>::edges;
+    using graph<T>::adj;
+    using graph<T>::n;
+
+    digraph(int sz) : graph<T>(sz) {}
+
+    void add(int from, int to, T cost = 1) {
+        assert(0 <= from && from < n && 0 <= to && to < n);
+        edges.push_back({from, to, cost});
+        adj[from].push_back({to, cost});
+    }
+    
+    digraph<T> reverse() const {
+        digraph<T> rev(n);
+        for (auto &e : edges) {
+            rev.add(e.to, e.from, e.cost);
+        }
+        return rev;
+    }
+};
+```
+
+## Usage Example
+
+```cpp
+// Create an undirected graph with 5 nodes
+undigraph<int> g(5);
+g.add(0, 1, 2);  // Edge from 0 to 1 with cost 2
+g.add(1, 2, 3);
+g.add(2, 3, 1);
+g.add(3, 4, 4);
+
+// Create a directed graph
+digraph<int> dg(5);
+dg.add(0, 1, 2);  // Directed edge from 0 to 1
+dg.add(1, 2, 3);
+```
+
+<Note>
+  All graph implementations use 0-based indexing for nodes.
+</Note>
+
+## Algorithm Categories
+
+### Single-Source Shortest Path
+- **Dijkstra's Algorithm**: O(E log V) for non-negative weights
+- **Bellman-Ford**: O(VE) for graphs with negative weights
+
+### All-Pairs Shortest Path
+- **Floyd-Warshall**: O(V³) for all pairs of vertices
+
+### Minimum Spanning Tree
+- **Kruskal's Algorithm**: O(E log E) using DSU
+
+### Graph Connectivity
+- **Disjoint Set Union (DSU)**: Near O(1) amortized operations
+- **Strongly Connected Components**: O(V + E) using Kosaraju's algorithm
+
+### Tree Algorithms
+- **Binary Lifting**: O(log N) LCA queries after O(N log N) preprocessing
+- **Tree Diameter**: O(N) using DFS
+- **Euler Tour**: O(N) tree flattening
+
+<Tip>
+  Choose the right algorithm based on your constraints: graph size, edge weights, and whether you need single-source or all-pairs shortest paths.
+</Tip>

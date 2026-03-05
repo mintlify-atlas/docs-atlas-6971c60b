@@ -1,0 +1,567 @@
+---
+title: Fast I/O Utilities
+description: High-performance input/output utilities for competitive programming
+icon: arrow-right-arrow-left
+---
+
+Fast I/O utilities for efficiently reading and writing data in competitive programming, where I/O can be a bottleneck for large datasets.
+
+## Overview
+
+In competitive programming, standard I/O can be slow when dealing with large amounts of data. These utilities provide:
+
+- Fast reading of arrays and containers
+- Fast writing with custom formatting
+- Support for various STL containers
+- Convenient APIs for common operations
+
+## Quick Start
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n;
+    cin >> n;
+    
+    vector<int> arr;
+    read(arr, n);  // Read n integers into vector
+    
+    write(arr);    // Write entire vector
+    
+    return 0;
+}
+```
+
+## Reading Utilities
+
+### Read Function
+
+Read `n` elements into a container starting at a specific position.
+
+```cpp
+template<typename T> // supported for vector, list, forward_list and deque
+void read(T &&ref, int n, int start=0) {
+    assert(0<=start && 0<=n); 
+    ref.resize(start+n);
+    for(auto it=next(begin(ref), start); it != end(ref); it++)
+        cin >> *it;
+}
+```
+
+**Parameters:**
+- `ref`: Reference to container (vector, list, deque, forward_list)
+- `n`: Number of elements to read
+- `start`: Starting index (default: 0)
+
+**Features:**
+- Automatically resizes container
+- Works with any type that supports `operator>>`
+- Includes bounds checking
+- Efficient iterator-based reading
+
+### Usage Examples
+
+#### Read Vector
+
+```cpp
+vector<int> arr;
+read(arr, 5);  // Read 5 integers
+// Input: 1 2 3 4 5
+// Result: arr = {1, 2, 3, 4, 5}
+```
+
+#### Read with Starting Position
+
+```cpp
+vector<int> arr = {10, 20, 30};
+read(arr, 3, 3);  // Read 3 more integers starting at index 3
+// Input: 40 50 60
+// Result: arr = {10, 20, 30, 40, 50, 60}
+```
+
+#### Read Different Types
+
+```cpp
+vector<string> words;
+read(words, 3);
+// Input: hello world test
+// Result: words = {"hello", "world", "test"}
+
+vector<double> values;
+read(values, 4);
+// Input: 3.14 2.71 1.41 1.73
+// Result: values = {3.14, 2.71, 1.41, 1.73}
+```
+
+#### Read List or Deque
+
+```cpp
+list<int> lst;
+read(lst, 5);
+// Input: 10 20 30 40 50
+// Result: lst = {10, 20, 30, 40, 50}
+
+deque<int> dq;
+read(dq, 3);
+// Input: 1 2 3
+// Result: dq = {1, 2, 3}
+```
+
+#### 1-Indexed Arrays
+
+```cpp
+vector<int> arr;
+read(arr, 5, 1);  // Reserve index 0, read into indices 1-5
+// Input: 10 20 30 40 50
+// Result: arr = {0, 10, 20, 30, 40, 50}
+// Access: arr[1] = 10, arr[2] = 20, ...
+```
+
+## Writing Utilities
+
+### Write Function
+
+Write elements from a container with custom formatting.
+
+```cpp
+template<typename T> // supported for vector, list and deque
+void write(T &&ref, int n=-1, int start=0, string mid=" ", string end_l="\n") {
+    if(n < 0) n = (int) ref.size();
+    assert(0<=start && 0<=n && start+n<=(int)ref.size());
+    auto end_it = next(begin(ref), start+n);
+    for(auto it=next(begin(ref), start); it != end_it; it++)
+        cout << *it << mid; 
+    cout << end_l;
+}
+```
+
+**Parameters:**
+- `ref`: Reference to container
+- `n`: Number of elements to write (default: all elements)
+- `start`: Starting index (default: 0)
+- `mid`: Separator between elements (default: space)
+- `end_l`: Line ending (default: newline)
+
+### Usage Examples
+
+#### Write Entire Container
+
+```cpp
+vector<int> arr = {1, 2, 3, 4, 5};
+write(arr);
+// Output: 1 2 3 4 5\n
+```
+
+#### Write Specific Range
+
+```cpp
+vector<int> arr = {10, 20, 30, 40, 50, 60};
+write(arr, 3, 1);  // Write 3 elements starting at index 1
+// Output: 20 30 40\n
+```
+
+#### Custom Separator
+
+```cpp
+vector<string> words = {"hello", "world", "test"};
+write(words, -1, 0, ", ");
+// Output: hello, world, test\n
+
+vector<int> arr = {1, 2, 3};
+write(arr, -1, 0, " -> ", "\n");
+// Output: 1 -> 2 -> 3\n
+```
+
+#### No Newline at End
+
+```cpp
+vector<int> arr = {1, 2, 3};
+write(arr, -1, 0, " ", "");
+// Output: 1 2 3 (no newline)
+```
+
+#### Write with Different Formatting
+
+```cpp
+vector<int> arr = {1, 2, 3, 4, 5};
+
+// Comma-separated
+write(arr, -1, 0, ",", "\n");
+// Output: 1,2,3,4,5\n
+
+// Tab-separated
+write(arr, -1, 0, "\t", "\n");
+// Output: 1\t2\t3\t4\t5\n
+
+// Each on new line
+write(arr, -1, 0, "\n", "\n");
+// Output:
+// 1
+// 2
+// 3
+// 4
+// 5
+```
+
+## Print Function
+
+Variadic template for printing multiple values with automatic spacing.
+
+```cpp
+void print() { 
+    cout << "\n"; 
+}
+
+template<class H, class... T> 
+void print(const H& h, const T&... t) {
+    cout << h;
+    if(sizeof...(t)) cout << ' '; 
+    print(t...);
+}
+```
+
+### Usage Examples
+
+```cpp
+print();                    // Output: \n
+print(42);                  // Output: 42\n
+print("Hello", "World");    // Output: Hello World\n
+int a = 10, b = 20;
+print("Sum:", a + b);       // Output: Sum: 30\n
+
+vector<int> v = {1, 2, 3};
+print("Size:", v.size());   // Output: Size: 3\n
+```
+
+## Complete Examples
+
+### Example 1: Array Sum
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+template<typename T>
+void read(T &&ref, int n, int start=0) {
+    assert(0<=start && 0<=n); 
+    ref.resize(start+n);
+    for(auto it=next(begin(ref), start); it != end(ref); it++)
+        cin >> *it;
+}
+
+template<typename T>
+void write(T &&ref, int n=-1, int start=0, string mid=" ", string end_l="\n") {
+    if(n < 0) n = (int) ref.size();
+    assert(0<=start && 0<=n && start+n<=(int)ref.size());
+    auto end_it = next(begin(ref), start+n);
+    for(auto it=next(begin(ref), start); it != end_it; it++)
+        cout << *it << mid; 
+    cout << end_l;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n;
+    cin >> n;
+    
+    vector<int> arr;
+    read(arr, n);
+    
+    long long sum = 0;
+    for(int x : arr) sum += x;
+    
+    cout << sum << "\n";
+    
+    return 0;
+}
+```
+
+**Input:**
+```
+5
+1 2 3 4 5
+```
+
+**Output:**
+```
+15
+```
+
+### Example 2: Matrix I/O
+
+```cpp
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    vector<vector<int>> matrix(n);
+    for(int i = 0; i < n; i++) {
+        read(matrix[i], m);
+    }
+    
+    // Transpose
+    vector<vector<int>> transposed(m, vector<int>(n));
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < m; j++) {
+            transposed[j][i] = matrix[i][j];
+        }
+    }
+    
+    // Output transposed matrix
+    for(int i = 0; i < m; i++) {
+        write(transposed[i]);
+    }
+    
+    return 0;
+}
+```
+
+**Input:**
+```
+3 4
+1 2 3 4
+5 6 7 8
+9 10 11 12
+```
+
+**Output:**
+```
+1 5 9
+2 6 10
+3 7 11
+4 8 12
+```
+
+### Example 3: Multiple Test Cases
+
+```cpp
+void print() { cout << "\n"; }
+template<class H, class... T> 
+void print(const H& h, const T&... t) {
+    cout << h;
+    if(sizeof...(t)) cout << ' '; 
+    print(t...);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while(t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> arr;
+        read(arr, n);
+        
+        int minVal = *min_element(arr.begin(), arr.end());
+        int maxVal = *max_element(arr.begin(), arr.end());
+        
+        print("Min:", minVal, "Max:", maxVal);
+    }
+    
+    return 0;
+}
+```
+
+### Example 4: 1-Indexed Array Processing
+
+```cpp
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n;
+    cin >> n;
+    
+    vector<int> arr;
+    read(arr, n, 1);  // 1-indexed
+    
+    // arr[0] is uninitialized/zero
+    // arr[1..n] contains the input
+    
+    for(int i = 1; i <= n; i++) {
+        arr[i] *= 2;  // Double each element
+    }
+    
+    write(arr, n, 1);  // Write from index 1
+    
+    return 0;
+}
+```
+
+## I/O Optimization Tips
+
+### Basic Optimization
+
+```cpp
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    // Your code here
+    
+    return 0;
+}
+```
+
+<Tip>
+  Always use `ios_base::sync_with_stdio(false)` and `cin.tie(nullptr)` for faster I/O.
+</Tip>
+
+### Reading Multiple Values
+
+```cpp
+// Instead of:
+int a, b, c;
+cin >> a >> b >> c;
+
+// Use read for arrays:
+vector<int> values;
+read(values, 3);
+int a = values[0], b = values[1], c = values[2];
+```
+
+### Writing Without Extra Spaces
+
+```cpp
+vector<int> arr = {1, 2, 3};
+
+// Write without trailing space
+for(int i = 0; i < arr.size(); i++) {
+    if(i > 0) cout << " ";
+    cout << arr[i];
+}
+cout << "\n";
+
+// Or use write with custom formatting
+write(arr, arr.size(), 0, " ", "\n");
+```
+
+### Flush Control
+
+```cpp
+// Avoid flushing unnecessarily
+cout << x << "\n";        // Good (no flush)
+cout << x << endl;        // Bad (flushes buffer)
+
+// Manual flush when needed
+cout << x << "\n" << flush;
+```
+
+## Advanced Patterns
+
+### Reading Pairs
+
+```cpp
+vector<pair<int, int>> pairs;
+int n;
+cin >> n;
+
+for(int i = 0; i < n; i++) {
+    int a, b;
+    cin >> a >> b;
+    pairs.push_back({a, b});
+}
+```
+
+### Reading Graph Edges
+
+```cpp
+int n, m;  // nodes, edges
+cin >> n >> m;
+
+vector<vector<int>> adj(n + 1);
+
+for(int i = 0; i < m; i++) {
+    int u, v;
+    cin >> u >> v;
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+}
+```
+
+### Custom Input Format
+
+```cpp
+// Read until EOF
+vector<int> all_numbers;
+int x;
+while(cin >> x) {
+    all_numbers.push_back(x);
+}
+
+// Read line by line
+string line;
+while(getline(cin, line)) {
+    // Process line
+}
+```
+
+## Performance Comparison
+
+| Method | Time (1M integers) | Notes |
+|--------|-------------------|-------|
+| `scanf/printf` | Fastest | C-style, format strings |
+| `cin/cout` (optimized) | Very fast | With sync_with_stdio(false) |
+| `cin/cout` (default) | Slow | Synchronized with C I/O |
+| `read/write` utilities | Very fast | Built on optimized cin/cout |
+
+<Tip>
+  For maximum speed with C++ I/O, use `read`/`write` with I/O optimizations enabled.
+</Tip>
+
+## When to Use What
+
+### Use `read` when:
+- Reading arrays or containers of known size
+- Need automatic resizing
+- Want cleaner code for bulk input
+
+### Use `write` when:
+- Outputting entire containers
+- Need custom formatting
+- Want consistent spacing
+
+### Use `print` when:
+- Printing mixed types
+- Need automatic spacing
+- Quick debug output
+
+### Use standard `cin/cout` when:
+- Reading single values
+- Complex input parsing
+- Custom format requirements
+
+## Common Pitfalls
+
+<Warning>
+  **Don't mix C and C++ I/O**: If you use `sync_with_stdio(false)`, don't use `scanf`/`printf`.
+</Warning>
+
+<Warning>
+  **Check array bounds**: The `read` function uses assertions but not all judges enable them.
+</Warning>
+
+<Warning>
+  **Flush when needed**: Interactive problems require flushing after each query.
+</Warning>
+
+## Related Topics
+
+- [Debug Utilities](/algorithms/misc/debugging) - Debug macros for printing
+- [Useful Macros](/algorithms/misc/macros) - Common shortcuts and helpers
+- [Template Setup](/algorithms/misc/templates) - Complete competitive programming templates

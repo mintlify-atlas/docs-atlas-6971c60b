@@ -1,0 +1,580 @@
+---
+title: 'Pattern Matching Algorithms'
+description: 'KMP, Rabin-Karp, Aho-Corasick, and Z-algorithm for efficient pattern searching'
+icon: 'magnifying-glass'
+---
+
+## Overview
+
+Pattern matching algorithms efficiently find occurrences of a pattern string within a text string. Each algorithm has specific strengths for different use cases.
+
+## KMP (Knuth-Morris-Pratt)
+
+KMP algorithm uses a prefix function to avoid redundant comparisons, achieving O(n + m) time complexity.
+
+<Note>
+**Time Complexity**
+- Preprocessing: O(m)
+- Search: O(n)
+- Total: O(n + m)
+
+**Space Complexity**: O(m)
+
+Where n = text length, m = pattern length
+</Note>
+
+### Prefix Function
+
+```cpp string_prefix_function.cpp
+template <typename T> vector<int> prefix_function(const T &s) {
+    int n = (int)s.size();
+    vector<int> lps(n, 0);
+    lps[0] = 0;
+    int matched = 0;
+    for (int pos = 1; pos < n; ++pos) {
+        while (matched > 0 && s[pos] != s[matched])
+            matched = lps[matched - 1];
+        if (s[pos] == s[matched])
+            matched++;
+        lps[pos] = matched;
+    }
+    return lps;
+}
+// Longest prefix which is also suffix
+// Time Complexity: O(N), Space Complexity: O(N)
+```
+
+### KMP Implementation
+
+```cpp string_kmp_std.cpp
+template <typename T> vector<int> kmp(const T &text, const T &pattern) {
+    int n = (int)text.size(), m = (int)pattern.size();
+    vector<int> lcp = prefix_function(pattern), occurrences;
+    int matched = 0;
+    for (int idx = 0; idx < n; ++idx) {
+        while (matched > 0 && text[idx] != pattern[matched])
+            matched = lcp[matched - 1];
+        if (text[idx] == pattern[matched])
+            matched++;
+        if (matched == m) {
+            occurrences.push_back(idx - matched + 1);
+            matched = lcp[matched - 1];
+        }
+    }
+    return occurrences;
+}
+
+template <typename T>
+vector<int> search_pattern(const T &text, const T &pattern) {
+    return kmp(text, pattern);
+}
+```
+
+### KMP Usage Examples
+
+<Tabs>
+  <Tab title="Basic Pattern Search">
+    ```cpp
+    string text = "ABABCABABA";
+    string pattern = "ABA";
+    
+    vector<int> positions = search_pattern(text, pattern);
+    // Returns: {0, 5, 7}
+    
+    cout << "Pattern found at positions: ";
+    for (int pos : positions) {
+        cout << pos << " ";
+    }
+    // Output: Pattern found at positions: 0 5 7
+    ```
+  </Tab>
+  <Tab title="Count Occurrences">
+    ```cpp
+    string text = "AABAACAADAABAABA";
+    string pattern = "AABA";
+    
+    vector<int> matches = kmp(text, pattern);
+    cout << "Number of occurrences: " << matches.size() << endl;
+    // Output: Number of occurrences: 3
+    
+    // Also works with vectors
+    vector<int> arr = {1, 2, 1, 2, 3, 1, 2, 1, 2};
+    vector<int> pat = {1, 2, 1, 2};
+    vector<int> pos = kmp(arr, pat);
+    // Returns: {0, 5}
+    ```
+  </Tab>
+  <Tab title="Prefix Function Applications">
+    ```cpp
+    // Find period of string
+    string s = "abcabcabc";
+    vector<int> lps = prefix_function(s);
+    int n = s.size();
+    int period = n - lps[n - 1];
+    cout << "Period length: " << period << endl;  // 3
+    
+    // Check if string is periodic
+    if (n % period == 0) {
+        cout << "String is periodic with period: " << s.substr(0, period) << endl;
+    }
+    
+    // Find longest palindromic prefix
+    string rev(s.rbegin(), s.rend());
+    string combined = s + "#" + rev;
+    lps = prefix_function(combined);
+    int palin_len = lps.back();
+    cout << "Longest palindromic prefix length: " << palin_len << endl;
+    ```
+  </Tab>
+</Tabs>
+
+## Rabin-Karp
+
+Rabin-Karp uses rolling hash to efficiently search for patterns. It's particularly useful for multiple pattern matching.
+
+<Note>
+**Time Complexity**
+- Preprocessing: O(m)
+- Search: O(n + m) average case, O(nm) worst case
+
+**Space Complexity**: O(1)
+</Note>
+
+### Implementation
+
+```cpp string_rabin_karp_std.cpp
+template <typename T> vector<int> rabin_karp(const T &text, const T &pattern) {
+    int n = (int)text.size(), m = (int)pattern.size();
+    hashing<string> txt(text), pat(pattern);
+    vector<int> occurrences;
+    auto hash_pat = pat.query(0, m - 1);
+    for (int i = 0; i < n - m + 1; ++i) {
+        auto hash_txt = txt.query(i, i + m - 1);
+        if (hash_pat == hash_txt)
+            occurrences.push_back(i);
+    }
+    return occurrences;
+}
+
+template <typename T>
+vector<int> search_pattern(const T &text, const T &pattern) {
+    return rabin_karp(text, pattern);
+}
+```
+
+### Rabin-Karp Usage
+
+<Tabs>
+  <Tab title="Single Pattern">
+    ```cpp
+    string text = "ABABABAB";
+    string pattern = "ABA";
+    
+    vector<int> matches = rabin_karp(text, pattern);
+    // Returns: {0, 2, 4}
+    
+    for (int pos : matches) {
+        cout << "Match at " << pos << endl;
+    }
+    ```
+  </Tab>
+  <Tab title="Multiple Patterns">
+    ```cpp
+    string text = "the quick brown fox jumps over the lazy dog";
+    vector<string> patterns = {"the", "fox", "dog", "cat"};
+    
+    hashing<string> h_text(text);
+    
+    for (const string& pattern : patterns) {
+        hashing<string> h_pat(pattern);
+        auto target = h_pat.query(0, pattern.size() - 1);
+        
+        vector<int> matches;
+        for (int i = 0; i <= text.size() - pattern.size(); i++) {
+            if (h_text.query(i, i + pattern.size() - 1) == target) {
+                matches.push_back(i);
+            }
+        }
+        
+        cout << "Pattern '" << pattern << "' found " 
+             << matches.size() << " times" << endl;
+    }
+    ```
+  </Tab>
+  <Tab title="2D Pattern Matching">
+    ```cpp
+    // Find pattern in 2D grid
+    vector<string> grid = {
+        "ABCD",
+        "EFGH",
+        "IJKL",
+        "MNOP"
+    };
+    
+    vector<string> pattern = {
+        "FG",
+        "JK"
+    };
+    
+    int n = grid.size(), m = grid[0].size();
+    int pn = pattern.size(), pm = pattern[0].size();
+    
+    // Hash all rows of pattern
+    vector<int64_t> pat_hashes;
+    for (const auto& row : pattern) {
+        hashing<string> h(row);
+        pat_hashes.push_back(h.query(0, pm - 1));
+    }
+    
+    // Search in grid
+    for (int i = 0; i <= n - pn; i++) {
+        for (int j = 0; j <= m - pm; j++) {
+            bool match = true;
+            for (int k = 0; k < pn && match; k++) {
+                hashing<string> h(grid[i + k]);
+                if (h.query(j, j + pm - 1) != pat_hashes[k]) {
+                    match = false;
+                }
+            }
+            if (match) {
+                cout << "Pattern found at (" << i << ", " << j << ")" << endl;
+            }
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Z-Algorithm
+
+Z-algorithm computes Z-array where Z[i] is the length of the longest substring starting from i that matches the prefix.
+
+<Note>
+**Time Complexity**: O(n + m)
+
+**Space Complexity**: O(n + m)
+</Note>
+
+### Implementation
+
+```cpp string_z_algorithm_std.cpp
+vector<int> z_algorithm(const string &s) {
+    int n = (int)s.size();
+    vector<int> z_array(n);
+    int left = 0, right = 0;
+    z_array[0] = 0;
+    for (int idx = 1; idx < n; ++idx) {
+        if (idx > right) {
+            left = right = idx;
+            while (right < n && s[right - left] == s[right])
+                right++;
+            z_array[idx] = right - left;
+            right--;
+        } else {
+            int k = idx - left;
+            if (z_array[k] < right - idx + 1) {
+                z_array[idx] = z_array[k];
+            } else {
+                left = idx;
+                while (right < n && s[right - left] == s[right])
+                    right++;
+                z_array[idx] = right - left;
+                right--;
+            }
+        }
+    }
+    return z_array;
+}
+```
+
+### Z-Algorithm Usage
+
+<Tabs>
+  <Tab title="Pattern Matching">
+    ```cpp
+    string text = "ABABCABABA";
+    string pattern = "ABA";
+    
+    // Combine pattern and text with separator
+    string combined = pattern + "#" + text;
+    vector<int> z = z_algorithm(combined);
+    
+    int m = pattern.size();
+    vector<int> matches;
+    for (int i = m + 1; i < combined.size(); i++) {
+        if (z[i] == m) {
+            matches.push_back(i - m - 1);
+        }
+    }
+    // matches = {0, 5, 7}
+    ```
+  </Tab>
+  <Tab title="Find All Palindromes">
+    ```cpp
+    string s = "abaaba";
+    string rev(s.rbegin(), s.rend());
+    
+    // Find odd-length palindromes
+    for (int center = 0; center < s.size(); center++) {
+        string left = s.substr(0, center + 1);
+        reverse(left.begin(), left.end());
+        string right = s.substr(center);
+        
+        string combined = left + "#" + right;
+        vector<int> z = z_algorithm(combined);
+        
+        // z values tell us palindrome lengths
+    }
+    ```
+  </Tab>
+  <Tab title="String Matching Queries">
+    ```cpp
+    // Preprocess string for multiple pattern queries
+    string text = "programming";
+    vector<int> z = z_algorithm(text);
+    
+    // Check if prefix matches substring at position i
+    auto matches_prefix = [&](int pos, int len) {
+        return pos + len <= text.size() && z[pos] >= len;
+    };
+    
+    // Find all positions where a prefix of length k appears
+    auto find_prefix_occurrences = [&](int k) {
+        vector<int> positions;
+        positions.push_back(0);  // Always matches at start
+        for (int i = 1; i < text.size(); i++) {
+            if (z[i] >= k) {
+                positions.push_back(i);
+            }
+        }
+        return positions;
+    };
+    
+    vector<int> prog_matches = find_prefix_occurrences(4);
+    ```
+  </Tab>
+</Tabs>
+
+## Aho-Corasick
+
+Aho-Corasick algorithm is used for multiple pattern matching. It builds a trie with failure links for efficient searching.
+
+<Note>
+**Time Complexity**
+- Build: O(Σm) where Σm is sum of all pattern lengths
+- Search: O(n + k) where k is number of matches
+
+**Space Complexity**: O(Σm × alphabet_size)
+</Note>
+
+### Implementation
+
+```cpp string_aho_corasick_occurrences.cpp
+const int ALPHA = 26;  // alphabet size
+const char L = 'a';    // first letter of the alphabet
+
+struct TrieNode {
+    int next[ALPHA];
+    int fail, fail_out;
+    bool end;
+    int cnt;
+    vector<int> idxs;
+
+    TrieNode() {
+        fill(next, next + ALPHA, 0);
+        fail_out = fail = 0;
+        end = false;
+        cnt = 0;
+    }
+    int &operator[](int idx) { return next[idx]; }
+};
+
+class AhoCorasick {
+  public:
+    int nodes;
+    int n;
+    vector<TrieNode> trie;
+    vector<string> words;
+
+    AhoCorasick(const vector<string> &words) : nodes(0), words(words) {
+        trie.emplace_back();
+        n = (int)words.size();
+        int idx = 0;
+        for (const string &word : words)
+            insert(word, idx++);
+        build_ac();
+    }
+
+    vector<vector<int>> search(const string &text) {
+        vector<vector<int>> answer(n);
+        int state = 0;
+        for (int i = 0; i < (int)text.size(); ++i) {
+            int c = text[i] - L;
+            while (state > 0 && !trie[state][c])
+                state = trie[state].fail;
+            state = trie[state][c];
+
+            int aux = state;
+            while (aux) {
+                if (trie[aux].end) {
+                    for (const int &idx : trie[aux].idxs) {
+                        answer[idx].push_back(i - (int)words[idx].size() + 1);
+                    }
+                }
+                aux = trie[aux].fail_out;
+            }
+        }
+        return answer;
+    }
+
+  private:
+    void insert(const string &word, int idx) {
+        int state = 0;
+        for (const char &ch : word) {
+            int c = ch - L;
+            if (!trie[state][c]) {
+                trie.emplace_back();
+                trie[state][c] = ++nodes;
+            }
+            state = trie[state][c];
+        }
+        trie[state].end = true;
+        trie[state].cnt++;
+        trie[state].idxs.push_back(idx);
+    }
+
+    void build_ac() {
+        queue<int> q;
+        for (int ch = 0; ch < ALPHA; ++ch) {
+            if (trie[0][ch]) {
+                trie[trie[0][ch]].fail = 0;
+                trie[trie[0][ch]].fail_out = 0;
+                q.push(trie[0][ch]);
+            }
+        }
+        while (!q.empty()) {
+            int node = q.front();
+            q.pop();
+            for (int ch = 0; ch < ALPHA; ++ch) {
+                if (trie[node][ch]) {
+                    int failure = trie[node].fail;
+                    while (failure > 0 && !trie[failure][ch])
+                        failure = trie[failure].fail;
+                    failure = trie[failure][ch];
+                    trie[trie[node][ch]].fail = failure;
+                    if (trie[failure].end) {
+                        trie[trie[node][ch]].fail_out = failure;
+                    } else {
+                        trie[trie[node][ch]].fail_out = trie[failure].fail_out;
+                    }
+                    trie[trie[node][ch]].cnt += trie[failure].cnt;
+                    q.push(trie[node][ch]);
+                }
+            }
+        }
+    }
+};
+```
+
+### Aho-Corasick Usage
+
+<Tabs>
+  <Tab title="Basic Dictionary Search">
+    ```cpp
+    vector<string> patterns = {"he", "she", "his", "hers"};
+    string text = "she sells his shells at hers";
+    
+    AhoCorasick ac(patterns);
+    vector<vector<int>> matches = ac.search(text);
+    
+    for (int i = 0; i < patterns.size(); i++) {
+        cout << "'" << patterns[i] << "' found at: ";
+        for (int pos : matches[i]) {
+            cout << pos << " ";
+        }
+        cout << endl;
+    }
+    // Output:
+    // 'he' found at: 1 14 21 25
+    // 'she' found at: 0 21
+    // 'his' found at: 10
+    // 'hers' found at: 24
+    ```
+  </Tab>
+  <Tab title="Count Total Matches">
+    ```cpp
+    vector<string> keywords = {"virus", "malware", "hack", "exploit"};
+    string content = "the virus and malware hackers exploit systems";
+    
+    AhoCorasick ac(keywords);
+    auto results = ac.search(content);
+    
+    int total_matches = 0;
+    for (const auto& matches : results) {
+        total_matches += matches.size();
+    }
+    
+    cout << "Total keyword occurrences: " << total_matches << endl;
+    
+    // Find most common keyword
+    int max_count = 0;
+    int max_idx = -1;
+    for (int i = 0; i < results.size(); i++) {
+        if (results[i].size() > max_count) {
+            max_count = results[i].size();
+            max_idx = i;
+        }
+    }
+    cout << "Most frequent: " << keywords[max_idx] << endl;
+    ```
+  </Tab>
+  <Tab title="DNA Sequence Matching">
+    ```cpp
+    // Find multiple DNA patterns
+    vector<string> motifs = {"ATG", "TAG", "TAA", "TGA"};
+    string dna = "ATGCTAGTAATGATGATAACCCTAGATAG";
+    
+    AhoCorasick ac(motifs);
+    auto matches = ac.search(dna);
+    
+    // Create annotation map
+    map<int, vector<string>> annotations;
+    for (int i = 0; i < motifs.size(); i++) {
+        for (int pos : matches[i]) {
+            annotations[pos].push_back(motifs[i]);
+        }
+    }
+    
+    // Print annotated sequence
+    for (auto [pos, patterns] : annotations) {
+        cout << "Position " << pos << ": ";
+        for (const string& p : patterns) {
+            cout << p << " ";
+        }
+        cout << endl;
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Algorithm Comparison
+
+| Algorithm | Best For | Pros | Cons |
+|-----------|----------|------|------|
+| **KMP** | Single pattern, repeating prefixes | Deterministic O(n), simple | Only single pattern |
+| **Rabin-Karp** | Multiple patterns, same length | Easy to implement, flexible | Probabilistic, collisions |
+| **Z-Algorithm** | Prefix matching, palindromes | Simple, versatile | Not for multiple patterns |
+| **Aho-Corasick** | Multiple patterns, dictionary | Finds all matches efficiently | Complex, memory intensive |
+
+## Practice Problems
+
+1. **Implement strStr()** (LeetCode 28) - Use KMP
+2. **Repeated String Match** (LeetCode 686) - Use Rabin-Karp
+3. **Find All Anagrams** (LeetCode 438) - Use rolling hash
+4. **Word Search II** (LeetCode 212) - Use Aho-Corasick
+5. **Shortest Palindrome** (LeetCode 214) - Use KMP or Z-algorithm
+
+## See Also
+
+- [String Hashing](/algorithms/string/hashing) - For efficient substring comparison
+- [Suffix Array](/algorithms/string/suffix-array) - For multiple pattern queries

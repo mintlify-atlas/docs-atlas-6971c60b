@@ -1,0 +1,465 @@
+---
+title: Two Pointers Technique
+description: Master four variations of the two pointers pattern for efficient array and sequence manipulation
+icon: arrows-left-right
+---
+
+The two pointers technique is a powerful pattern that uses two pointers to iterate through data structures, typically to solve problems in linear time and constant space.
+
+## Overview
+
+Two pointers is an algorithmic pattern where you maintain two references (pointers) to elements in a data structure and move them based on certain conditions. This technique is particularly useful for:
+
+- Searching pairs in sorted arrays
+- Removing duplicates
+- Reversing arrays
+- Merging sorted sequences
+- Finding subarrays with specific properties
+
+## Pattern Variations
+
+<CardGroup cols={2}>
+  <Card title="Slow and Fast Runner" icon="gauge-high" href="#slow-and-fast-runner">
+    Two pointers moving at different speeds through a single sequence
+  </Card>
+  <Card title="Left and Right Boundary" icon="left-right" href="#left-right-boundary">
+    Two pointers starting from opposite ends moving toward each other
+  </Card>
+  <Card title="Old and New State" icon="clock-rotate-left" href="#old-new-state">
+    Track previous and current state while iterating
+  </Card>
+  <Card title="Two Sequences" icon="list" href="#two-sequences">
+    Pointer for each of two different sequences
+  </Card>
+</CardGroup>
+
+## Slow and Fast Runner
+
+This pattern uses two pointers moving at different speeds. The slow pointer advances conditionally while the fast pointer iterates through all elements.
+
+### Template
+
+```cpp
+int slow = 0;
+for(int fast = 0; fast < n; ++fast) {
+    if(slow_condition(slow)) {
+        slow = slow.next;
+        slow += 1;
+    }
+    process_logic(slow, fast);
+}
+```
+
+### Visualization
+
+```
+sequence: [a1, a2, a3, ..., an]
+slow runner: [slow] ->->
+fast runner: [fast] ->->->->
+```
+
+### Use Cases
+
+- **Remove duplicates** from sorted array in-place
+- **Detect cycles** in linked lists (Floyd's algorithm)
+- **Partition arrays** (move all zeros to end)
+- **In-place modifications** where order matters
+
+### Example: Remove Duplicates
+
+<Steps>
+  <Step title="Initialize pointers">
+    Start both `slow` and `fast` at the beginning of the array. `slow` tracks the position of unique elements.
+  </Step>
+  <Step title="Advance fast pointer">
+    Move `fast` through every element in the array.
+  </Step>
+  <Step title="Check for duplicates">
+    When `arr[fast] != arr[slow]`, we found a new unique element.
+  </Step>
+  <Step title="Move slow pointer">
+    Increment `slow` and copy the unique element: `arr[++slow] = arr[fast]`.
+  </Step>
+  <Step title="Return result">
+    After the loop, `slow + 1` gives the count of unique elements.
+  </Step>
+</Steps>
+
+```cpp
+int removeDuplicates(vector<int>& arr) {
+    if(arr.empty()) return 0;
+    
+    int slow = 0;
+    for(int fast = 1; fast < arr.size(); ++fast) {
+        if(arr[fast] != arr[slow]) {
+            slow++;
+            arr[slow] = arr[fast];
+        }
+    }
+    return slow + 1;
+}
+
+// Example usage
+vector<int> arr = {1, 1, 2, 2, 3, 4, 4, 5};
+int len = removeDuplicates(arr);
+// Result: arr = {1, 2, 3, 4, 5, ...}, len = 5
+```
+
+## Left and Right Boundary
+
+Two pointers start from opposite ends of the array and move toward each other until they meet.
+
+### Template
+
+```cpp
+int left = 0, right = n - 1;
+while(left < right) {
+    if(left_condition(left)) {
+        left++;
+    }
+    if(right_condition(right)) {
+        right--;
+    }
+    process_logic(left, right);
+}
+```
+
+### Visualization
+
+```
+sequence:  [a1, a2, a3, a4, ..., an]
+    [left] ->->              <-<-<- [right]
+```
+
+### Use Cases
+
+- **Two Sum** in sorted array
+- **Container With Most Water**
+- **Valid Palindrome** checking
+- **Reverse array** in-place
+- **Three Sum** and similar problems
+
+### Example: Two Sum in Sorted Array
+
+<Steps>
+  <Step title="Initialize pointers">
+    Set `left` to start (0) and `right` to end (n-1) of the sorted array.
+  </Step>
+  <Step title="Calculate sum">
+    Compute `sum = arr[left] + arr[right]`.
+  </Step>
+  <Step title="Compare with target">
+    If sum equals target, return the pair. If sum is too small, increment `left`. If too large, decrement `right`.
+  </Step>
+  <Step title="Repeat until found">
+    Continue until pointers meet or target is found.
+  </Step>
+</Steps>
+
+```cpp
+pair<int, int> twoSum(vector<int>& arr, int target) {
+    int left = 0, right = arr.size() - 1;
+    
+    while(left < right) {
+        int sum = arr[left] + arr[right];
+        
+        if(sum == target) {
+            return {left, right};
+        } else if(sum < target) {
+            left++;
+        } else {
+            right--;
+        }
+    }
+    
+    return {-1, -1}; // Not found
+}
+
+// Example usage
+vector<int> arr = {1, 2, 3, 4, 6, 8, 9};
+auto [i, j] = twoSum(arr, 10);
+// Result: i = 2, j = 5 (arr[2] + arr[5] = 3 + 8 = 10)
+```
+
+### Example: Valid Palindrome
+
+```cpp
+bool isPalindrome(string s) {
+    int left = 0, right = s.length() - 1;
+    
+    while(left < right) {
+        if(s[left] != s[right]) {
+            return false;
+        }
+        left++;
+        right--;
+    }
+    
+    return true;
+}
+
+// Example usage
+string word = "racecar";
+bool result = isPalindrome(word);
+// Result: true
+```
+
+## Old and New State
+
+This pattern tracks both the previous state and current state during iteration, useful for problems requiring information from the previous step.
+
+### Template
+
+```cpp
+int last = default_val1;
+int now = default_val2;
+for(int i = 0; i < n; ++i) {
+    last = now;
+    now = process_logic(element, last);
+}
+```
+
+### Visualization
+
+```
+sequence:       [a1,   a2,   a3, ...]
+                  |     |     |
+                  v     v     v
+new state: [new0, new1, new2, new3, ...]
+              |     |     |
+              v     v     v
+old state: [old0, old1, old2, old3, ...]
+```
+
+### Use Cases
+
+- **Dynamic programming** space optimization (using only O(1) space)
+- **Fibonacci sequence** calculation
+- **House Robber** problem
+- **Stock trading** with cooldown
+- Any problem where current state depends on previous state
+
+### Example: Fibonacci with O(1) Space
+
+<Steps>
+  <Step title="Initialize states">
+    Set `last = 0` (F(0)) and `now = 1` (F(1)).
+  </Step>
+  <Step title="Iterate n times">
+    For each step, calculate the next Fibonacci number.
+  </Step>
+  <Step title="Update states">
+    Store current in `temp`, update `now` to sum, and set `last` to old current.
+  </Step>
+  <Step title="Return result">
+    After loop completes, `now` contains F(n).
+  </Step>
+</Steps>
+
+```cpp
+int fibonacci(int n) {
+    if(n <= 1) return n;
+    
+    int last = 0;  // F(0)
+    int now = 1;   // F(1)
+    
+    for(int i = 2; i <= n; ++i) {
+        int temp = now;
+        now = last + now;
+        last = temp;
+    }
+    
+    return now;
+}
+
+// Example usage
+int fib10 = fibonacci(10);
+// Result: 55 (0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55)
+```
+
+### Example: House Robber
+
+```cpp
+int rob(vector<int>& houses) {
+    if(houses.empty()) return 0;
+    if(houses.size() == 1) return houses[0];
+    
+    int last = 0;           // Max money up to house i-2
+    int now = houses[0];    // Max money up to house i-1
+    
+    for(int i = 1; i < houses.size(); ++i) {
+        int temp = now;
+        // Either rob current house + money from i-2,
+        // or skip current house and take money from i-1
+        now = max(now, last + houses[i]);
+        last = temp;
+    }
+    
+    return now;
+}
+
+// Example usage
+vector<int> houses = {2, 7, 9, 3, 1};
+int maxMoney = rob(houses);
+// Result: 12 (rob house 0, 2, and 4: 2 + 9 + 1 = 12)
+```
+
+## Two Sequences
+
+This pattern uses one pointer for each of two different sequences, useful when merging or comparing two arrays.
+
+### Template
+
+```cpp
+int n = seq1.size();
+int m = seq2.size();
+int p1 = 0, p2 = 0;
+
+while(p1 < n && p2 < m) {
+    if(p1_condition(p1)) {
+        p1++;
+    }
+    if(p2_condition(p2)) {
+        p2++;
+    }
+    process_logic(p1, p2);
+}
+```
+
+### Visualization
+
+```
+seq1: [a1, a2, a3, ..., an]
+[p1] ->->->->->
+
+seq2: [b1, b2, b3, ..., bn]
+[p2] ->->
+```
+
+### Use Cases
+
+- **Merge sorted arrays**
+- **Find intersection** of two arrays
+- **Median of two sorted arrays**
+- **Compare sequences** for equality
+- **Zip/interleave** two arrays
+
+### Example: Merge Two Sorted Arrays
+
+<Steps>
+  <Step title="Initialize pointers">
+    Set `p1 = 0` for first array and `p2 = 0` for second array.
+  </Step>
+  <Step title="Compare elements">
+    At each step, compare `arr1[p1]` with `arr2[p2]`.
+  </Step>
+  <Step title="Add smaller element">
+    Add the smaller element to result and advance that pointer.
+  </Step>
+  <Step title="Handle remaining elements">
+    When one array is exhausted, copy remaining elements from the other.
+  </Step>
+</Steps>
+
+```cpp
+vector<int> mergeSorted(vector<int>& arr1, vector<int>& arr2) {
+    int n = arr1.size();
+    int m = arr2.size();
+    vector<int> result;
+    result.reserve(n + m);
+    
+    int p1 = 0, p2 = 0;
+    
+    while(p1 < n && p2 < m) {
+        if(arr1[p1] <= arr2[p2]) {
+            result.push_back(arr1[p1++]);
+        } else {
+            result.push_back(arr2[p2++]);
+        }
+    }
+    
+    // Copy remaining elements
+    while(p1 < n) result.push_back(arr1[p1++]);
+    while(p2 < m) result.push_back(arr2[p2++]);
+    
+    return result;
+}
+
+// Example usage
+vector<int> arr1 = {1, 3, 5, 7};
+vector<int> arr2 = {2, 4, 6, 8};
+vector<int> merged = mergeSorted(arr1, arr2);
+// Result: {1, 2, 3, 4, 5, 6, 7, 8}
+```
+
+### Example: Intersection of Two Arrays
+
+```cpp
+vector<int> intersection(vector<int>& arr1, vector<int>& arr2) {
+    sort(arr1.begin(), arr1.end());
+    sort(arr2.begin(), arr2.end());
+    
+    vector<int> result;
+    int p1 = 0, p2 = 0;
+    
+    while(p1 < arr1.size() && p2 < arr2.size()) {
+        if(arr1[p1] == arr2[p2]) {
+            result.push_back(arr1[p1]);
+            p1++;
+            p2++;
+        } else if(arr1[p1] < arr2[p2]) {
+            p1++;
+        } else {
+            p2++;
+        }
+    }
+    
+    return result;
+}
+
+// Example usage
+vector<int> a = {1, 2, 2, 1};
+vector<int> b = {2, 2};
+vector<int> common = intersection(a, b);
+// Result: {2, 2}
+```
+
+## Complexity Analysis
+
+| Pattern | Time Complexity | Space Complexity |
+|---------|----------------|------------------|
+| Slow-Fast Runner | O(n) | O(1) |
+| Left-Right Boundary | O(n) | O(1) |
+| Old-New State | O(n) | O(1) |
+| Two Sequences | O(n + m) | O(1) excluding output |
+
+## When to Use Two Pointers
+
+Consider using two pointers when:
+
+- Working with **sorted arrays** or lists
+- Need to find **pairs or triplets** with specific properties
+- Optimizing from **O(n²) to O(n)** time complexity
+- Problem requires **in-place** modifications
+- Need to **track multiple positions** in the same or different sequences
+- Problem involves **partitioning** or **rearranging** elements
+
+## Common Pitfalls
+
+<Warning>
+  **Off-by-one errors**: Carefully manage boundary conditions (`<` vs `<=`, `left < right` vs `left <= right`)
+</Warning>
+
+<Warning>
+  **Infinite loops**: Ensure at least one pointer always advances in each iteration
+</Warning>
+
+<Warning>
+  **Sorted assumption**: Many two-pointer problems assume sorted input - don't forget to sort if needed
+</Warning>
+
+## Related Patterns
+
+- [Sliding Window](/algorithms/techniques/sliding-window) - Extension of two pointers for subarray problems
+- [Binary Search](/algorithms/searches/binary-search) - Another technique often used with sorted data
+- [Fast and Slow Pointers](/algorithms/techniques/cycle-detection) - Special case for linked list cycle detection

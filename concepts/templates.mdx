@@ -1,0 +1,646 @@
+---
+title: Template Overview
+description: Complete guide to all available C++ templates for competitive programming
+---
+
+## Overview
+
+Templates provide starting points for your competitive programming solutions. Each template is optimized for specific contest formats and includes essential utilities.
+
+## Available Templates
+
+### Standard Template
+
+**Trigger:** `template_std`
+
+The most comprehensive template for general competitive programming.
+
+```cpp
+/**
+ * @created     : March 05, 2026
+ * @handle      : @LuchoBazz
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    return 0;
+}
+```
+
+**Features:**
+- Clean, minimal starting point
+- Fast I/O optimization
+- Date and author placeholders
+- Compatible with all contest formats
+
+**Best for:**
+- Codeforces rounds
+- AtCoder contests
+- General practice problems
+
+<Tip>
+This is the most commonly used template. Start here if unsure which template to choose.
+</Tip>
+
+### Header Template
+
+**Trigger:** `template_header`
+
+Comprehensive header with optimizations and utility macros.
+
+```cpp
+#ifdef ONLINE_JUDGE
+#pragma GCC optimize("O3,unroll-loops")
+#pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
+#endif
+
+#define endl '\n'
+#define _ << ' ' <<
+#define PB push_back
+#define SZ(v) ((int)(v).size())
+#define all(v) (v).begin(), (v).end()
+#define rall(v) (v).rbegin(), (v).rend()
+
+// Loop macros
+#define forn(i, a) for (int i = 0; i < int(a); ++i)
+#define rof(i, a) for (int i = int(a) - 1; i >= 0; --i)
+
+// Constants
+const string ALPHA = "abcdefghijklmnopqrstuvwxyz";
+const string YES = "YES", NO = "NO";
+const int d4x[4] = {0, -1, 1, 0};
+const int d4y[4] = {-1, 0, 0, 1};
+
+// Utility functions
+template <class T, class S> 
+inline bool xmax(T &a, const S &b) {
+    return (a < b ? a = b, 1 : 0);
+}
+
+template <class T, class S> 
+inline bool xmin(T &a, const S &b) {
+    return (a > b ? a = b, 1 : 0);
+}
+
+// Type aliases
+using ll = int64_t;
+using ld = long double;
+```
+
+**Features:**
+- Compiler optimization pragmas
+- Common macros and shortcuts
+- Direction arrays for grid problems
+- Min/max utility functions
+- Vector I/O operators
+- Type aliases
+
+**Best for:**
+- Complex problems requiring many utilities
+- When you need grid navigation
+- Problems with lots of container operations
+
+<Note>
+Optimization pragmas only activate on online judges to avoid local debugging issues.
+</Note>
+
+### Test Case Template
+
+**Trigger:** `template_cases`
+
+Optimized for problems with multiple test cases.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    // Your solution here
+}
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int T;
+    cin >> T;
+    while(T--) {
+        solve();
+    }
+    
+    return 0;
+}
+```
+
+**Features:**
+- Clean separation of solve logic
+- Handles multiple test cases automatically
+- Fast I/O enabled
+
+**Best for:**
+- Codeforces Division 2/3 problems
+- Most AtCoder contests
+- Any problem starting with "T test cases"
+
+### Google Template
+
+**Trigger:** `template_google`
+
+Specialized for Google Code Jam and Kick Start.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve(int case_num) {
+    // Your solution here
+    
+    cout << "Case #" << case_num << ": ";
+    // Output answer
+    cout << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int T;
+    cin >> T;
+    for(int t = 1; t <= T; t++) {
+        solve(t);
+    }
+    
+    return 0;
+}
+```
+
+**Features:**
+- Automatic case numbering
+- Proper output format: `Case #X: answer`
+- One-indexed test cases
+
+**Best for:**
+- Google Code Jam
+- Google Kick Start
+- Facebook Hacker Cup
+
+<Warning>
+Google competitions require exact output format. Don't modify the case numbering format.
+</Warning>
+
+### USACO Template
+
+**Trigger:** `template_usaco`
+
+Optimized for USA Computing Olympiad format.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    freopen("problemname.in", "r", stdin);
+    freopen("problemname.out", "w", stdout);
+    
+    // Your solution here
+    
+    return 0;
+}
+```
+
+**Features:**
+- File I/O setup
+- Reads from `.in` file
+- Writes to `.out` file
+- Automatic file handling
+
+**Best for:**
+- USACO contests
+- Any competition requiring file I/O
+
+<Tip>
+Replace `"problemname"` with the actual problem name (e.g., `"paint.in"` and `"paint.out"`).
+</Tip>
+
+### LeetCode Template
+
+**Trigger:** `template_std_leetcode`
+
+Class-based structure for LeetCode problems.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+class Solution {
+public:
+    // Your solution method here
+};
+
+int main() {
+    Solution sol;
+    
+    // Test your solution
+    
+    return 0;
+}
+```
+
+**Features:**
+- Class-based structure matching LeetCode format
+- Easy local testing setup
+- Compatible with LeetCode copy-paste
+
+**Best for:**
+- LeetCode practice
+- Interview preparation
+- Class-based problem formats
+
+### Random Test Template
+
+**Trigger:** `template_random`
+
+Generate random test cases for stress testing.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+
+int rand_int(int l, int r) {
+    uniform_int_distribution<int> dist(l, r);
+    return dist(rng);
+}
+
+vector<int> rand_vector(int n, int l, int r) {
+    vector<int> v(n);
+    for(int i = 0; i < n; i++) {
+        v[i] = rand_int(l, r);
+    }
+    return v;
+}
+
+int main() {
+    // Generate test cases
+    int n = rand_int(1, 100);
+    vector<int> arr = rand_vector(n, 1, 1000);
+    
+    return 0;
+}
+```
+
+**Features:**
+- Proper random number generation
+- Utility functions for common random data
+- Stress testing helpers
+
+**Best for:**
+- Finding edge cases
+- Comparing brute force vs optimized solutions
+- Validating correctness
+
+<Note>
+Use with `random_init`, `random_vector`, and `random_permutation` snippets for more functionality.
+</Note>
+
+## Template Selection Guide
+
+### Decision Tree
+
+<Steps>
+  <Step title="Identify Contest Type">
+    <CardGroup cols={2}>
+      <Card title="General Contests" icon="code">
+        Codeforces, AtCoder, etc.
+        
+        → `template_std` or `template_header`
+      </Card>
+      
+      <Card title="Google Competitions" icon="google">
+        Code Jam, Kick Start
+        
+        → `template_google`
+      </Card>
+      
+      <Card title="USACO" icon="flag-usa">
+        USA Computing Olympiad
+        
+        → `template_usaco`
+      </Card>
+      
+      <Card title="LeetCode" icon="laptop-code">
+        Interview practice
+        
+        → `template_std_leetcode`
+      </Card>
+    </CardGroup>
+  </Step>
+
+  <Step title="Consider Problem Format">
+    **Single test case:**
+    - Use `template_std`
+    
+    **Multiple test cases:**
+    - Use `template_cases`
+    
+    **File I/O:**
+    - Use `template_usaco`
+    
+    **Stress testing:**
+    - Use `template_random`
+  </Step>
+
+  <Step title="Assess Complexity Needs">
+    **Simple problem:**
+    - `template_std` (minimal)
+    
+    **Complex problem:**
+    - `template_header` (full utilities)
+    
+    **Grid problem:**
+    - `template_header` (includes direction arrays)
+  </Step>
+</Steps>
+
+## Combining Templates with Snippets
+
+### Common Combinations
+
+<AccordionGroup>
+  <Accordion title="Graph Problem">
+    ```cpp
+    template_std
+    graph_graph
+    graph_digraph
+    graph_dijkstra_std
+    misc_debug  // for testing
+    ```
+  </Accordion>
+
+  <Accordion title="Dynamic Programming">
+    ```cpp
+    template_header  // for loop macros
+    numeric_mint_compress  // if modular arithmetic needed
+    misc_debug
+    ```
+  </Accordion>
+
+  <Accordion title="String Problem">
+    ```cpp
+    template_std
+    string_kmp_std
+    // or
+    string_hashing_static_compress
+    ```
+  </Accordion>
+
+  <Accordion title="Geometry Problem">
+    ```cpp
+    template_header  // for math utilities
+    2d_geometry_point
+    2d_geometry_convex_hull_mc
+    misc_precise  // for decimal precision
+    ```
+  </Accordion>
+
+  <Accordion title="Interactive Problem">
+    ```cpp
+    template_std
+    // Remove fast I/O for interactive:
+    // Comment out: ios_base::sync_with_stdio(0);
+    // Add: cout.flush() after each output
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Template Customization
+
+### Modifying Templates
+
+You can customize templates for your preferences:
+
+#### Add Your Handle
+
+```cpp
+/**
+ * @created     : March 05, 2026
+ * @handle      : @YourHandle  // Change this
+ */
+```
+
+#### Custom Macros
+
+Add frequently used macros:
+
+```cpp
+#define int long long  // If you always use long long
+#define double long double  // For precision
+#define vi vector<int>
+#define pii pair<int,int>
+```
+
+#### Favorite Utilities
+
+Add your most-used functions:
+
+```cpp
+template<typename T>
+void print(vector<T> v) {
+    for(auto x : v) cout << x << " ";
+    cout << endl;
+}
+```
+
+<Warning>
+If you modify the source `.cpp` files, re-run the snippet generator:
+
+```bash
+python3 generate_vscode_snippets.py
+# or
+bash generate_snippets.sh
+```
+</Warning>
+
+## Template Best Practices
+
+### DO:
+
+- ✅ Always start with a template
+- ✅ Use `template_cases` for multiple test cases
+- ✅ Enable fast I/O for large inputs
+- ✅ Use appropriate template for contest format
+- ✅ Add `misc_debug` during development
+- ✅ Remove debug code before submission
+
+### DON'T:
+
+- ❌ Disable fast I/O for interactive problems
+- ❌ Use Google template for non-Google contests
+- ❌ Forget to change USACO filename
+- ❌ Submit with debug statements enabled
+- ❌ Use unnecessary includes or snippets
+- ❌ Modify template structure unless needed
+
+## Interactive Problems
+
+For interactive problems, modify the template:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    // DON'T use fast I/O for interactive problems
+    // ios_base::sync_with_stdio(0);  // Comment this out
+    // cin.tie(0);                    // Comment this out
+    
+    // Your solution
+    int query;
+    cin >> query;
+    
+    int response = process(query);
+    cout << response << endl;
+    cout.flush();  // IMPORTANT: flush after every output
+    
+    return 0;
+}
+```
+
+<Warning>
+**Critical for interactive problems:**
+1. Disable fast I/O
+2. Add `cout.flush()` after each output
+3. Never use `endl` without flush
+</Warning>
+
+## Template Cheat Sheet
+
+| Template | Trigger | Use Case | Key Features |
+|----------|---------|----------|-------------|
+| Standard | `template_std` | General purpose | Clean, minimal |
+| Header | `template_header` | Complex problems | Macros, optimizations |
+| Cases | `template_cases` | Multiple test cases | Auto T handling |
+| Google | `template_google` | Code Jam, Kick Start | Case numbering |
+| USACO | `template_usaco` | USACO contests | File I/O |
+| LeetCode | `template_std_leetcode` | Interview prep | Class structure |
+| Random | `template_random` | Stress testing | Random generation |
+
+## Common Mistakes
+
+<AccordionGroup>
+  <Accordion title="Using Wrong Template for Contest">
+    **Problem:** Using `template_std` for Google Code Jam
+    
+    **Solution:** Use `template_google` for proper case numbering:
+    ```cpp
+    cout << "Case #" << case_num << ": " << answer << endl;
+    ```
+  </Accordion>
+
+  <Accordion title="Forgetting to Change USACO Filename">
+    **Problem:** Submitting with `problemname.in/out`
+    
+    **Solution:** Always update filenames:
+    ```cpp
+    freopen("paint.in", "r", stdin);   // Actual problem name
+    freopen("paint.out", "w", stdout);
+    ```
+  </Accordion>
+
+  <Accordion title="Fast I/O in Interactive Problems">
+    **Problem:** Solution hangs or gets wrong answer
+    
+    **Solution:** Disable fast I/O and use flush:
+    ```cpp
+    // ios_base::sync_with_stdio(0);  // Commented out
+    cout << answer << endl;
+    cout.flush();  // Add this
+    ```
+  </Accordion>
+
+  <Accordion title="Including Unnecessary Code">
+    **Problem:** Large template with unused code
+    
+    **Solution:** Remove what you don't need:
+    - Don't need direction arrays? Remove them
+    - Don't need vector I/O? Remove those operators
+    - Keep templates minimal for compilation speed
+  </Accordion>
+</AccordionGroup>
+
+## Advanced Usage
+
+### Creating Problem-Specific Templates
+
+For recurring problem types, create specialized templates:
+
+```cpp my_dp_template.cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+const int MOD = 1e9 + 7;
+const int MAXN = 1e5 + 5;
+
+ll dp[MAXN][MAXN];
+
+int main() {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    // DP solution structure
+    
+    return 0;
+}
+```
+
+Add it to your snippets and regenerate.
+
+### Template Inheritance
+
+Build on existing templates:
+
+```cpp
+// Start with template_header
+// Then add your customizations
+#define int long long  // Auto long long
+
+void setIO(string name = "") {
+    if(name.size()) {
+        freopen((name + ".in").c_str(), "r", stdin);
+        freopen((name + ".out").c_str(), "w", stdout);
+    }
+}
+
+signed main() {  // Note: signed main() when #define int long long
+    setIO("problemname");
+    return 0;
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Snippet Usage" icon="keyboard" href="/concepts/snippet-usage">
+    Learn how to efficiently trigger and combine snippets
+  </Card>
+  <Card title="Competitive Programming" icon="trophy" href="/concepts/competitive-programming">
+    Master contest strategies and best practices
+  </Card>
+  <Card title="API Reference" icon="book" href="/reference/graph">
+    Explore all available algorithms and data structures
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Build your first solution with snippets
+  </Card>
+</CardGroup>

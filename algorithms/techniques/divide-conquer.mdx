@@ -1,0 +1,510 @@
+---
+title: Divide and Conquer
+description: Master the divide and conquer paradigm for breaking down complex problems
+icon: split
+---
+
+Divide and conquer is a fundamental algorithmic paradigm that breaks down a problem into smaller subproblems, solves them recursively, and combines their solutions.
+
+## Overview
+
+The divide and conquer strategy involves three steps:
+
+1. **Divide**: Break the problem into smaller subproblems of the same type
+2. **Conquer**: Solve the subproblems recursively (base case when small enough)
+3. **Combine**: Merge the solutions of subproblems to solve the original problem
+
+## Basic Template
+
+From the source code, here's the fundamental divide and conquer pattern:
+
+```cpp
+void divide(int left, int right) {
+    if (left == right) {
+        // Base case: single element
+        return;
+    } else if (left < right) {
+        int mid = (left + right) / 2;
+        
+        // Divide: split into two halves
+        divide(left, mid);
+        divide(mid + 1, right);
+        
+        // Conquer: combine results (if needed)
+        // combine(left, mid, right);
+    }
+}
+```
+
+## The Three Phases
+
+<Steps>
+  <Step title="Divide">
+    Split the problem into smaller subproblems. Typically involves finding a midpoint or partitioning the data.
+  </Step>
+  <Step title="Conquer">
+    Recursively solve each subproblem. Continue until reaching base cases that are trivial to solve.
+  </Step>
+  <Step title="Combine">
+    Merge the solutions of subproblems to create the solution for the original problem.
+  </Step>
+</Steps>
+
+## Classic Examples
+
+<CardGroup cols={2}>
+  <Card title="Merge Sort" icon="sort" href="#merge-sort">
+    Sort by dividing array in half, sorting each half, then merging
+  </Card>
+  <Card title="Quick Sort" icon="bolt" href="#quick-sort">
+    Sort by partitioning around pivot, then sorting partitions
+  </Card>
+  <Card title="Binary Search" icon="magnifying-glass" href="#binary-search">
+    Search by repeatedly halving the search space
+  </Card>
+  <Card title="Maximum Subarray" icon="chart-line" href="#maximum-subarray">
+    Find max sum subarray by dividing and checking crossing cases
+  </Card>
+</CardGroup>
+
+## Example 1: Merge Sort
+
+Merge sort is the quintessential divide and conquer algorithm.
+
+```cpp
+void merge(vector<int>& arr, int left, int mid, int right) {
+    vector<int> temp;
+    int i = left, j = mid + 1;
+    
+    // Merge two sorted halves
+    while(i <= mid && j <= right) {
+        if(arr[i] <= arr[j]) {
+            temp.push_back(arr[i++]);
+        } else {
+            temp.push_back(arr[j++]);
+        }
+    }
+    
+    // Copy remaining elements
+    while(i <= mid) temp.push_back(arr[i++]);
+    while(j <= right) temp.push_back(arr[j++]);
+    
+    // Copy back to original array
+    for(int i = 0; i < temp.size(); i++) {
+        arr[left + i] = temp[i];
+    }
+}
+
+void mergeSort(vector<int>& arr, int left, int right) {
+    if(left >= right) return;  // Base case
+    
+    int mid = left + (right - left) / 2;
+    
+    // Divide
+    mergeSort(arr, left, mid);
+    mergeSort(arr, mid + 1, right);
+    
+    // Combine
+    merge(arr, left, mid, right);
+}
+
+// Example usage
+vector<int> arr = {38, 27, 43, 3, 9, 82, 10};
+mergeSort(arr, 0, arr.size() - 1);
+// Result: {3, 9, 10, 27, 38, 43, 82}
+```
+
+**How it works:**
+
+```
+[38, 27, 43, 3, 9, 82, 10]
+         /              \
+[38, 27, 43, 3]      [9, 82, 10]
+    /      \            /      \
+[38, 27] [43, 3]   [9, 82]  [10]
+  /  \    /  \      /  \
+[38][27][43][3]   [9][82]  [10]
+  \  /    \  /      \  /     |
+[27,38] [3,43]   [9,82]   [10]
+    \      /         \      /
+[3,27,38,43]      [9,10,82]
+         \            /
+   [3,9,10,27,38,43,82]
+```
+
+**Complexity:**
+- Time: O(n log n) - Always
+- Space: O(n) - For temporary arrays
+- Stable: Yes
+
+## Example 2: Quick Sort
+
+Quick sort divides by partitioning around a pivot element.
+
+```cpp
+int partition(vector<int>& arr, int left, int right) {
+    int pivot = arr[right];  // Choose rightmost as pivot
+    int i = left - 1;        // Index of smaller element
+    
+    for(int j = left; j < right; j++) {
+        if(arr[j] <= pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+    
+    swap(arr[i + 1], arr[right]);
+    return i + 1;
+}
+
+void quickSort(vector<int>& arr, int left, int right) {
+    if(left >= right) return;  // Base case
+    
+    // Divide: partition around pivot
+    int pivotIndex = partition(arr, left, right);
+    
+    // Conquer: recursively sort partitions
+    quickSort(arr, left, pivotIndex - 1);
+    quickSort(arr, pivotIndex + 1, right);
+    
+    // Combine: not needed (in-place)
+}
+
+// Example usage
+vector<int> arr = {10, 7, 8, 9, 1, 5};
+quickSort(arr, 0, arr.size() - 1);
+// Result: {1, 5, 7, 8, 9, 10}
+```
+
+**Complexity:**
+- Time: O(n log n) average, O(n²) worst case
+- Space: O(log n) for recursion stack
+- Stable: No (standard implementation)
+
+## Example 3: Binary Search
+
+Binary search divides the search space in half at each step.
+
+```cpp
+int binarySearch(vector<int>& arr, int target) {
+    int left = 0, right = arr.size() - 1;
+    
+    while(left <= right) {
+        int mid = left + (right - left) / 2;
+        
+        if(arr[mid] == target) {
+            return mid;  // Found
+        } else if(arr[mid] < target) {
+            left = mid + 1;  // Search right half
+        } else {
+            right = mid - 1;  // Search left half
+        }
+    }
+    
+    return -1;  // Not found
+}
+
+// Recursive version
+int binarySearchRecursive(vector<int>& arr, int target, int left, int right) {
+    if(left > right) return -1;  // Base case: not found
+    
+    int mid = left + (right - left) / 2;
+    
+    if(arr[mid] == target) {
+        return mid;
+    } else if(arr[mid] < target) {
+        return binarySearchRecursive(arr, target, mid + 1, right);
+    } else {
+        return binarySearchRecursive(arr, target, left, mid - 1);
+    }
+}
+
+// Example usage
+vector<int> arr = {1, 3, 5, 7, 9, 11, 13};
+int index = binarySearch(arr, 7);
+// Result: 3
+```
+
+**Complexity:**
+- Time: O(log n)
+- Space: O(1) iterative, O(log n) recursive
+
+## Example 4: Maximum Subarray (Kadane's Problem)
+
+Find the contiguous subarray with the largest sum using divide and conquer.
+
+```cpp
+int maxCrossingSum(vector<int>& arr, int left, int mid, int right) {
+    // Maximum sum including elements on left of mid
+    int leftSum = INT_MIN;
+    int sum = 0;
+    for(int i = mid; i >= left; i--) {
+        sum += arr[i];
+        leftSum = max(leftSum, sum);
+    }
+    
+    // Maximum sum including elements on right of mid
+    int rightSum = INT_MIN;
+    sum = 0;
+    for(int i = mid + 1; i <= right; i++) {
+        sum += arr[i];
+        rightSum = max(rightSum, sum);
+    }
+    
+    return leftSum + rightSum;
+}
+
+int maxSubarraySum(vector<int>& arr, int left, int right) {
+    if(left == right) {
+        return arr[left];  // Base case: single element
+    }
+    
+    int mid = left + (right - left) / 2;
+    
+    // Divide: three possibilities
+    int leftMax = maxSubarraySum(arr, left, mid);
+    int rightMax = maxSubarraySum(arr, mid + 1, right);
+    int crossMax = maxCrossingSum(arr, left, mid, right);
+    
+    // Combine: return maximum of three
+    return max({leftMax, rightMax, crossMax});
+}
+
+// Example usage
+vector<int> arr = {-2, 1, -3, 4, -1, 2, 1, -5, 4};
+int result = maxSubarraySum(arr, 0, arr.size() - 1);
+// Result: 6 (subarray [4, -1, 2, 1])
+```
+
+**Complexity:**
+- Time: O(n log n)
+- Space: O(log n) for recursion
+
+<Note>
+  Kadane's algorithm solves this in O(n) time with dynamic programming, but the divide-and-conquer approach demonstrates the paradigm well.
+</Note>
+
+## Example 5: Count Inversions
+
+Count pairs (i, j) where i < j but arr[i] > arr[j].
+
+```cpp
+long long mergeAndCount(vector<int>& arr, int left, int mid, int right) {
+    vector<int> leftArr(arr.begin() + left, arr.begin() + mid + 1);
+    vector<int> rightArr(arr.begin() + mid + 1, arr.begin() + right + 1);
+    
+    int i = 0, j = 0, k = left;
+    long long invCount = 0;
+    
+    while(i < leftArr.size() && j < rightArr.size()) {
+        if(leftArr[i] <= rightArr[j]) {
+            arr[k++] = leftArr[i++];
+        } else {
+            arr[k++] = rightArr[j++];
+            // All remaining elements in leftArr are greater than rightArr[j]
+            invCount += (leftArr.size() - i);
+        }
+    }
+    
+    while(i < leftArr.size()) arr[k++] = leftArr[i++];
+    while(j < rightArr.size()) arr[k++] = rightArr[j++];
+    
+    return invCount;
+}
+
+long long countInversions(vector<int>& arr, int left, int right) {
+    long long invCount = 0;
+    
+    if(left < right) {
+        int mid = left + (right - left) / 2;
+        
+        invCount += countInversions(arr, left, mid);
+        invCount += countInversions(arr, mid + 1, right);
+        invCount += mergeAndCount(arr, left, mid, right);
+    }
+    
+    return invCount;
+}
+
+// Example usage
+vector<int> arr = {8, 4, 2, 1};
+long long inversions = countInversions(arr, 0, arr.size() - 1);
+// Result: 6 (pairs: (8,4), (8,2), (8,1), (4,2), (4,1), (2,1))
+```
+
+## Example 6: Closest Pair of Points
+
+Find the closest pair of points in 2D space.
+
+```cpp
+struct Point {
+    double x, y;
+};
+
+double distance(Point p1, Point p2) {
+    return sqrt((p1.x - p2.x) * (p1.x - p2.x) + 
+                (p1.y - p2.y) * (p1.y - p2.y));
+}
+
+double bruteForce(vector<Point>& points, int left, int right) {
+    double minDist = DBL_MAX;
+    for(int i = left; i < right; i++) {
+        for(int j = i + 1; j <= right; j++) {
+            minDist = min(minDist, distance(points[i], points[j]));
+        }
+    }
+    return minDist;
+}
+
+double stripClosest(vector<Point>& strip, double d) {
+    double minDist = d;
+    sort(strip.begin(), strip.end(), [](Point a, Point b) {
+        return a.y < b.y;
+    });
+    
+    for(int i = 0; i < strip.size(); i++) {
+        for(int j = i + 1; j < strip.size() && 
+            (strip[j].y - strip[i].y) < minDist; j++) {
+            minDist = min(minDist, distance(strip[i], strip[j]));
+        }
+    }
+    
+    return minDist;
+}
+
+double closestPairUtil(vector<Point>& points, int left, int right) {
+    if(right - left <= 3) {
+        return bruteForce(points, left, right);
+    }
+    
+    int mid = left + (right - left) / 2;
+    Point midPoint = points[mid];
+    
+    double dl = closestPairUtil(points, left, mid);
+    double dr = closestPairUtil(points, mid + 1, right);
+    double d = min(dl, dr);
+    
+    vector<Point> strip;
+    for(int i = left; i <= right; i++) {
+        if(abs(points[i].x - midPoint.x) < d) {
+            strip.push_back(points[i]);
+        }
+    }
+    
+    return min(d, stripClosest(strip, d));
+}
+
+double closestPair(vector<Point>& points) {
+    sort(points.begin(), points.end(), [](Point a, Point b) {
+        return a.x < b.x;
+    });
+    return closestPairUtil(points, 0, points.size() - 1);
+}
+```
+
+**Complexity:** O(n log²n)
+
+## Complexity Analysis
+
+### Master Theorem
+
+For recurrence relations of the form:
+
+```
+T(n) = aT(n/b) + f(n)
+```
+
+Where:
+- `a` = number of subproblems
+- `n/b` = size of each subproblem
+- `f(n)` = cost of divide and combine steps
+
+**Examples:**
+
+| Algorithm | Recurrence | Time Complexity |
+|-----------|-----------|----------------|
+| Binary Search | T(n) = T(n/2) + O(1) | O(log n) |
+| Merge Sort | T(n) = 2T(n/2) + O(n) | O(n log n) |
+| Quick Sort (avg) | T(n) = 2T(n/2) + O(n) | O(n log n) |
+| Karatsuba | T(n) = 3T(n/2) + O(n) | O(n^1.58) |
+| Strassen | T(n) = 7T(n/2) + O(n²) | O(n^2.81) |
+
+## When to Use Divide and Conquer
+
+Use divide and conquer when:
+
+- Problem can be **broken into similar subproblems**
+- Subproblems are **independent** (no overlapping)
+- Solution can be **constructed from subproblem solutions**
+- Problem has **optimal substructure**
+- Base cases are **simple to solve**
+
+## Divide and Conquer vs Dynamic Programming
+
+| Aspect | Divide and Conquer | Dynamic Programming |
+|--------|-------------------|---------------------|
+| Subproblems | Independent | Overlapping |
+| Approach | Top-down | Bottom-up or Top-down |
+| Memoization | Not needed | Essential |
+| Example | Merge Sort | Fibonacci |
+
+## Common Pitfalls
+
+<Warning>
+  **Integer overflow**: Use `left + (right - left) / 2` instead of `(left + right) / 2` for midpoint calculation
+</Warning>
+
+<Warning>
+  **Off-by-one errors**: Be careful with boundary conditions in recursive calls (mid vs mid+1)
+</Warning>
+
+<Warning>
+  **Stack overflow**: Very deep recursion can exceed stack limits. Consider iterative alternatives for large inputs
+</Warning>
+
+<Warning>
+  **Not checking base cases**: Always handle base cases (empty array, single element, etc.) properly
+</Warning>
+
+## Optimization Techniques
+
+### 1. Switch to iterative for small subproblems
+```cpp
+if(right - left < THRESHOLD) {
+    insertionSort(arr, left, right);
+    return;
+}
+```
+
+### 2. Tail recursion optimization
+```cpp
+// Instead of two recursive calls, eliminate one
+void quickSort(vector<int>& arr, int left, int right) {
+    while(left < right) {
+        int pivot = partition(arr, left, right);
+        quickSort(arr, left, pivot - 1);
+        left = pivot + 1;  // Tail recursion eliminated
+    }
+}
+```
+
+### 3. Iterative version using stack
+```cpp
+void mergeSortIterative(vector<int>& arr) {
+    int n = arr.size();
+    for(int currSize = 1; currSize < n; currSize *= 2) {
+        for(int left = 0; left < n - 1; left += 2 * currSize) {
+            int mid = min(left + currSize - 1, n - 1);
+            int right = min(left + 2 * currSize - 1, n - 1);
+            merge(arr, left, mid, right);
+        }
+    }
+}
+```
+
+## Related Concepts
+
+- [Dynamic Programming](/algorithms/techniques/dynamic-programming) - For overlapping subproblems
+- [Recursion](/algorithms/techniques/recursion) - Foundation of divide and conquer
+- [Binary Search](/algorithms/searches/binary-search) - Classic divide and conquer application
+- [Merge Sort](/algorithms/sorting/merge-sort) - Prototypical divide and conquer algorithm

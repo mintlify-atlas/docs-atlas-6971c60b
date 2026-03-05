@@ -1,0 +1,350 @@
+---
+title: "Combinatorics API"
+description: "Combinations, permutations, and combinatorial algorithms"
+---
+
+## Overview
+
+Combinatorial algorithms for competitive programming including combinations, permutations, Catalan numbers, and generating all combinations.
+
+## Combinatorics Class
+
+A comprehensive class for combinatorial calculations using precomputed factorials.
+
+```cpp
+template<typename T>
+struct Combinatorics {
+    int sz;
+    Factorial<T> fact;
+    
+    Combinatorics(int n);  // Precompute factorials up to n
+    
+    T C(int n, int k);     // Combinations (nCr)
+    T H(int n, int k);     // Combinations with repetition
+    T P(int n, int k);     // Permutations (nPr)
+    T P(int n, const vector<int> &m);  // Permutations with repetition
+    T catalan(int n);      // n-th Catalan number
+};
+
+template<typename T>
+using Comb = Combinatorics<T>;
+```
+
+### Constructor
+
+<ParamField path="Combinatorics" type="Combinatorics(int n)">
+  Initialize with maximum value n. Precomputes factorials up to n.
+</ParamField>
+
+**Complexity:** O(n) initialization
+
+## Combinations (nCr)
+
+Number of ways to choose k items from n items where **order does NOT matter**.
+
+### With Precomputed Factorials
+
+```cpp
+template<typename T>
+T C(int n, int k);
+```
+
+**Formula:** C(n, k) = n! / (k! × (n-k)!)
+
+**Complexity:** O(1) with O(n) preprocessing
+
+**Usage Example:**
+
+```cpp
+using Mint = Modular<integral_constant<int, MOD>>;
+Comb<Mint> comb(1e6);
+
+Mint result = comb.C(10, 3);  // 120
+// Number of ways to choose 3 items from 10
+```
+
+### Without Precomputation
+
+```cpp
+template<typename T>
+T C(T n, T k) {  // O(k)
+    if(n < k) return static_cast<T>(0);
+    T ans = static_cast<T>(1);
+    for(T i = static_cast<T>(1); i <= k; i++) {
+        ans *= (n - k + i);
+        ans /= i;
+    }
+    return ans;
+}
+```
+
+**Complexity:** O(k)
+
+**Usage Example:**
+
+```cpp
+int result = C(10, 3);  // 120
+```
+
+### Properties
+
+```cpp
+// Symmetry
+C(n, k) = C(n, n-k)
+
+// Base cases
+C(n, 0) = C(n, n) = 1
+
+// Pascal's identity
+C(n, k) = C(n-1, k-1) + C(n-1, k)
+
+// Sum of row
+C(n, 0) + C(n, 1) + ... + C(n, n) = 2^n
+```
+
+## Permutations (nPr)
+
+Number of ways to arrange k items from n items where **order DOES matter**.
+
+### Without Repetition
+
+```cpp
+template<typename T>
+T P(int n, int k);
+```
+
+**Formula:** P(n, k) = n! / (n-k)!
+
+**Complexity:** O(1) with preprocessing
+
+**Usage Example:**
+
+```cpp
+Comb<Mint> comb(1e6);
+Mint result = comb.P(10, 3);  // 720
+// Number of ways to arrange 3 items from 10
+```
+
+### With Repetition
+
+```cpp
+template<typename T>
+T P(int n, const vector<int> &m);
+```
+
+**Formula:** P(n, \{m1, m2, ...\}) = n! / (m1! × m2! × ...)
+
+**Usage Example:**
+
+```cpp
+// Permutations of "MISSISSIPPI"
+vector<int> freq = {1, 4, 4, 2};  // M:1, I:4, S:4, P:2
+Mint result = comb.P(11, freq);
+// 11! / (1! * 4! * 4! * 2!) = 34650
+```
+
+## Combinations with Repetition (H)
+
+Also known as "stars and bars" - choosing k items from n types where repetition is allowed.
+
+```cpp
+template<typename T>
+T H(int n, int k);
+```
+
+**Formula:** H(n, k) = C(n + k - 1, k)
+
+**Complexity:** O(1) with preprocessing
+
+**Usage Example:**
+
+```cpp
+Comb<Mint> comb(1e6);
+Mint result = comb.H(3, 2);  // 6
+// Number of ways to choose 2 items from 3 types with repetition
+// {A,A}, {A,B}, {A,C}, {B,B}, {B,C}, {C,C}
+```
+
+## Catalan Numbers
+
+Sequence: 1, 1, 2, 5, 14, 42, 132, 429, 1430, 4862, ...
+
+```cpp
+template<typename T>
+T catalan(int n);
+```
+
+**Formula:** Cat(n) = C(2n, n) / (n + 1)
+
+**Complexity:** O(1) with preprocessing
+
+**Usage Example:**
+
+```cpp
+Comb<Mint> comb(1e6);
+Mint result = comb.catalan(5);  // 42
+```
+
+### Applications
+
+- Number of valid parenthesis sequences with n pairs
+- Number of full binary trees with n+1 leaves
+- Number of ways to triangulate a polygon with n+2 sides
+- Number of paths in grid that don't cross diagonal
+
+## Generating Algorithms
+
+### Next Combination
+
+Generates the next combination in lexicographic order.
+
+```cpp
+bool next_combination(vector<int> &comb, int n);
+```
+
+**Usage Example:**
+
+```cpp
+vector<int> comb = {0, 1, 2};  // First combination of size 3 from 0 to n-1
+do {
+    // Process combination
+    for(int i : comb) cout << i << " ";
+    cout << endl;
+} while(next_combination(comb, n));
+```
+
+### All Combinations (Backtracking)
+
+```cpp
+vector<vector<int>> all_combinations(int n, int k) {
+    vector<vector<int>> result;
+    vector<int> current;
+    
+    function<void(int)> backtrack = [&](int start) {
+        if(current.size() == k) {
+            result.push_back(current);
+            return;
+        }
+        for(int i = start; i < n; i++) {
+            current.push_back(i);
+            backtrack(i + 1);
+            current.pop_back();
+        }
+    };
+    
+    backtrack(0);
+    return result;
+}
+```
+
+**Complexity:** O(C(n, k) × k)
+
+### K-th Permutation
+
+Generates the k-th permutation directly without generating all previous ones.
+
+```cpp
+vector<int> kth_permutation(int n, int k) {
+    vector<int> result;
+    vector<int> numbers;
+    
+    int fact = 1;
+    for(int i = 1; i <= n; i++) {
+        numbers.push_back(i);
+        fact *= i;
+    }
+    
+    k--;  // 0-indexed
+    for(int i = 0; i < n; i++) {
+        fact /= (n - i);
+        int index = k / fact;
+        result.push_back(numbers[index]);
+        numbers.erase(numbers.begin() + index);
+        k %= fact;
+    }
+    
+    return result;
+}
+```
+
+**Complexity:** O(n²)
+
+**Usage Example:**
+
+```cpp
+vector<int> perm = kth_permutation(4, 9);
+// Returns the 9th permutation of {1, 2, 3, 4}
+// Result: {2, 3, 1, 4}
+```
+
+### Next Permutation with Repetitions
+
+```cpp
+template<typename T>
+bool next_permutation_with_reps(vector<T> &arr);
+```
+
+**Usage Example:**
+
+```cpp
+vector<int> arr = {1, 1, 2};
+do {
+    for(int x : arr) cout << x << " ";
+    cout << endl;
+} while(next_permutation_with_reps(arr));
+// Generates: 1 1 2, 1 2 1, 2 1 1
+```
+
+## nCr with Modulo (Compressed)
+
+Efficient computation when values are computed on-the-fly.
+
+```cpp
+template<typename T>
+T nCr_mod(int n, int r, T mod) {
+    if(r > n) return 0;
+    if(r == 0 || r == n) return 1;
+    
+    vector<T> C(r + 1, 0);
+    C[0] = 1;
+    
+    for(int i = 1; i <= n; i++) {
+        for(int j = min(i, r); j > 0; j--) {
+            C[j] = (C[j] + C[j-1]) % mod;
+        }
+    }
+    return C[r];
+}
+```
+
+**Complexity:** O(n × r)
+
+## Available Implementations
+
+| Algorithm | File | Complexity |
+|-----------|------|------------|
+| Combinatorics Class | `combinatorics_combinations_permutations.cpp` | O(n) init |
+| Next Combination | `combinatorics_next_combination.cpp` | O(n) |
+| All Combinations | `combinatorics_all_combinations_backtracking.cpp` | O(C(n,k) × k) |
+| K-th Permutation | `combinatorics_k_th_permutation.cpp` | O(n²) |
+| nCr Compressed | `combinatorics_ncr_compress.cpp` | O(n × r) |
+
+## Summary Table
+
+| Concept | Order Matters? | Repetition? | Formula |
+|---------|----------------|-------------|----------|
+| C(n, k) | No | No | n! / (k!(n-k)!) |
+| P(n, k) | Yes | No | n! / (n-k)! |
+| H(n, k) | No | Yes | C(n+k-1, k) |
+| P(n, {m}) | Yes | Yes | n! / (∏mᵢ!) |
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Math Algorithms" icon="calculator" href="/reference/math">
+    Factorials and number theory
+  </Card>
+  <Card title="Numeric Utilities" icon="hashtag" href="/reference/numeric">
+    Modular arithmetic for large values
+  </Card>
+</CardGroup>

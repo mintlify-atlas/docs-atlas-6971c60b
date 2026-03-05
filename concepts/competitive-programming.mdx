@@ -1,0 +1,686 @@
+---
+title: Competitive Programming Best Practices
+description: Master competitive programming techniques and workflows with C++ Algorithm Snippets
+---
+
+## Overview
+
+This guide covers best practices for using C++ Algorithm Snippets effectively in competitive programming contests. Learn how to maximize speed, avoid common pitfalls, and optimize your workflow.
+
+## Contest Workflow
+
+### Pre-Contest Setup
+
+<Steps>
+  <Step title="Verify Snippet Installation">
+    Before any contest, ensure snippets are properly installed:
+    
+    ```bash
+    # Test in a new file
+    echo "template_std" > test.cpp
+    ```
+    
+    Open in your editor and verify autocomplete works.
+  </Step>
+
+  <Step title="Prepare Your Template">
+    Choose the appropriate template for the contest:
+    
+    <CodeGroup>
+    ```cpp Standard Contests
+    template_std
+    // For Codeforces, AtCoder, etc.
+    ```
+    
+    ```cpp Google Competitions
+    template_google
+    // For Code Jam, Kick Start
+    // Includes case numbering
+    ```
+    
+    ```cpp USACO
+    template_usaco
+    // File I/O for USACO format
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Setup Compilation Alias">
+    Create fast compilation shortcuts:
+    
+    ```bash .bashrc
+    alias cppc='g++ -std=c++17 -O2 -Wall -Wextra -o sol'
+    alias cppd='g++ -std=c++17 -O2 -Wall -Wextra -DDEBUG -o sol'
+    alias run='./sol'
+    ```
+    
+    Usage:
+    ```bash
+    cppc solution.cpp && run < input.txt
+    ```
+  </Step>
+
+  <Step title="Prepare Test Script">
+    Create a testing script for quick validation:
+    
+    ```bash test.sh
+    #!/bin/bash
+    g++ -std=c++17 -O2 -Wall -Wextra -o sol $1
+    for input in tests/*.in; do
+        echo "Testing $input"
+        ./sol < $input > output.txt
+        diff -w output.txt "${input%.in}.out"
+    done
+    ```
+  </Step>
+</Steps>
+
+## Speed Optimization Techniques
+
+### Fast I/O
+
+All templates include essential I/O optimizations:
+
+```cpp
+ios_base::sync_with_stdio(0);
+cin.tie(0);
+```
+
+<Note>
+**What this does:**
+- `sync_with_stdio(0)` - Disables synchronization between C and C++ I/O streams
+- `cin.tie(0)` - Unties `cin` from `cout` for faster input
+
+**Speed improvement:** 2-3x faster for large inputs
+</Note>
+
+### Compiler Optimizations
+
+The `template_header` snippet includes powerful pragmas:
+
+```cpp
+#ifdef ONLINE_JUDGE
+#pragma GCC optimize("O3,unroll-loops")
+#pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
+#endif
+```
+
+<Warning>
+These optimizations only apply when compiled for online judges. They may cause issues in local debugging.
+</Warning>
+
+### Macro Shortcuts
+
+Use built-in macros from `template_header` or `misc_loops`:
+
+```cpp
+// Loop macros
+forn(i, n)           // for(int i = 0; i < n; i++)
+forn(i, 1, n)        // for(int i = 1; i <= n; i++)
+rof(i, n)            // for(int i = n-1; i >= 0; i--)
+
+// Container macros
+all(v)               // v.begin(), v.end()
+rall(v)              // v.rbegin(), v.rend()
+SZ(v)                // (int)(v).size()
+PB                   // push_back
+```
+
+**Example usage:**
+
+```cpp
+vector<int> v = {3, 1, 4, 1, 5};
+sort(all(v));
+forn(i, SZ(v)) {
+    cout << v[i] << " ";
+}
+```
+
+## Common Problem Patterns
+
+### Pattern 1: Single Source Shortest Path
+
+<AccordionGroup>
+  <Accordion title="Problem Type">
+    Find shortest path from one node to all others in a weighted graph.
+  </Accordion>
+
+  <Accordion title="Snippet Sequence">
+    ```cpp
+    template_std
+    graph_graph
+    graph_digraph  // or graph_undigraph
+    graph_dijkstra_std
+    ```
+  </Accordion>
+
+  <Accordion title="Key Points">
+    - Use `digraph` for directed, `undigraph` for undirected
+    - Dijkstra works only with non-negative weights
+    - For negative weights, use `graph_bellman_ford`
+    - Returns `numeric_limits<T>::max()` for unreachable nodes
+  </Accordion>
+</AccordionGroup>
+
+### Pattern 2: Range Query Problems
+
+<AccordionGroup>
+  <Accordion title="Problem Type">
+    Process queries on array ranges (sum, min, max, update).
+  </Accordion>
+
+  <Accordion title="Snippet Sequence">
+    ```cpp
+    template_std
+    range_query_segment_tree_lazy_compress  // or fenwick tree
+    ```
+  </Accordion>
+
+  <Accordion title="Choosing the Right Structure">
+    **Fenwick Tree** (`range_query_fenwick_tree_std`):
+    - Simpler implementation
+    - Point updates, range queries
+    - Sum queries only
+    - O(log n) operations
+    
+    **Segment Tree** (`range_query_segment_tree`):
+    - More flexible
+    - Range updates possible
+    - Works for min, max, sum, etc.
+    - O(log n) operations
+    
+    **Lazy Segment Tree** (`range_query_segment_tree_lazy_compress`):
+    - Range updates + range queries
+    - Essential for update-heavy problems
+    - O(log n) operations
+  </Accordion>
+</AccordionGroup>
+
+### Pattern 3: String Matching
+
+<AccordionGroup>
+  <Accordion title="Problem Type">
+    Find pattern occurrences in text.
+  </Accordion>
+
+  <Accordion title="Snippet Sequence">
+    ```cpp
+    template_std
+    string_kmp_std  // or string_rabin_karp_std
+    ```
+  </Accordion>
+
+  <Accordion title="Algorithm Selection">
+    **KMP** (`string_kmp_std`):
+    - Single pattern matching
+    - O(n + m) time complexity
+    - No hash collisions
+    - Best for exact matches
+    
+    **Rabin-Karp** (`string_rabin_karp_std`):
+    - Multiple pattern matching
+    - Rolling hash approach
+    - Fast in practice
+    - Good for approximate matching
+    
+    **Aho-Corasick** (`string_aho_corasick_counter`):
+    - Multiple patterns simultaneously
+    - O(n + m + z) where z is matches
+    - Best for dictionary matching
+  </Accordion>
+</AccordionGroup>
+
+### Pattern 4: Dynamic Programming with Modular Arithmetic
+
+<AccordionGroup>
+  <Accordion title="Problem Type">
+    Count combinations/permutations modulo large prime.
+  </Accordion>
+
+  <Accordion title="Snippet Sequence">
+    ```cpp
+    template_std
+    numeric_mint_compress
+    combinatorics_ncr_compress
+    math_factorial  // if needed
+    ```
+  </Accordion>
+
+  <Accordion title="Usage Example">
+    ```cpp
+    const int MOD = 1e9 + 7;
+    using mint = modular<MOD>;
+    
+    // Now use mint like regular integers
+    mint result = mint(5) * mint(3) + mint(2);
+    cout << result.value() << endl;  // Outputs: 17
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Debugging Strategies
+
+### Using misc_debug
+
+The `misc_debug` snippet provides powerful debugging capabilities:
+
+```cpp
+#define DEBUG
+#include <bits/stdc++.h>
+using namespace std;
+
+// Include misc_debug snippet here
+
+int main() {
+    vector<int> v = {1, 2, 3, 4, 5};
+    map<int, string> m = {{1, "one"}, {2, "two"}};
+    
+    log(v);        // Prints: v = [1, 2, 3, 4, 5]
+    log(m);        // Prints: m = {1: one, 2: two}
+    log(v, m);     // Prints both
+}
+```
+
+<Tip>
+Compile with `-DDEBUG` flag to enable debug output:
+
+```bash
+g++ -std=c++17 -O2 -DDEBUG -o sol solution.cpp
+```
+
+For submission, remove the flag and debug output is automatically disabled.
+</Tip>
+
+### Stress Testing
+
+Use `template_random` to generate test cases:
+
+```cpp
+template_random
+
+// Generates random test cases
+random_init(seed);
+vector<int> test = random_vector(1000, 1, 1e9);
+```
+
+**Stress testing workflow:**
+
+```cpp stress_test.cpp
+// Your solution
+void solve_fast(input) { /* optimized code */ }
+
+// Brute force solution
+void solve_slow(input) { /* correct but slow */ }
+
+int main() {
+    random_init(12345);
+    
+    for(int test = 0; test < 1000; test++) {
+        // Generate random input
+        int n = rand() % 100 + 1;
+        vector<int> arr = random_vector(n, 1, 1000);
+        
+        // Compare outputs
+        auto ans1 = solve_fast(arr);
+        auto ans2 = solve_slow(arr);
+        
+        if(ans1 != ans2) {
+            cout << "Failed on test " << test << endl;
+            log(arr, ans1, ans2);
+            break;
+        }
+    }
+    
+    cout << "All tests passed!" << endl;
+}
+```
+
+## Time and Space Complexity
+
+Refer to `notes_complexity` and `notes_time_and_memory_limits` snippets for quick reference:
+
+### Typical Contest Constraints
+
+| N Size | Time Complexity | Algorithms |
+|--------|----------------|------------|
+| ≤ 10 | O(n!) | Permutations, backtracking |
+| ≤ 20 | O(2^n) | Bitmask DP, subset enumeration |
+| ≤ 500 | O(n³) | Floyd-Warshall, DP |
+| ≤ 5,000 | O(n²) | Nested loops, simple DP |
+| ≤ 100,000 | O(n log n) | Sorting, segment tree, binary search |
+| ≤ 1,000,000 | O(n) | Linear algorithms, hash maps |
+
+<Warning>
+**Contest time limits:**
+- Usually 1-2 seconds
+- ~10⁸ to 10⁹ operations per second
+- Account for constant factors
+</Warning>
+
+### Memory Constraints
+
+```cpp
+// Common memory limits: 256 MB or 512 MB
+
+// Rough estimates:
+int arr[10000000];        // ~40 MB
+vector<int> v(10000000);  // ~40 MB
+int dp[1000][1000];       // ~4 MB
+long long arr[1000000];   // ~8 MB
+```
+
+Use `notes_possible_array_values` snippet for detailed limits.
+
+## Common Pitfalls and Solutions
+
+### Pitfall 1: Integer Overflow
+
+<AccordionGroup>
+  <Accordion title="Problem">
+    Intermediate calculations exceed `int` range.
+    
+    ```cpp
+    int a = 1e9, b = 1e9;
+    int result = a * b;  // OVERFLOW!
+    ```
+  </Accordion>
+
+  <Accordion title="Solution">
+    Use `long long` for intermediate calculations:
+    
+    ```cpp
+    int a = 1e9, b = 1e9;
+    long long result = (long long)a * b;  // OK
+    
+    // Or use ll alias from template
+    using ll = int64_t;
+    ll result = ll(a) * b;
+    ```
+    
+    Add `misc_data_types` snippet for type aliases:
+    ```cpp
+    using ll = int64_t;
+    using ld = long double;
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Pitfall 2: Modular Arithmetic Errors
+
+<AccordionGroup>
+  <Accordion title="Problem">
+    Negative modulo or incorrect operations.
+    
+    ```cpp
+    int result = (a - b) % MOD;  // Can be negative!
+    ```
+  </Accordion>
+
+  <Accordion title="Solution">
+    Use `numeric_mint_compress` for automatic modular arithmetic:
+    
+    ```cpp
+    const int MOD = 1e9 + 7;
+    using mint = modular<MOD>;
+    
+    mint a = 5, b = 10;
+    mint result = a - b;  // Automatically handles negative
+    cout << result.value() << endl;  // Correct modulo value
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Pitfall 3: Array Index Errors
+
+<AccordionGroup>
+  <Accordion title="Problem">
+    Off-by-one errors or zero vs one-based indexing.
+  </Accordion>
+
+  <Accordion title="Solution">
+    Use assertions and consistent indexing:
+    
+    ```cpp
+    // Zero-based (most common)
+    forn(i, n) {  // i goes from 0 to n-1
+        assert(0 <= i && i < n);
+        // use arr[i]
+    }
+    
+    // One-based (when needed)
+    forn(i, 1, n) {  // i goes from 1 to n
+        assert(1 <= i && i <= n);
+        // use arr[i]
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Pitfall 4: TLE on Large Inputs
+
+<AccordionGroup>
+  <Accordion title="Problem">
+    Solution times out on large test cases.
+  </Accordion>
+
+  <Accordion title="Solution">
+    1. **Use Fast I/O** (included in all templates):
+    ```cpp
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    ```
+    
+    2. **Optimize algorithm complexity:**
+    ```cpp
+    // Bad: O(n²)
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            // ...
+        }
+    }
+    
+    // Good: O(n log n)
+    sort(all(arr));
+    for(int x : arr) {
+        // ...
+    }
+    ```
+    
+    3. **Use compressed variants:**
+    ```cpp
+    numeric_mint_compress        // Instead of numeric_mint_full
+    string_hashing_static_compress  // Instead of dynamic version
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Contest-Specific Tips
+
+### Codeforces
+
+<CardGroup cols={2}>
+  <Card title="Use Standard Template" icon="code">
+    ```cpp
+    template_std
+    ```
+    Includes all essential optimizations and macros.
+  </Card>
+
+  <Card title="Handle Multiple Test Cases" icon="list">
+    ```cpp
+    template_cases
+    ```
+    Automatically formats case numbers.
+  </Card>
+
+  <Card title="Fast Modular Arithmetic" icon="bolt">
+    ```cpp
+    numeric_mod_fast
+    ```
+    Optimized for MOD = 1e9+7 or 998244353.
+  </Card>
+
+  <Card title="Enable Debug Mode" icon="bug">
+    ```cpp
+    misc_debug
+    ```
+    Compile with `-DDEBUG` for local testing.
+  </Card>
+</CardGroup>
+
+### Google Code Jam
+
+```cpp
+template_google
+```
+
+**Key features:**
+- Automatic case numbering: `Case #1: answer`
+- Multiple test case handling
+- Output formatting helpers
+
+**Usage:**
+```cpp
+void solve(int case_num) {
+    // Your solution
+    cout << "Case #" << case_num << ": ";
+    // Print answer
+}
+
+int main() {
+    int T;
+    cin >> T;
+    for(int t = 1; t <= T; t++) {
+        solve(t);
+    }
+}
+```
+
+### USACO
+
+```cpp
+template_usaco
+```
+
+**Key features:**
+- File I/O setup
+- Handles `.in` and `.out` files
+- Proper file closing
+
+**Structure:**
+```cpp
+int main() {
+    freopen("problem.in", "r", stdin);
+    freopen("problem.out", "w", stdout);
+    
+    // Your solution
+    
+    return 0;
+}
+```
+
+## Advanced Techniques
+
+### Small to Large Optimization
+
+Use `tree_merge_trick_on_trees` for tree problems:
+
+```cpp
+// Merge smaller set into larger set
+// O(n log² n) instead of O(n²)
+if(set1.size() < set2.size()) {
+    swap(set1, set2);
+}
+for(auto x : set2) {
+    set1.insert(x);
+}
+```
+
+### Coordinate Compression
+
+Use `misc_coordinate_compression` for large coordinate ranges:
+
+```cpp
+vector<int> coords = {1000000, 5, 999, 5};
+// Compress to: {2, 0, 1, 0}
+```
+
+### Binary Jumping for Queries
+
+Use `searches_binary_search_III` for optimization:
+
+```cpp
+// Find optimal value in O(log n) jumps
+// Useful for minimization/maximization
+```
+
+## Resource Management
+
+### Memory Optimization
+
+<CardGroup cols={2}>
+  <Card title="Use Arrays Over Vectors" icon="memory">
+    When size is known at compile time:
+    ```cpp
+    int dp[1000][1000];  // Faster
+    // vs
+    vector<vector<int>> dp(1000, vector<int>(1000));
+    ```
+  </Card>
+
+  <Card title="Reserve Vector Capacity" icon="arrow-up">
+    Avoid repeated reallocations:
+    ```cpp
+    vector<int> v;
+    v.reserve(1000000);
+    ```
+  </Card>
+
+  <Card title="Use Bitsets for Booleans" icon="toggle-on">
+    Save memory:
+    ```cpp
+    bitset<1000000> visited;  // 125 KB
+    // vs
+    bool visited[1000000];    // 1000 KB
+    ```
+  </Card>
+
+  <Card title="Reuse Data Structures" icon="recycle">
+    Clear and reuse instead of recreating:
+    ```cpp
+    for(int t = 0; t < T; t++) {
+        vector<int> v;  // Bad: creates new each time
+    }
+    vector<int> v;
+    for(int t = 0; t < T; t++) {
+        v.clear();      // Good: reuses memory
+    }
+    ```
+  </Card>
+</CardGroup>
+
+## Final Checklist
+
+Before submitting:
+
+- [ ] Remove all debug statements and `log()` calls
+- [ ] Verify time complexity is within limits
+- [ ] Check for integer overflow possibilities
+- [ ] Test edge cases (n=1, n=max, all same values)
+- [ ] Ensure fast I/O is enabled
+- [ ] Use correct graph type (directed/undirected)
+- [ ] Handle modular arithmetic correctly
+- [ ] Verify array bounds and indexing
+- [ ] Remove unnecessary includes and snippets
+- [ ] Test on sample inputs
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Templates Overview" icon="file-code" href="/concepts/templates">
+    Explore all available templates and their use cases
+  </Card>
+  <Card title="API Reference" icon="book" href="/reference/graph">
+    Browse complete algorithm and data structure documentation
+  </Card>
+</CardGroup>

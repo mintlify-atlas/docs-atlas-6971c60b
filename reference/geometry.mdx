@@ -1,0 +1,365 @@
+---
+title: "Geometry Algorithms API"
+description: "2D computational geometry including points, polygons, convex hull, and geometric calculations"
+---
+
+## Overview
+
+2D computational geometry algorithms for competitive programming including point operations, polygon operations, convex hull, area, and perimeter calculations.
+
+## Point Structure
+
+A template-based 2D point with comprehensive operations.
+
+```cpp
+typedef long double floating_t;
+
+template<typename T>
+struct Point {
+    T x;
+    T y;
+    
+    Point<T> operator+(Point<T> p);
+    Point<T> operator-(Point<T> p);
+    Point<T> operator*(Point<T> p);  // Complex multiplication
+    Point<T> operator*(T p);          // Scalar multiplication
+    Point<T> operator/(T p);          // Scalar division
+    
+    bool operator==(const Point<T> &p) const;
+    bool operator!=(const Point<T> &p) const;
+    bool operator<(const Point<T> &p) const;
+    bool operator>(const Point<T> &p) const;
+    
+    T norm();                        // x² + y²
+    T norm(Point<T> p);              // Distance squared to p
+    floating_t arg();                // Angle in radians
+    T dot(Point<T> p);               // Dot product
+    T cross(Point<T> p);             // Cross product
+    T orient(Point<T> b, Point<T> c); // Orientation test
+    
+    // Distances
+    floating_t eucl_dist();          // Euclidean distance from origin
+    floating_t eucl_dist(Point<T> p); // Euclidean distance to p
+    T man_dist();                    // Manhattan distance from origin
+    T man_dist(Point<T> p);          // Manhattan distance to p
+    T ch_dist();                     // Chebyshev distance from origin
+    T ch_dist(Point<T> p);           // Chebyshev distance to p
+};
+
+template<typename T>
+using point = Point<T>;
+```
+
+### Point Operations
+
+<ParamField path="norm" type="T norm()">
+  Returns x² + y² (squared Euclidean distance from origin)
+</ParamField>
+
+<ParamField path="dot" type="T dot(Point<T> p)">
+  Dot product: x₁x₂ + y₁y₂
+</ParamField>
+
+<ParamField path="cross" type="T cross(Point<T> p)">
+  Cross product: x₁y₂ - y₁x₂ (signed area of parallelogram)
+</ParamField>
+
+<ParamField path="orient" type="T orient(Point<T> b, Point<T> c)">
+  Orientation test: > 0 for left turn, < 0 for right turn, = 0 for collinear
+</ParamField>
+
+### Distance Metrics
+
+**Euclidean Distance:**
+
+```cpp
+Point<int> p1 = {0, 0};
+Point<int> p2 = {3, 4};
+floating_t dist = p1.eucl_dist(p2);  // 5.0
+```
+
+**Manhattan Distance:**
+
+```cpp
+T dist = p1.man_dist(p2);  // |x₁-x₂| + |y₁-y₂|
+```
+
+**Chebyshev Distance:**
+
+```cpp
+T dist = p1.ch_dist(p2);  // max(|x₁-x₂|, |y₁-y₂|)
+```
+
+### Hash Function
+
+```cpp
+template<typename T>
+struct hasher {
+    size_t operator()(const Point<T> &p) const {
+        return hash<T>()(p.x) ^ hash<T>()(p.y);
+    }
+};
+
+// Usage:
+unordered_map<Point<int>, int, hasher<int>> mp;
+```
+
+## Polygon Structure
+
+```cpp
+template<typename T>
+class Polygon {
+public:
+    Polygon();
+    Polygon(int n);
+    Polygon(vector<Point<T>> pts);
+    
+    void add(Point<T> point);
+    void delete_repeated();
+    int size();
+    Point<T>& operator[](int i);
+};
+
+template<typename T>
+using polygon = Polygon<T>;
+```
+
+### Polygon Operations
+
+<ParamField path="add" type="void add(Point<T> point)">
+  Add a point to the polygon
+</ParamField>
+
+<ParamField path="delete_repeated" type="void delete_repeated()">
+  Remove duplicate points (sorts points)
+</ParamField>
+
+**Complexity:**
+- delete_repeated: O(n log n)
+
+## Area Calculation
+
+### Shoelace Formula
+
+Calculates the signed area of a polygon.
+
+```cpp
+template<typename T>
+floating_t area(const Polygon<T> &poly) {
+    floating_t area = 0.0;
+    int n = poly.size();
+    for(int i = 0; i < n; i++) {
+        int j = (i + 1) % n;
+        area += poly[i].x * poly[j].y;
+        area -= poly[j].x * poly[i].y;
+    }
+    return abs(area) / 2.0;
+}
+```
+
+**Complexity:** O(n)
+
+**Usage Example:**
+
+```cpp
+Polygon<int> poly;
+poly.add({0, 0});
+poly.add({4, 0});
+poly.add({4, 3});
+poly.add({0, 3});
+floating_t a = area(poly);  // 12.0
+```
+
+### Triangle Area
+
+```cpp
+template<typename T>
+floating_t triangle_area(Point<T> a, Point<T> b, Point<T> c) {
+    return abs((b - a).cross(c - a)) / 2.0;
+}
+```
+
+## Perimeter Calculation
+
+```cpp
+template<typename T>
+floating_t perimeter(const Polygon<T> &poly) {
+    floating_t perim = 0.0;
+    int n = poly.size();
+    for(int i = 0; i < n; i++) {
+        int j = (i + 1) % n;
+        perim += poly[i].eucl_dist(poly[j]);
+    }
+    return perim;
+}
+```
+
+**Complexity:** O(n)
+
+## Convex Hull
+
+Finds the convex hull of a set of points using Monotone Chain (Andrew's algorithm).
+
+```cpp
+template<typename T>
+Polygon<T> convex_hull(vector<Point<T>> &points) {
+    int n = points.size();
+    if(n <= 1) return Polygon<T>(points);
+    
+    sort(points.begin(), points.end());
+    
+    vector<Point<T>> lower, upper;
+    
+    // Build lower hull
+    for(int i = 0; i < n; i++) {
+        while(lower.size() >= 2 && 
+              (lower[lower.size()-1] - lower[lower.size()-2])
+              .cross(points[i] - lower[lower.size()-2]) <= 0) {
+            lower.pop_back();
+        }
+        lower.push_back(points[i]);
+    }
+    
+    // Build upper hull
+    for(int i = n-1; i >= 0; i--) {
+        while(upper.size() >= 2 && 
+              (upper[upper.size()-1] - upper[upper.size()-2])
+              .cross(points[i] - upper[upper.size()-2]) <= 0) {
+            upper.pop_back();
+        }
+        upper.push_back(points[i]);
+    }
+    
+    lower.pop_back();
+    upper.pop_back();
+    lower.insert(lower.end(), upper.begin(), upper.end());
+    
+    return Polygon<T>(lower);
+}
+```
+
+**Complexity:** O(n log n)
+
+**Usage Example:**
+
+```cpp
+vector<Point<int>> points = {{0,0}, {1,1}, {2,2}, {0,2}, {2,0}, {1,0}};
+Polygon<int> hull = convex_hull(points);
+// hull contains only the points on the convex boundary
+```
+
+## Geometric Predicates
+
+### Orientation Test
+
+```cpp
+template<typename T>
+int orientation(Point<T> a, Point<T> b, Point<T> c) {
+    T val = a.orient(b, c);
+    if(val == 0) return 0;     // Collinear
+    return (val > 0) ? 1 : -1; // 1: Left turn, -1: Right turn
+}
+```
+
+### Point in Polygon
+
+```cpp
+template<typename T>
+bool point_in_polygon(Point<T> p, const Polygon<T> &poly) {
+    int n = poly.size();
+    bool inside = false;
+    
+    for(int i = 0, j = n - 1; i < n; j = i++) {
+        if((poly[i].y > p.y) != (poly[j].y > p.y) &&
+           p.x < (poly[j].x - poly[i].x) * (p.y - poly[i].y) / 
+                 (poly[j].y - poly[i].y) + poly[i].x) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+```
+
+**Complexity:** O(n)
+
+### Line Segment Intersection
+
+```cpp
+template<typename T>
+bool segments_intersect(Point<T> p1, Point<T> q1, 
+                       Point<T> p2, Point<T> q2) {
+    int o1 = orientation(p1, q1, p2);
+    int o2 = orientation(p1, q1, q2);
+    int o3 = orientation(p2, q2, p1);
+    int o4 = orientation(p2, q2, q1);
+    
+    // General case
+    if(o1 != o2 && o3 != o4) return true;
+    
+    // Special cases (collinear points)
+    // ... implementation details
+    
+    return false;
+}
+```
+
+## Common Formulas
+
+### Distance from Point to Line
+
+```cpp
+template<typename T>
+floating_t point_to_line_distance(Point<T> p, Point<T> a, Point<T> b) {
+    return abs((b - a).cross(p - a)) / a.eucl_dist(b);
+}
+```
+
+### Closest Point on Line Segment
+
+```cpp
+template<typename T>
+Point<floating_t> closest_point_on_segment(Point<T> p, Point<T> a, Point<T> b) {
+    floating_t t = max(0.0, min(1.0, 
+        (p - a).dot(b - a) / (floating_t)(b - a).norm()));
+    return Point<floating_t>{a.x + t * (b.x - a.x), 
+                             a.y + t * (b.y - a.y)};
+}
+```
+
+## Available Algorithms
+
+| Algorithm | File | Complexity |
+|-----------|------|------------|
+| Point Structure | `2d_geometry_point.cpp` | O(1) operations |
+| Polygon Structure | `2d_geometry_polygon.cpp` | Varies |
+| Area (Shoelace) | `2d_geometry_area.cpp` | O(n) |
+| Perimeter | `2d_geometry_perimeter.cpp` | O(n) |
+| Convex Hull | `2d_geometry_convex_hull_mc.cpp` | O(n log n) |
+
+## Usage Tips
+
+<CardGroup cols={2}>
+  <Card title="Use Long Double" icon="calculator">
+    Use `long double` for floating-point coordinates to avoid precision errors
+  </Card>
+  <Card title="Integer Coordinates" icon="hashtag">
+    Use `long long` for integer coordinates to avoid overflow
+  </Card>
+  <Card title="Cross Product" icon="times">
+    Cross product is key for orientation tests and area calculations
+  </Card>
+  <Card title="Epsilon Comparison" icon="equals">
+    Compare floating-point values with epsilon for equality
+  </Card>
+</CardGroup>
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Math Algorithms" icon="calculator" href="/reference/math">
+    Mathematical operations and formulas
+  </Card>
+  <Card title="Techniques" icon="lightbulb" href="/reference/techniques">
+    Sweep line for geometric problems
+  </Card>
+</CardGroup>

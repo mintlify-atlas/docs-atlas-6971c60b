@@ -1,0 +1,288 @@
+---
+title: 'String Algorithms Overview'
+description: 'Efficient algorithms for pattern matching, hashing, and string processing'
+icon: 'text'
+---
+
+## Introduction
+
+String algorithms are essential in competitive programming for efficiently processing and matching text patterns. These algorithms enable fast substring searches, comparisons, and transformations.
+
+<CardGroup cols={2}>
+  <Card title="Pattern Matching" icon="magnifying-glass" href="/algorithms/string/pattern-matching">
+    KMP, Rabin-Karp, Aho-Corasick, and Z-algorithm for finding patterns
+  </Card>
+  <Card title="String Hashing" icon="hashtag" href="/algorithms/string/hashing">
+    Fast string comparison and substring matching using hash functions
+  </Card>
+  <Card title="Suffix Array" icon="list" href="/algorithms/string/suffix-array">
+    Efficient string indexing for pattern matching and LCP computation
+  </Card>
+</CardGroup>
+
+## Algorithm Comparison
+
+### Pattern Matching Algorithms
+
+| Algorithm | Preprocessing | Search | Space | Multiple Patterns | Use Case |
+|-----------|--------------|--------|-------|------------------|----------|
+| **KMP** | O(m) | O(n) | O(m) | ❌ No | Single pattern matching |
+| **Rabin-Karp** | O(m) | O(n+m) avg | O(1) | ✅ Yes | Multiple pattern matching |
+| **Z-Algorithm** | - | O(n+m) | O(n+m) | ❌ No | Pattern matching, palindromes |
+| **Aho-Corasick** | O(Σm) | O(n+k) | O(Σm) | ✅ Yes | Multiple pattern matching |
+
+<Note>
+**Notation:**
+- n = length of text
+- m = length of pattern
+- k = number of matches
+- Σm = sum of all pattern lengths
+</Note>
+
+### String Comparison Methods
+
+| Method | Preprocessing | Comparison | Update | Best For |
+|--------|--------------|------------|--------|----------|
+| **Direct Compare** | O(1) | O(n) | O(1) | Short strings |
+| **Static Hashing** | O(n) | O(1) | ❌ No | Read-only strings |
+| **Dynamic Hashing** | O(n log n) | O(1) | O(log n) | Mutable strings |
+| **Suffix Array** | O(n log n) | O(m log n) | ❌ No | Many pattern searches |
+
+## Choosing the Right Algorithm
+
+### Pattern Matching
+
+**Use KMP when:**
+- Searching for a single pattern
+- Need deterministic O(n) time
+- Pattern has repeating prefixes
+- Want simple, reliable code
+
+**Use Rabin-Karp when:**
+- Searching for multiple patterns of same length
+- Need simple implementation
+- Can tolerate probabilistic approach
+- Working with rolling hash problems
+
+**Use Z-Algorithm when:**
+- Need all prefix matches
+- Solving palindrome problems
+- Want simple O(n) pattern matching
+
+**Use Aho-Corasick when:**
+- Searching for multiple patterns simultaneously
+- Patterns have different lengths
+- Need to find all occurrences
+- Dictionary matching problems
+
+### String Comparison
+
+**Use Static Hashing when:**
+- Strings don't change
+- Need O(1) substring comparison
+- Working with substring equality
+- Solving string matching problems
+
+**Use Dynamic Hashing when:**
+- Strings are modified frequently
+- Need O(1) comparison after updates
+- Building strings dynamically
+- Maintaining string in data structure
+
+**Use Suffix Array when:**
+- Finding all occurrences of patterns
+- Need lexicographic ordering
+- Computing longest common substrings
+- Working with multiple pattern searches
+
+## Common Patterns
+
+### Finding All Occurrences
+
+<Tabs>
+  <Tab title="KMP">
+    ```cpp
+    string text = "ABABCABABA";
+    string pattern = "ABA";
+    
+    vector<int> positions = kmp(text, pattern);
+    // Returns: {0, 5, 7}
+    ```
+  </Tab>
+  <Tab title="Rabin-Karp">
+    ```cpp
+    string text = "ABABCABABA";
+    string pattern = "ABA";
+    
+    vector<int> positions = rabin_karp(text, pattern);
+    // Returns: {0, 5, 7}
+    ```
+  </Tab>
+  <Tab title="Z-Algorithm">
+    ```cpp
+    string s = pattern + "#" + text;
+    vector<int> z = z_algorithm(s);
+    
+    vector<int> positions;
+    int m = pattern.size();
+    for (int i = m + 1; i < s.size(); i++) {
+        if (z[i] == m) {
+            positions.push_back(i - m - 1);
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Substring Comparison
+
+```cpp
+// Using string hashing
+string s = "abcdefghijk";
+hashing<string> h(s);
+
+// Compare substrings in O(1)
+if (h.query(0, 2) == h.query(5, 7)) {
+    cout << "s[0:2] == s[5:7]" << endl;
+}
+
+// Find all occurrences of substring
+string pattern = "abc";
+hashing<string> p_hash(pattern);
+auto target = p_hash.query(0, pattern.size() - 1);
+
+for (int i = 0; i <= s.size() - pattern.size(); i++) {
+    if (h.query(i, i + pattern.size() - 1) == target) {
+        cout << "Found at position " << i << endl;
+    }
+}
+```
+
+### Multiple Pattern Matching
+
+```cpp
+// Aho-Corasick for dictionary matching
+vector<string> patterns = {"he", "she", "his", "hers"};
+string text = "she sells his shells";
+
+AhoCorasick ac(patterns);
+vector<vector<int>> matches = ac.search(text);
+
+for (int i = 0; i < patterns.size(); i++) {
+    cout << "Pattern '" << patterns[i] << "' found at: ";
+    for (int pos : matches[i]) {
+        cout << pos << " ";
+    }
+    cout << endl;
+}
+```
+
+## Advanced Techniques
+
+### Palindrome Detection
+
+```cpp
+// Using hashing to check palindromes
+string s = "racecar";
+hashing<string> h(s);
+string rev(s.rbegin(), s.rend());
+hashing<string> h_rev(rev);
+
+auto is_palindrome = [&](int l, int r) {
+    int len = r - l + 1;
+    return h.query(l, r) == h_rev.query(s.size() - r - 1, s.size() - l - 1);
+};
+```
+
+### Longest Common Substring
+
+```cpp
+// Binary search + hashing
+string s1 = "abcdefgh";
+string s2 = "xyzabcpqr";
+
+auto has_common_substring = [&](int len) {
+    set<int64_t> hashes;
+    hashing<string> h1(s1);
+    
+    for (int i = 0; i <= s1.size() - len; i++) {
+        hashes.insert(h1.query(i, i + len - 1));
+    }
+    
+    hashing<string> h2(s2);
+    for (int i = 0; i <= s2.size() - len; i++) {
+        if (hashes.count(h2.query(i, i + len - 1))) {
+            return true;
+        }
+    }
+    return false;
+};
+
+int lo = 0, hi = min(s1.size(), s2.size());
+while (lo < hi) {
+    int mid = (lo + hi + 1) / 2;
+    if (has_common_substring(mid)) lo = mid;
+    else hi = mid - 1;
+}
+```
+
+### String Period Detection
+
+```cpp
+// Using prefix function
+template <typename T>
+int find_period(const T &s) {
+    vector<int> lps = prefix_function(s);
+    int n = s.size();
+    int period_len = n - lps[n - 1];
+    
+    // Check if it's a valid period
+    if (n % period_len == 0) {
+        return period_len;
+    }
+    return n;  // String is its own period
+}
+
+string s = "abcabcabc";
+int period = find_period(s);  // Returns 3
+```
+
+## Common Applications
+
+<CardGroup cols={2}>
+  <Card title="Text Search" icon="magnifying-glass">
+    Find patterns in large texts efficiently
+  </Card>
+  <Card title="DNA Matching" icon="dna">
+    Match genetic sequences and find mutations
+  </Card>
+  <Card title="Plagiarism Detection" icon="copy">
+    Find common substrings between documents
+  </Card>
+  <Card title="Data Compression" icon="compress">
+    Identify repeated patterns for compression
+  </Card>
+  <Card title="Spell Checking" icon="spell-check">
+    Dictionary matching with fuzzy search
+  </Card>
+  <Card title="URL Filtering" icon="filter">
+    Match URLs against pattern lists
+  </Card>
+</CardGroup>
+
+## Performance Tips
+
+1. **Use hashing for equality checks**: O(1) after O(n) preprocessing
+2. **Combine algorithms**: Use hashing + binary search for complex queries
+3. **Choose right base and mod**: Avoid collisions in hashing
+4. **Use double hashing**: Reduce false positives
+5. **Cache preprocessing**: Reuse prefix functions and hash tables
+6. **Consider memory**: Aho-Corasick uses more space than KMP
+
+## Next Steps
+
+Dive into specific implementations:
+
+1. [Pattern Matching](/algorithms/string/pattern-matching) - KMP, Rabin-Karp, Aho-Corasick, Z-algorithm
+2. [String Hashing](/algorithms/string/hashing) - Static and dynamic hashing techniques
+3. [Suffix Array](/algorithms/string/suffix-array) - Efficient string indexing

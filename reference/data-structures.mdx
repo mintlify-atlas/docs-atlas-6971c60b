@@ -1,0 +1,278 @@
+---
+title: "Data Structures API"
+description: "Advanced data structures including tries, stacks, queues, and Mo's algorithm"
+---
+
+## Overview
+
+This module provides advanced data structures optimized for competitive programming, including specialized stacks and queues with min/max queries, tries, and Mo's algorithm for range queries.
+
+## Stack with Min/Max Queries
+
+A stack that supports retrieving the minimum or maximum element in O(1) time.
+
+```cpp
+template<typename T>
+struct Wrapper {
+    T value;
+    T op;
+};
+
+template<typename T, typename Operate>
+class Stack {
+public:
+    Stack();
+    void push(T value);
+    void pop();
+    T top();
+    T operate();  // Returns min/max of all elements
+    bool empty();
+};
+
+struct Min {
+    template <typename T> T operator()(T x, T y) { return min<T>(x, y); }
+};
+
+struct Max {
+    template <typename T> T operator()(T x, T y) { return max<T>(x, y); }
+};
+
+template<typename T> using MinStack = Stack<T, Min>;
+template<typename T> using MaxStack = Stack<T, Max>;
+```
+
+### Methods
+
+<ParamField path="push" type="void push(T value)">
+  Add element to the top of the stack
+</ParamField>
+
+<ParamField path="pop" type="void pop()">
+  Remove element from the top of the stack
+</ParamField>
+
+<ParamField path="top" type="T top()">
+  Return the top element without removing it
+</ParamField>
+
+<ParamField path="operate" type="T operate()">
+  Return the min/max of all elements in the stack in O(1) time
+</ParamField>
+
+**Complexity:**
+- All operations: O(1)
+- Space: O(n)
+
+**Usage Example:**
+
+```cpp
+MinStack<int> st;
+st.push(5);
+st.push(3);
+st.push(7);
+cout << st.operate() << endl;  // 3 (minimum)
+cout << st.top() << endl;      // 7
+st.pop();
+cout << st.operate() << endl;  // 3
+```
+
+## Queue with Min/Max Queries
+
+A queue that supports retrieving the minimum or maximum element in O(1) amortized time.
+
+```cpp
+template<typename T, typename Operate>
+class Queue {
+public:
+    Queue();
+    void push(T value);
+    void pop();
+    T front();
+    T operate();  // Returns min/max of all elements
+    bool empty();
+};
+
+template<typename T> using MinQueue = Queue<T, Min>;
+template<typename T> using MaxQueue = Queue<T, Max>;
+```
+
+**Complexity:**
+- Push: O(1) amortized
+- Pop: O(1) amortized
+- Min/Max query: O(1)
+- Space: O(n)
+
+## Trie Data Structures
+
+### Dynamic Trie
+
+A trie (prefix tree) for efficient string operations.
+
+```cpp
+template<typename T>
+class Trie {
+public:
+    Trie();
+    void insert(const T& word);
+    bool search(const T& word);
+    bool startsWith(const T& prefix);
+};
+```
+
+<ParamField path="insert" type="void insert(const T& word)">
+  Insert a word into the trie
+</ParamField>
+
+<ParamField path="search" type="bool search(const T& word)">
+  Check if a word exists in the trie
+</ParamField>
+
+<ParamField path="startsWith" type="bool startsWith(const T& prefix)">
+  Check if any word in the trie starts with the given prefix
+</ParamField>
+
+**Complexity:**
+- Insert: O(L) where L is word length
+- Search: O(L)
+- StartsWith: O(L)
+- Space: O(ALPHABET_SIZE * L * N) where N is number of words
+
+### Trie Automaton
+
+A trie with failure links for pattern matching (similar to Aho-Corasick).
+
+**Complexity:**
+- Build: O(total length of all patterns)
+- Query: O(text length + number of matches)
+
+## Mo's Algorithm
+
+An algorithm for answering range queries offline by reordering them optimally.
+
+```cpp
+class MosAlgorithm {
+public:
+    MosAlgorithm(int n, vector<Query> queries);
+    void add(int idx);     // Add element at index
+    void remove(int idx);  // Remove element at index
+    void process();        // Process all queries
+};
+```
+
+**Complexity:**
+- Time: O((N + Q) * √N) where Q is number of queries
+- Space: O(N + Q)
+
+**Usage Example:**
+
+```cpp
+// Process range queries with add/remove operations
+MosAlgorithm mo(n, queries);
+mo.process();
+```
+
+## Median Data Structure
+
+Maintains a dynamic set of numbers and efficiently computes the median.
+
+```cpp
+class MedianFinder {
+public:
+    MedianFinder();
+    void addNum(int num);
+    double findMedian();
+};
+```
+
+<ParamField path="addNum" type="void addNum(int num)">
+  Add a number to the data structure
+</ParamField>
+
+<ParamField path="findMedian" type="double findMedian()">
+  Return the median of all numbers added so far
+</ParamField>
+
+**Complexity:**
+- Add: O(log n)
+- Find Median: O(1)
+- Space: O(n)
+
+## Tree Order Statistic
+
+Supports finding the k-th smallest element and rank queries using policy-based data structures.
+
+```cpp
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+
+template<typename T>
+using ordered_set = tree<T, null_type, less<T>, 
+                        rb_tree_tag, tree_order_statistics_node_update>;
+```
+
+### Methods
+
+- `find_by_order(k)` - Returns iterator to k-th smallest element (0-indexed)
+- `order_of_key(x)` - Returns number of elements strictly less than x
+
+**Complexity:**
+- Insert/Delete/Find: O(log n)
+- Order statistics: O(log n)
+
+**Usage Example:**
+
+```cpp
+ordered_set<int> s;
+s.insert(5);
+s.insert(3);
+s.insert(7);
+auto it = s.find_by_order(1);  // Iterator to 5 (2nd smallest)
+int rank = s.order_of_key(6);   // 2 (elements < 6)
+```
+
+## Min/Max Heap with Map
+
+A heap that supports efficient updates using a map for tracking elements.
+
+```cpp
+template<typename T>
+class MinMaxHeap {
+public:
+    void insert(T value);
+    T getMin();  // or getMax()
+    void removeMin();  // or removeMax()
+    void update(T oldVal, T newVal);
+};
+```
+
+**Complexity:**
+- Insert: O(log n)
+- Get Min/Max: O(log n)
+- Remove: O(log n)
+- Update: O(log n)
+
+## Available Data Structures
+
+| Data Structure | File | Key Feature |
+|----------------|------|-------------|
+| Min/Max Stack | `data_structure_stack_min_max.cpp` | O(1) min/max queries |
+| Min/Max Queue | `data_structure_queue_min_max.cpp` | O(1) amortized queries |
+| Dynamic Trie | `data_structure_trie_dynamic.cpp` | Prefix queries |
+| Trie Automaton | `data_structure_trie_automaton.cpp` | Pattern matching |
+| Mo's Algorithm | `data_structure_mos_algorithm.cpp` | Offline range queries |
+| Median Finder | `data_structure_median.cpp` | Dynamic median |
+| Order Statistic Tree | `data_structure_tree_order_statistic.cpp` | k-th element queries |
+| MinMax Heap (Map) | `data_structure_minmax_heap_map.cpp` | Updatable heap |
+| MinMax Heap (Multiset) | `data_structure_minmax_heap_multiset.cpp` | Multiset-based heap |
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Range Query Structures" icon="layer-group" href="/reference/range-query">
+    Segment trees, Fenwick trees, and sparse tables
+  </Card>
+  <Card title="Graph Algorithms" icon="diagram-project" href="/reference/graph">
+    Graph data structures and algorithms
+  </Card>
+</CardGroup>

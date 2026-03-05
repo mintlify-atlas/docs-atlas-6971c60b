@@ -1,0 +1,140 @@
+---
+title: 'Data Structures Overview'
+description: 'Advanced data structures for competitive programming'
+icon: 'database'
+---
+
+## Introduction
+
+This section covers advanced data structures that extend beyond standard library containers, providing powerful tools for solving complex competitive programming problems.
+
+## Available Data Structures
+
+<CardGroup cols={2}>
+  <Card title="Trie" icon="diagram-project" href="/algorithms/data-structures/trie">
+    Prefix tree implementations with automaton and dynamic variants
+  </Card>
+  
+  <Card title="Advanced Structures" icon="cubes" href="/algorithms/data-structures/advanced">
+    Mo's algorithm, order statistic trees, and min/max heaps and stacks/queues
+  </Card>
+</CardGroup>
+
+## Quick Reference
+
+### Trie (Prefix Tree)
+
+Efficient string storage and prefix matching:
+- **Search/Insert**: O(L) where L is string length
+- **Space**: O(N × ALPHABET_SIZE)
+- Use for: Dictionary operations, prefix matching, autocomplete
+
+**Variants**:
+- **Automaton Trie**: Static, array-based, faster access
+- **Dynamic Trie**: Pointer-based, supports node manipulation
+
+### Mo's Algorithm
+
+Efficiently answers range queries offline:
+- **Time Complexity**: O((N + Q) × √N × F)
+- **Space**: O(N)
+- Use for: Offline range queries with O(1) add/remove operations
+
+### Order Statistic Tree
+
+Extends binary search tree with rank operations:
+- **Find k-th element**: O(log N)
+- **Count elements < x**: O(log N)
+- **All BST operations**: O(log N)
+- Use for: Dynamic median, k-th smallest queries
+
+### Min/Max Heaps
+
+Dual-ended priority queues:
+- **Get min/max**: O(1) or O(log N)
+- **Insert**: O(log N)
+- **Delete min/max**: O(log N)
+- Use for: Tracking both minimum and maximum efficiently
+
+### Stack/Queue with Min/Max
+
+Augmented stacks and queues:
+- **All operations**: O(1) amortized
+- **Get min/max**: O(1)
+- Use for: Sliding window min/max, monotonic structures
+
+## Complexity Comparison
+
+| Data Structure | Insert | Delete | Query | Space |
+|----------------|--------|--------|-------|-------|
+| Trie | O(L) | O(L) | O(L) | O(N × Σ) |
+| Order Statistic Tree | O(log N) | O(log N) | O(log N) | O(N) |
+| Min/Max Heap | O(log N) | O(log N) | O(1) | O(N) |
+| Min/Max Stack | O(1) | O(1) | O(1) | O(N) |
+| Min/Max Queue | O(1) amortized | O(1) amortized | O(1) | O(N) |
+
+Where:
+- N = number of elements
+- L = length of string
+- Σ = alphabet size
+
+## Choosing the Right Structure
+
+### Use Trie When:
+- Working with strings and need prefix operations
+- Building dictionaries or autocomplete systems
+- Solving problems involving common prefixes
+- Need efficient string matching
+
+### Use Order Statistic Tree When:
+- Need to find k-th smallest/largest element dynamically
+- Counting elements in a range
+- Maintaining sorted order with insertions/deletions
+- Solving inversion count problems
+
+### Use Mo's Algorithm When:
+- Have offline range queries
+- Can efficiently add/remove elements at query boundaries
+- Need to optimize query answering
+- Range query complexity is expensive with online approach
+
+### Use Min/Max Heaps When:
+- Need both minimum and maximum access
+- Working with sliding windows
+- Implementing double-ended priority queues
+- Median finding problems
+
+### Use Stack/Queue with Min/Max When:
+- Need stack/queue semantics with min/max queries
+- Solving sliding window minimum/maximum
+- Building monotonic structures
+- Range minimum queries with specific patterns
+
+<Note>
+  All data structures in this section are template-based and support custom types and comparators where applicable.
+</Note>
+
+<Tip>
+  For most problems, start with standard library containers (vector, set, map, priority_queue). Use these advanced structures when you need their specific capabilities or when standard library performance is insufficient.
+</Tip>
+
+## Common Problem Patterns
+
+### String Matching Patterns
+→ Use **Trie** for prefix matching, dictionary operations
+
+### Dynamic K-th Queries
+→ Use **Order Statistic Tree** for rank-based queries
+
+### Offline Range Queries
+→ Use **Mo's Algorithm** for efficient batch processing
+
+### Sliding Window Extrema
+→ Use **Stack/Queue with Min/Max** for O(1) extrema access
+
+### Median Maintenance
+→ Use **Min/Max Heap** to track both halves of data
+
+<Warning>
+  Order statistic trees use GNU's Policy-Based Data Structures (PBDS), which may not be available on all platforms. Always check platform support before using.
+</Warning>

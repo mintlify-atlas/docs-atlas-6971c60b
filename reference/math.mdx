@@ -1,0 +1,392 @@
+---
+title: "Math Algorithms API"
+description: "Number theory, prime numbers, GCD, modular arithmetic, and mathematical operations"
+---
+
+## Overview
+
+Comprehensive mathematical algorithms for competitive programming including number theory, prime factorization, GCD/LCM, modular arithmetic, matrix operations, and more.
+
+## Basic Number Theory
+
+### GCD (Greatest Common Divisor)
+
+#### Iterative Version
+
+```cpp
+template<class T>
+T gcd(T a, T b);
+```
+
+**Complexity:** O(log min(a, b))
+
+**Usage Example:**
+
+```cpp
+int ans = gcd(15, 25);  // 5
+```
+
+#### Recursive Version
+
+```cpp
+template<class T>
+T gcd(T a, T b);
+```
+
+### LCM (Least Common Multiple)
+
+```cpp
+template<class T>
+T lcm(T a, T b);
+```
+
+**Formula:** lcm(a, b) = (a × b) / gcd(a, b)
+
+**Complexity:** O(log min(a, b))
+
+**Usage Example:**
+
+```cpp
+int ans = lcm(12, 18);  // 36
+```
+
+### Extended GCD
+
+Finds integers x and y such that a·x + b·y = gcd(a, b).
+
+#### Recursive Version
+
+```cpp
+template<typename T>
+tuple<T, T, T> extgcd(T a, T b);
+```
+
+**Returns:** `{gcd, x, y}` where a·x + b·y = gcd(a, b)
+
+**Complexity:** O(log min(a, b))
+
+**Usage Example:**
+
+```cpp
+auto [g, x, y] = extgcd(35, 15);
+// g = 5, and 35*x + 15*y = 5
+
+// Finding modular inverse: a*x ≡ 1 (mod m)
+auto [g, x, y] = extgcd(a, m);
+if (g == 1) {
+    int inv = (x % m + m) % m;  // Modular inverse
+}
+```
+
+#### Iterative Version
+
+```cpp
+template<typename T>
+tuple<T, T, T> extgcd(T a, T b);
+```
+
+## Prime Numbers
+
+### Sieve of Eratosthenes
+
+Generates all prime numbers up to M.
+
+```cpp
+const int M = 1e6 + 2;
+bool marked[M+1];
+vector<int> primes;
+
+void sieve();
+```
+
+**Complexity:** O(M log log M)
+
+**Usage Example:**
+
+```cpp
+sieve();
+cout << "Number of primes: " << primes.size() << endl;
+for (int p : primes) {
+    // Process prime p
+}
+```
+
+### Prime Factorization
+
+#### Vector Version
+
+Returns all prime factors with repetition.
+
+```cpp
+template<class T>
+vector<T> prime_factors(T number);
+```
+
+**Complexity:** O(√n)
+
+**Usage Example:**
+
+```cpp
+int n = 100;
+vector<int> factors = prime_factors<int>(n);
+// factors = {2, 2, 5, 5}
+// 2² × 5² = 100
+```
+
+#### Map Version
+
+Returns prime factors with their exponents.
+
+```cpp
+template<class T>
+map<T, int> prime_factors_map(T number);
+```
+
+**Usage Example:**
+
+```cpp
+auto factors = prime_factors_map(100);
+// factors = {{2, 2}, {5, 2}}
+// Represents 2² × 5²
+```
+
+### Primality Test
+
+```cpp
+template<class T>
+bool is_prime(T n);
+```
+
+**Complexity:** O(√n)
+
+**Usage Example:**
+
+```cpp
+if (is_prime(97)) {
+    cout << "Prime!" << endl;
+}
+```
+
+### Divisors
+
+```cpp
+template<class T>
+vector<T> divisors(T n);
+```
+
+**Returns:** All divisors of n
+
+**Complexity:** O(√n)
+
+**Usage Example:**
+
+```cpp
+vector<int> divs = divisors(12);
+// divs = {1, 2, 3, 4, 6, 12}
+```
+
+## Modular Arithmetic
+
+### Euler's Totient Function
+
+Counts integers up to n that are coprime to n.
+
+```cpp
+template<class T>
+T phi_euler(T n);
+```
+
+**Complexity:** O(√n)
+
+**Usage Example:**
+
+```cpp
+int result = phi_euler(9);  // 6
+// Numbers coprime to 9: {1, 2, 4, 5, 7, 8}
+```
+
+## Factorial and Combinatorics
+
+### Factorial Class
+
+Precomputes factorials for fast access.
+
+```cpp
+template<typename T>
+class Factorial {
+public:
+    Factorial(int mx);
+    T operator[](int idx);
+};
+```
+
+**Complexity:**
+- Precompute: O(n)
+- Access: O(1)
+
+**Usage Example:**
+
+```cpp
+Factorial<Mint> fact(1e6);
+Mint result = fact[5];  // 120
+```
+
+## Advanced Mathematics
+
+### Matrix Operations
+
+```cpp
+template<typename T>
+class Matrix {
+public:
+    Matrix(int rows, int cols);
+    Matrix operator*(const Matrix &other);
+    Matrix power(int64_t exp);
+    T determinant();
+};
+```
+
+<ParamField path="operator*" type="Matrix operator*(const Matrix &other)">
+  Matrix multiplication
+</ParamField>
+
+<ParamField path="power" type="Matrix power(int64_t exp)">
+  Matrix exponentiation using fast power
+</ParamField>
+
+<ParamField path="determinant" type="T determinant()">
+  Calculate matrix determinant
+</ParamField>
+
+**Complexity:**
+- Multiplication: O(n³)
+- Power: O(n³ log exp)
+- Determinant: O(n³)
+
+### Polynomial Operations
+
+```cpp
+template<typename T>
+class Polynomial {
+public:
+    Polynomial(const vector<T> &coefficients);
+    Polynomial operator+(const Polynomial &other);
+    Polynomial operator*(const Polynomial &other);
+    T evaluate(T x);
+};
+```
+
+### Fast Fourier Transform (FFT)
+
+```cpp
+vector<complex<double>> fft(vector<complex<double>> &a, bool invert);
+vector<int> multiply(const vector<int> &a, const vector<int> &b);
+```
+
+**Complexity:** O(n log n) for polynomial multiplication
+
+## Utility Functions
+
+### MEX (Minimum Excludant)
+
+Finds smallest non-negative integer not in the array.
+
+```cpp
+int mex(const vector<int> &arr);
+```
+
+**Complexity:** O(n)
+
+**Usage Example:**
+
+```cpp
+vector<int> arr = {0, 1, 2, 4, 5};
+int result = mex(arr);  // 3
+```
+
+### Is Power of N
+
+```cpp
+template<class T>
+bool is_power_of_n(T number, T n);
+```
+
+**Usage Example:**
+
+```cpp
+bool result = is_power_of_n(64, 2);  // true (2⁶ = 64)
+```
+
+### Harmonic Lemma
+
+Optimizes certain sum calculations.
+
+**Complexity:** O(√n) for sums of form Σ(n/i)
+
+## Diophantine Equations
+
+Solves linear Diophantine equations ax + by = c.
+
+### Standard Version
+
+```cpp
+template<typename T>
+bool diophantine(T a, T b, T c, T &x, T &y);
+```
+
+### Best Solution
+
+Finds solution minimizing |x| + |y|.
+
+```cpp
+template<typename T>
+bool diophantine_best(T a, T b, T c, T &x, T &y);
+```
+
+**Usage Example:**
+
+```cpp
+int x, y;
+if (diophantine(3, 5, 7, x, y)) {
+    cout << "Solution: " << x << ", " << y << endl;
+    // 3*x + 5*y = 7
+}
+```
+
+## Available Algorithms
+
+| Algorithm | File | Complexity |
+|-----------|------|------------|
+| GCD (Iterative) | `math_gcd_iterative.cpp` | O(log n) |
+| GCD (Recursive) | `math_gcd_recursive.cpp` | O(log n) |
+| LCM | `math_lcm.cpp` | O(log n) |
+| ExtGCD (Iterative) | `math_extgcd_iterative.cpp` | O(log n) |
+| ExtGCD (Recursive) | `math_extgcd_recursive.cpp` | O(log n) |
+| Sieve | `math_sieve.cpp` | O(n log log n) |
+| Sieve (Full) | `math_sieve_full.cpp` | O(n log log n) |
+| Prime Factors (Vector) | `math_prime_factors_vector.cpp` | O(√n) |
+| Prime Factors (Map) | `math_prime_factors_map.cpp` | O(√n) |
+| Primality Test | `math_primality_test.cpp` | O(√n) |
+| Divisors | `math_divisors.cpp` | O(√n) |
+| Euler Phi | `math_phi_euler_sqrt_n.cpp` | O(√n) |
+| Factorial | `math_factorial.cpp` | O(n) precompute |
+| Matrix | `math_matrix.cpp` | O(n³) |
+| Matrix (Full) | `math_matrix_full.cpp` | O(n³) |
+| Polynomial | `math_polynomial.cpp` | Varies |
+| FFT | `math_fft_recursive.cpp` | O(n log n) |
+| MEX | `math_mex.cpp` | O(n) |
+| Is Power of N | `math_is_power_of_n.cpp` | O(log n) |
+| Diophantine | `math_diophantine_std.cpp` | O(log n) |
+| Diophantine (Best) | `math_diophantine_best.cpp` | O(log n) |
+| Harmonic Lemma | `math_harmonic_lemma_trick.cpp` | O(√n) |
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Numeric Utilities" icon="calculator" href="/reference/numeric">
+    Modular arithmetic and fast power
+  </Card>
+  <Card title="Combinatorics" icon="shapes" href="/reference/combinatorics">
+    Combinations, permutations, and more
+  </Card>
+</CardGroup>

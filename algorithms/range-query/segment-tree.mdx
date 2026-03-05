@@ -1,0 +1,316 @@
+---
+title: 'Segment Tree'
+description: 'Versatile data structure for range queries and updates'
+icon: 'tree'
+---
+
+## Overview
+
+Segment trees are one of the most powerful and flexible data structures in competitive programming. They support range queries and updates in O(log n) time for any associative operation.
+
+<Note>
+**Time Complexity**
+- Build: O(n)
+- Query: O(log n)
+- Update: O(log n) for both point and range updates (with lazy propagation)
+
+**Space Complexity**: O(4n)
+</Note>
+
+## Basic Segment Tree
+
+The basic segment tree supports point updates and range queries efficiently using a bottom-up approach.
+
+### Implementation
+
+```cpp range_query_segment_tree.cpp
+template <typename T, class F = function<T(const T &, const T &)>>
+class SegmentTree {
+    T NEUTRAL;
+    int n;
+    vector<T> tree;
+    F func;
+
+  public:
+    SegmentTree(const vector<T> &values, T neutral, const F &f) : func(f) {
+        NEUTRAL = neutral;
+        n = values.size();
+        tree.resize(n * 2);
+        // Build
+        for (int i = 0; i < n; i++) {
+            tree[n + i] = values[i];
+        }
+        for (int i = n - 1; i > 0; --i) {
+            tree[i] = func(tree[i * 2], tree[i * 2 + 1]);
+        }
+    }
+
+    void modify(int index, T value) {
+        tree[index + n] = value;
+        index = index + n;
+        for (int i = index; i > 1; i >>= 1) {
+            tree[i / 2] = func(tree[i], tree[i ^ 1]);
+        }
+    }
+
+    T query(int l, int r) {
+        T ans = NEUTRAL;
+        for (l += n, r += n; l < r; l >>= 1, r >>= 1) {
+            if (l & 1) {
+                ans = func(ans, tree[l++]);
+            }
+            if (r & 1) {
+                ans = func(ans, tree[--r]);
+            }
+        }
+        return ans;
+    }
+};
+template <typename T> using segtree = SegmentTree<T>;
+```
+
+### Usage Examples
+
+<Tabs>
+  <Tab title="Range Maximum Query">
+    ```cpp
+    vector<int> values = {3, 1, 4, 1, 5, 9, 2, 6};
+    
+    // Create segment tree for maximum queries
+    auto func = [](int x, int y) { return max(x, y); };
+    segtree<int, decltype(func)> st(values, -1e9, func);
+    
+    // Query maximum in range [2, 5]
+    int max_val = st.query(2, 6);  // Returns 9 (half-open interval)
+    
+    // Update index 4 to 10
+    st.modify(4, 10);
+    
+    // Query again
+    max_val = st.query(2, 6);  // Returns 10
+    ```
+  </Tab>
+  <Tab title="Range Sum Query">
+    ```cpp
+    vector<int> values = {1, 2, 3, 4, 5};
+    
+    // Create segment tree for sum queries
+    segtree<int> st(values, 0, [](int x, int y) { return x + y; });
+    
+    // Query sum in range [1, 4)
+    int sum = st.query(1, 4);  // Returns 9 (2+3+4)
+    
+    // Update index 2 to 10
+    st.modify(2, 10);
+    
+    sum = st.query(1, 4);  // Returns 16 (2+10+4)
+    ```
+  </Tab>
+  <Tab title="Range Minimum Query">
+    ```cpp
+    vector<int> values = {5, 2, 8, 1, 9, 3};
+    
+    auto func = [](int x, int y) { return min(x, y); };
+    segtree<int, decltype(func)> st(values, 1e9, func);
+    
+    // Query minimum in range [1, 5)
+    int min_val = st.query(1, 5);  // Returns 1
+    
+    st.modify(3, 7);  // Change minimum to 7
+    min_val = st.query(1, 5);  // Returns 2
+    ```
+  </Tab>
+</Tabs>
+
+## Segment Tree with Lazy Propagation
+
+Lazy propagation enables efficient range updates by deferring updates until necessary.
+
+### Full Implementation
+
+```cpp range_query_segment_tree_lazy_full.cpp
+template <typename T> class SegmentTree {
+  public:
+    static const T lazy_neutral = static_cast<T>(0);
+
+    struct Node {
+        T lazy = lazy_neutral;
+        T mx = static_cast<T>(-1e9);
+        T mn = static_cast<T>(1e9);
+        T sum = static_cast<T>(0);
+        int idx_mn = -1;
+        int idx_mx = -1;
+        bool changed = false;
+
+        void apply(int left, int right, T value) {
+            lazy = value;
+            mx = value;
+            mn = value;
+            sum = (right - left + 1) * value;
+            if (left == right) {
+                idx_mn = left;
+                idx_mx = left;
+            }
+            changed = true;
+        }
+    };
+
+    Node unite(const Node &a, const Node &b) const {
+        Node res;
+        res.sum = a.sum + b.sum;
+        res.mx = max(a.mx, b.mx);
+        res.mn = min(a.mn, b.mn);
+        res.idx_mn = (res.mn == a.mn ? a.idx_mn : b.idx_mn);
+        res.idx_mx = (res.mx == a.mx ? a.idx_mx : b.idx_mx);
+        return res;
+    }
+
+    inline void push(int x, int left, int right) {
+        int y = (left + right) >> 1;
+        int z = x + ((y - left + 1) << 1);
+        if (tree[x].lazy != lazy_neutral || tree[x].changed) {
+            tree[x + 1].apply(left, y, tree[x].lazy);
+            tree[z].apply(y + 1, right, tree[x].lazy);
+            tree[x].lazy = lazy_neutral;
+        }
+    }
+
+    inline void pull(int x, int z) { tree[x] = unite(tree[x + 1], tree[z]); }
+
+    int n;
+    vector<Node> tree;
+
+    SegmentTree(int _n) : n(_n) {
+        assert(n > 0);
+        tree.resize(2 * n - 1);
+        build(0, 0, n - 1);
+    }
+
+    SegmentTree(const vector<T> &v) {
+        n = v.size();
+        assert(n > 0);
+        tree.resize(2 * n - 1);
+        build(0, 0, n - 1, v);
+    }
+
+    Node query(int left, int right) {
+        assert(0 <= left && left <= right && right <= n - 1);
+        return query(0, 0, n - 1, left, right);
+    }
+
+    template <typename... M> void modify(int left, int right, const M &...v) {
+        assert(0 <= left && left <= right && right <= n - 1);
+        modify(0, 0, n - 1, left, right, v...);
+    }
+
+    // Private methods omitted for brevity
+};
+template <typename T> using segtree = SegmentTree<T>;
+```
+
+### Usage Examples
+
+<Tabs>
+  <Tab title="Range Assignment">
+    ```cpp
+    int n = 10;
+    segtree<int> st(n);
+    
+    // Set all elements in [2, 7] to 5
+    st.modify(2, 7, 5);
+    
+    // Query range [3, 6]
+    auto result = st.query(3, 6);
+    cout << "Sum: " << result.sum << endl;      // Sum: 20 (4 * 5)
+    cout << "Max: " << result.mx << endl;       // Max: 5
+    cout << "Min: " << result.mn << endl;       // Min: 5
+    cout << "Max index: " << result.idx_mx << endl;  // 3
+    ```
+  </Tab>
+  <Tab title="Multiple Range Updates">
+    ```cpp
+    vector<int> values = {1, 2, 3, 4, 5, 6, 7, 8};
+    segtree<int> st(values);
+    
+    // Set [1, 4] to 10
+    st.modify(1, 4, 10);
+    
+    // Set [3, 6] to 20
+    st.modify(3, 6, 20);
+    
+    // Query individual elements
+    auto v1 = st.query(1, 1);  // 10
+    auto v3 = st.query(3, 3);  // 20 (overwritten)
+    auto v7 = st.query(7, 7);  // 8 (unchanged)
+    
+    // Query range sum
+    auto result = st.query(0, 7);
+    cout << result.sum << endl;
+    ```
+  </Tab>
+  <Tab title="Finding Min/Max Indices">
+    ```cpp
+    vector<int> values = {5, 2, 8, 1, 9, 3, 7, 4};
+    segtree<int> st(values);
+    
+    // Find minimum and its index in range [1, 6]
+    auto result = st.query(1, 6);
+    cout << "Min value: " << result.mn << endl;        // 1
+    cout << "Min index: " << result.idx_mn << endl;    // 3
+    cout << "Max value: " << result.mx << endl;        // 9
+    cout << "Max index: " << result.idx_mx << endl;    // 4
+    
+    // Update and query again
+    st.modify(3, 3, 15);
+    result = st.query(1, 6);
+    cout << "New min: " << result.mn << endl;          // 2
+    cout << "New min index: " << result.idx_mn << endl; // 1
+    ```
+  </Tab>
+</Tabs>
+
+## Binary Search on Segment Tree
+
+Segment trees support efficient binary search operations to find the first/last position satisfying a condition.
+
+```cpp
+// Find first index in [l, r] where sum >= k
+segtree<int> st(values);
+int pos = st.find_first(l, r, [&](const auto& node) {
+    return node.sum >= k;
+});
+
+// Find last index in [l, r] where max < threshold
+int pos = st.find_last(l, r, [&](const auto& node) {
+    return node.mx < threshold;
+});
+```
+
+## Common Applications
+
+<CardGroup cols={2}>
+  <Card title="Range Sum Queries" icon="plus">
+    Track cumulative values with point or range updates
+  </Card>
+  <Card title="Range Min/Max Queries" icon="chart-line">
+    Find extrema in ranges with dynamic updates
+  </Card>
+  <Card title="Coordinate Compression" icon="compress">
+    Map large coordinate spaces to smaller ranges
+  </Card>
+  <Card title="2D Range Queries" icon="table-cells">
+    Nested segment trees for 2D operations
+  </Card>
+</CardGroup>
+
+## Practice Problems
+
+1. **Range Sum Query - Mutable** (LeetCode 307)
+2. **Range Minimum Query** (CSES)
+3. **Dynamic Range Sum Queries** (CSES)
+4. **Hotel Queries** (CSES) - Binary search on segment tree
+
+## See Also
+
+- [Fenwick Tree](/algorithms/range-query/fenwick-tree) - More efficient for prefix sums
+- [Sparse Table](/algorithms/range-query/sparse-table) - O(1) queries for static arrays
