@@ -349,6 +349,100 @@ auto dp = make_vector<int>(n, m, k, 0);  // 3D vector initialized to 0
 #pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
 ```
 
+## Random Utilities
+
+Generate random values for testing and stress testing.
+
+### random(from, to)
+
+```cpp random_init.cpp
+template <typename T> T random(const T from, const T to);
+```
+
+Generates a random value in the range [from, to]. Works with both integers and floating-point types.
+
+### random_vector(n, from, to)
+
+```cpp random_vector.cpp
+template <typename T> vector<T> random_vector(int n, T from, T to);
+```
+
+Generates a vector of n random values in the range [from, to].
+
+**Usage Example:**
+
+```cpp
+// Generate test case
+vector<int> arr = random_vector(1000, 1, 1000000);
+
+// Generate floating-point values
+vector<double> values = random_vector(100, 0.0, 1.0);
+```
+
+### random_permutation(n, start)
+
+```cpp random_permutation.cpp
+template <typename T> vector<T> random_permutation(int n, T start = 0);
+```
+
+Generates a random permutation of n elements starting from `start`.
+
+**Usage Example:**
+
+```cpp
+// Permutation of 0..n-1
+vector<int> perm = random_permutation<int>(n);
+
+// Permutation of 1..n
+vector<int> perm1 = random_permutation<int>(n, 1);
+```
+
+## STD Library Utilities
+
+Useful utilities for working with standard library containers.
+
+### find_nearest(set, target)
+
+```cpp std_library_find_nearest_set.cpp
+template <typename T> T find_nearest(set<T> &st, T target);
+```
+
+Finds the element in the set nearest to the target value. If two elements are equidistant, returns the larger one.
+
+**Usage Example:**
+
+```cpp
+set<int> st = {1, 5, 10, 20};
+int nearest = find_nearest(st, 8);  // Returns 10
+```
+
+### Rope (GNU Extension)
+
+```cpp std_library_rope.cpp
+#include <ext/rope>
+using namespace __gnu_cxx;
+
+rope<char> r;  // or crope for strings
+```
+
+A rope is a tree-based string data structure supporting efficient operations:
+- `push_back(val)` - O(log n)
+- `pop_back()` - O(log n)
+- `insert(i, rope)` - O(log n) to O(n)
+- `erase(i, n)` - O(log n)
+- `substr(i, n)` - O(log n)
+- `replace(i, n, rope)` - O(log n)
+- Concatenation with `+` - O(1)
+
+**Usage Example:**
+
+```cpp
+crope r("hello");
+r.push_back(' ');
+r += crope("world");
+cout << r << endl;  // "hello world"
+```
+
 ## Available Utilities
 
 | Utility | File | Purpose |
@@ -371,6 +465,11 @@ auto dp = make_vector<int>(n, m, k, 0);  // 3D vector initialized to 0
 | Date | `misc_date.cpp` | Date calculations |
 | Pragma | `misc_pragma.cpp` | Compiler optimizations |
 | Format Answer | `misc_format_problem_answer.cpp` | Output formatting |
+| Random | `random_init.cpp` | Random value generation |
+| Random Vector | `random_vector.cpp` | Random vector generation |
+| Random Permutation | `random_permutation.cpp` | Random permutations |
+| Find Nearest Set | `std_library_find_nearest_set.cpp` | Find nearest element in set |
+| Rope | `std_library_rope.cpp` | Tree-based string structure |
 
 ## Tips
 
